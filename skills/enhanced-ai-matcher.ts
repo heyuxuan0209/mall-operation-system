@@ -1,5 +1,5 @@
 /**
- * AI智能推荐引擎 v2.0 - 增强版
+ * AI智能推荐引擎 v2.1 - 增强版（带缓存）
  *
  * 新增功能：
  * - 成功率权重：优先推荐成功案例
@@ -7,7 +7,85 @@
  * - 相似度计算：基于多维度特征的相似度
  * - 动态权重调整：根据历史反馈调整权重
  * - 多策略融合：结合多种推荐策略
+ * - 缓存机制：避免重复计算（v2.1新增）
+ * - 批量匹配：支持批量处理（v2.1新增）
  */
+
+/**
+ * 缓存管理器
+ */
+class MatcherCache {
+  private cache: Map<string, { result: EnhancedAIMatcherOutput; timestamp: number }> = new Map();
+  private maxSize: number = 100;
+  private ttl: number = 5 * 60 * 1000; // 5分钟过期
+
+  /**
+   * 生成缓存键
+   */
+  private generateKey(input: EnhancedAIMatcherInput): string {
+    return JSON.stringify({
+      category: input.merchantCategory,
+      tags: input.problemTags.sort(),
+      riskLevel: input.riskLevel
+    });
+  }
+
+  /**
+   * 获取缓存
+   */
+  get(input: EnhancedAIMatcherInput): EnhancedAIMatcherOutput | null {
+    const key = this.generateKey(input);
+    const cached = this.cache.get(key);
+
+    if (!cached) return null;
+
+    // 检查是否过期
+    if (Date.now() - cached.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.result;
+  }
+
+  /**
+   * 设置缓存
+   */
+  set(input: EnhancedAIMatcherInput, result: EnhancedAIMatcherOutput): void {
+    const key = this.generateKey(input);
+
+    // 如果缓存已满，删除最旧的条目
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) {
+        this.cache.delete(firstKey);
+      }
+    }
+
+    this.cache.set(key, { result, timestamp: Date.now() });
+  }
+
+  /**
+   * 清空缓存
+   */
+  clear(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * 获取缓存统计
+   */
+  getStats(): { size: number; maxSize: number; ttl: number } {
+    return {
+      size: this.cache.size,
+      maxSize: this.maxSize,
+      ttl: this.ttl
+    };
+  }
+}
+
+// 全局缓存实例
+const matcherCache = new MatcherCache();
 
 export interface EnhancedAIMatcherInput {
   merchantName: string;
@@ -48,7 +126,7 @@ export interface EnhancedAIMatcherOutput {
 }
 
 /**
- * 增强版智能匹配算法
+ * 增强版智能匹配算法（带缓存）
  *
  * 算法改进：
  * 1. 多维度特征匹配（业态、问题、指标相似度）
@@ -56,8 +134,28 @@ export interface EnhancedAIMatcherOutput {
  * 3. 时效性加权（优先推荐近期案例）
  * 4. 动态权重调整（基于历史反馈）
  * 5. 置信度评估（评估推荐可靠性）
+ * 6. 缓存机制（避免重复计算）
  */
 export function enhancedMatchCases(input: EnhancedAIMatcherInput): EnhancedAIMatcherOutput {
+  // 尝试从缓存获取结果
+  const cachedResult = matcherCache.get(input);
+  if (cachedResult) {
+    return cachedResult;
+  }
+
+  // 执行匹配计算
+  const result = performMatching(input);
+
+  // 缓存结果
+  matcherCache.set(input, result);
+
+  return result;
+}
+
+/**
+ * 执行实际的匹配计算
+ */
+function performMatching(input: EnhancedAIMatcherInput): EnhancedAIMatcherOutput {
   const {
     merchantName,
     merchantCategory,
@@ -430,4 +528,36 @@ export function inferMerchantCategory(merchantName: string): string {
   if (merchantName.includes('服饰') || merchantName.includes('装')) return '零售-服饰';
   if (merchantName.includes('珠宝') || merchantName.includes('金')) return '零售-珠宝';
   return '餐饮';
+}
+
+/**
+ * 批量匹配（v2.1新增）
+ * @param inputs 批量输入
+ * @returns 批量匹配结果
+ */
+export function batchMatchCases(
+  inputs: EnhancedAIMatcherInput[]
+): Map<string, EnhancedAIMatcherOutput> {
+  const results = new Map<string, EnhancedAIMatcherOutput>();
+
+  inputs.forEach(input => {
+    const result = enhancedMatchCases(input);
+    results.set(input.merchantName, result);
+  });
+
+  return results;
+}
+
+/**
+ * 清空缓存（v2.1新增）
+ */
+export function clearMatcherCache(): void {
+  matcherCache.clear();
+}
+
+/**
+ * 获取缓存统计（v2.1新增）
+ */
+export function getMatcherCacheStats(): { size: number; maxSize: number; ttl: number } {
+  return matcherCache.getStats();
 }
