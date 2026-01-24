@@ -31,27 +31,53 @@ function KnowledgeBaseContent() {
     }
   }, [searchParams]);
 
-  // 获取所有行业类型
-  const industries = Array.from(new Set(knowledgeBase.map(c => c.industry)));
+  // 获取所有行业类型（按大类：餐饮、零售、主力店等）
+  const industries = Array.from(new Set(knowledgeBase.map(c => c.industry.split('-')[0])));
 
-  // 获取所有标签
+  // 获取所有标签并按类别分组
   const allTags = Array.from(new Set(knowledgeBase.flatMap(c => c.tags)));
 
-  // 筛选案例
+  // 标签分组
+  const tagGroups = {
+    '问题类型': allTags.filter(t =>
+      t.includes('欠租') || t.includes('营收') || t.includes('业绩') ||
+      t.includes('客流') || t.includes('投诉') || t.includes('口碑') ||
+      t.includes('租售比') || t.includes('成本')
+    ),
+    '解决方案': allTags.filter(t =>
+      t.includes('营销') || t.includes('培训') || t.includes('优化') ||
+      t.includes('调整') || t.includes('改善') || t.includes('提升') ||
+      t.includes('协商') || t.includes('支持')
+    ),
+    '效果评价': allTags.filter(t =>
+      t.includes('成功') || t.includes('有效') || t.includes('显著') ||
+      t.includes('改善') || t.includes('提高')
+    ),
+    '其他': allTags.filter(t => {
+      const problemTags = ['欠租', '营收', '业绩', '客流', '投诉', '口碑', '租售比', '成本'];
+      const solutionTags = ['营销', '培训', '优化', '调整', '改善', '提升', '协商', '支持'];
+      const effectTags = ['成功', '有效', '显著', '改善', '提高'];
+      return !problemTags.some(p => t.includes(p)) &&
+             !solutionTags.some(s => t.includes(s)) &&
+             !effectTags.some(e => t.includes(e));
+    })
+  };
+
+  // 筛选案例（支持大类行业筛选）
   const filteredCases = knowledgeBase.filter(caseItem => {
     const matchesSearch = caseItem.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caseItem.symptoms.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caseItem.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          caseItem.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesIndustry = filterIndustry === 'all' || caseItem.industry === filterIndustry;
+    const matchesIndustry = filterIndustry === 'all' || caseItem.industry.startsWith(filterIndustry);
     const matchesTag = filterTag === 'all' || caseItem.tags.includes(filterTag);
     const matchesFavorites = !showFavoritesOnly || favorites.has(caseItem.id);
     return matchesSearch && matchesIndustry && matchesTag && matchesFavorites;
   });
 
-  // 按行业分组统计
+  // 按行业分组统计（大类）
   const casesByIndustry = industries.reduce((acc, industry) => {
-    acc[industry] = knowledgeBase.filter(c => c.industry === industry).length;
+    acc[industry] = knowledgeBase.filter(c => c.industry.startsWith(industry)).length;
     return acc;
   }, {} as Record<string, number>);
 
@@ -545,10 +571,10 @@ function KnowledgeBaseContent() {
       {/* 标签云弹窗 */}
       {showTagCloud && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">标签云</h2>
+                <h2 className="text-2xl font-bold text-gray-900">标签分类</h2>
                 <p className="text-sm text-gray-500 mt-1">点击标签筛选相关案例</p>
               </div>
               <button
@@ -558,26 +584,36 @@ function KnowledgeBaseContent() {
                 <X size={24} />
               </button>
             </div>
-            <div className="p-6">
-              <div className="flex flex-wrap gap-3">
-                {allTags.map((tag, idx) => {
-                  const tagCount = knowledgeBase.filter(c => c.tags.includes(tag)).length;
-                  const fontSize = Math.min(24, 12 + tagCount * 2);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setFilterTag(tag);
-                        setShowTagCloud(false);
-                      }}
-                      className={`px-4 py-2 rounded-full border transition-all hover:scale-110 ${getTagColor(tag)}`}
-                      style={{ fontSize: `${fontSize}px` }}
-                    >
-                      {tag} ({tagCount})
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="p-6 space-y-6">
+              {Object.entries(tagGroups).map(([groupName, tags]) => {
+                if (tags.length === 0) return null;
+                return (
+                  <div key={groupName} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="w-1 h-5 bg-blue-600 rounded"></span>
+                      {groupName}
+                      <span className="text-xs text-gray-500 font-normal">({tags.length}个标签)</span>
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, idx) => {
+                        const tagCount = knowledgeBase.filter(c => c.tags.includes(tag)).length;
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setFilterTag(tag);
+                              setShowTagCloud(false);
+                            }}
+                            className={`px-3 py-1.5 rounded-full border transition-all hover:scale-105 ${getTagColor(tag)}`}
+                          >
+                            {tag} <span className="text-xs opacity-75">({tagCount})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
