@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { mockMerchants } from '@/data/merchants/mock-data';
 import { Merchant } from '@/types';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
+import HealthTrendChart from '@/components/HealthTrendChart';
 
 export default function HealthMonitoringPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
@@ -384,6 +385,15 @@ export default function HealthMonitoringPage() {
                   </div>
                 </div>
               )}
+
+              {/* 健康度趋势预测 */}
+              <div>
+                <HealthTrendChart
+                  merchantName={selectedMerchant.name}
+                  currentScore={selectedMerchant.totalScore}
+                  showPrediction={true}
+                />
+              </div>
 
               {/* 管理动作 */}
               <div className="space-y-3">
