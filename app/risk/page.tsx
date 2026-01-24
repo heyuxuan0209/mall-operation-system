@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, Clock, CheckCircle, XCircle, Filter, Search, Plus, Eye, X } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle, XCircle, Filter, Search, Plus, Eye, X, DollarSign } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { mockRiskAlerts, getRiskStatistics } from '@/data/tasks/mock-data';
 import { mockMerchants } from '@/data/merchants/mock-data';
 import { RiskAlert, Merchant } from '@/types';
+import knowledgeBase from '@/data/cases/knowledge_base.json';
 
 export default function RiskManagementPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -16,8 +19,45 @@ export default function RiskManagementPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
   const [showBatchCreate, setShowBatchCreate] = useState(false);
+  const [taskDescription, setTaskDescription] = useState('');
+  const [selectedRiskType, setSelectedRiskType] = useState('');
+  const [suggestedStrategies, setSuggestedStrategies] = useState<string[]>([]);
 
   const stats = getRiskStatistics(mockRiskAlerts);
+
+  // 计算欠缴预警数量
+  const overdueCount = mockMerchants.filter(m => m.metrics.collection < 80).length;
+
+  // 卡片点击处理 - 联动列表筛选
+  const handleCardClick = (type: 'unresolved' | 'high' | 'resolved' | 'rent_ratio' | 'overdue') => {
+    switch (type) {
+      case 'unresolved':
+        setFilterStatus('unresolved');
+        setFilterSeverity('all');
+        setFilterType('all');
+        break;
+      case 'high':
+        setFilterStatus('unresolved');
+        setFilterSeverity('high');
+        setFilterType('all');
+        break;
+      case 'resolved':
+        setFilterStatus('resolved');
+        setFilterSeverity('all');
+        setFilterType('all');
+        break;
+      case 'rent_ratio':
+        setFilterStatus('all');
+        setFilterSeverity('all');
+        setFilterType('high_rent_ratio');
+        break;
+      case 'overdue':
+        setFilterStatus('all');
+        setFilterSeverity('all');
+        setFilterType('rent_overdue');
+        break;
+    }
+  };
 
   // 筛选风险预警
   const filteredAlerts = mockRiskAlerts.filter(alert => {
@@ -95,6 +135,99 @@ export default function RiskManagementPage() {
     }
   };
 
+  // 根据风险类型获取推荐策略
+  const getSuggestedStrategies = (riskType: string, merchant?: Merchant) => {
+    const strategies: string[] = [];
+
+    // 从知识库中匹配相关策略
+    const relevantCases = knowledgeBase.filter((c: any) => {
+      if (riskType === 'rent_overdue') {
+        return c.tags.some((t: string) => t.includes('欠租') || t.includes('收缴'));
+      } else if (riskType === 'low_revenue') {
+        return c.tags.some((t: string) => t.includes('营收') || t.includes('业绩'));
+      } else if (riskType === 'high_rent_ratio') {
+        return c.tags.some((t: string) => t.includes('租售比') || t.includes('租金压力'));
+      } else if (riskType === 'customer_complaint') {
+        return c.tags.some((t: string) => t.includes('投诉') || t.includes('服务'));
+      }
+      return false;
+    });
+
+    // 提取策略
+    relevantCases.slice(0, 3).forEach((c: any) => {
+      if (c.action) strategies.push(c.action);
+    });
+
+    // 如果没有匹配的案例，提供通用策略
+    if (strategies.length === 0) {
+      switch (riskType) {
+        case 'rent_overdue':
+          strategies.push('协商分期付款方案', '提供短期租金减免', '制定还款计划');
+          break;
+        case 'low_revenue':
+          strategies.push('开展联合营销活动', '优化商品结构和定价', '加强员工培训提升服务');
+          break;
+        case 'high_rent_ratio':
+          strategies.push('协商租金调整', '提供营销支持提升营收', '优化成本结构');
+          break;
+        case 'customer_complaint':
+          strategies.push('加强服务培训', '优化投诉处理流程', '提升顾客体验');
+          break;
+      }
+    }
+
+    return strategies;
+  };
+
+  // 处理风险类型选择
+  const handleRiskTypeChange = (type: string) => {
+    setSelectedRiskType(type);
+    if (selectedMerchant) {
+      const strategies = getSuggestedStrategies(type, selectedMerchant);
+      setSuggestedStrategies(strategies);
+    }
+  };
+
+  // 创建单个任务
+  const handleCreateTask = () => {
+    if (!selectedMerchant || !selectedRiskType) {
+      alert('请选择商户和风险类型');
+      return;
+    }
+
+    const existingTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    const newTaskId = 'T' + Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 3);
+
+    const newTask = {
+      id: newTaskId,
+      merchantId: selectedMerchant.id,
+      merchantName: selectedMerchant.name,
+      title: `${selectedMerchant.name}风险处理 - ${getRiskTypeText(selectedRiskType)}`,
+      description: taskDescription || `${getRiskTypeText(selectedRiskType)}，需要及时介入帮扶`,
+      measures: [],
+      assignee: selectedMerchant.riskLevel === 'high' ? '运营经理' : '运营助理',
+      assignedTo: selectedMerchant.riskLevel === 'high' ? '运营经理 张伟' : '运营助理 李明',
+      assignedLevel: selectedMerchant.riskLevel === 'high' ? 'manager' : 'assistant',
+      status: 'in_progress',
+      stage: 'planning',
+      priority: selectedMerchant.riskLevel === 'high' ? 'urgent' : selectedMerchant.riskLevel === 'medium' ? 'high' : 'medium',
+      riskLevel: selectedMerchant.riskLevel,
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      startDate: new Date().toISOString().split('T')[0],
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      initialMetrics: selectedMerchant.metrics,
+      logs: [],
+      collectionStatus: selectedMerchant.rentToSalesRatio > 0.25 ? 'owed' : 'normal'
+    };
+
+    existingTasks.push(newTask);
+    localStorage.setItem('tasks', JSON.stringify(existingTasks));
+
+    // 跳转到任务中心并打开该任务
+    router.push(`/tasks?taskId=${newTaskId}`);
+  };
+
   // 批量创建任务
   const handleBatchCreateTasks = () => {
     const alertsToProcess = filteredAlerts.filter(a => selectedAlerts.has(a.id));
@@ -132,9 +265,11 @@ export default function RiskManagementPage() {
     });
 
     localStorage.setItem('tasks', JSON.stringify(existingTasks));
-    alert(`成功创建 ${alertsToProcess.length} 个帮扶任务！`);
     setSelectedAlerts(new Set());
     setShowBatchCreate(false);
+
+    // 跳转到任务中心
+    router.push('/tasks');
   };
 
   return (
@@ -166,8 +301,11 @@ export default function RiskManagementPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div
+          onClick={() => handleCardClick('unresolved')}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-red-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <AlertTriangle className="text-white" size={24} />
@@ -180,7 +318,10 @@ export default function RiskManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => handleCardClick('high')}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-orange-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <Clock className="text-white" size={24} />
@@ -193,7 +334,10 @@ export default function RiskManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => handleCardClick('resolved')}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <CheckCircle className="text-white" size={24} />
@@ -208,7 +352,10 @@ export default function RiskManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => handleCardClick('rent_ratio')}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-purple-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <XCircle className="text-white" size={24} />
@@ -218,6 +365,22 @@ export default function RiskManagementPage() {
           <div className="flex items-baseline gap-1">
             <p className="text-2xl font-bold text-gray-900">{stats.byType.high_rent_ratio}</p>
             <span className="text-sm text-gray-500">条</span>
+          </div>
+        </div>
+
+        <div
+          onClick={() => handleCardClick('overdue')}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-yellow-500 w-12 h-12 rounded-lg flex items-center justify-center">
+              <DollarSign className="text-white" size={24} />
+            </div>
+          </div>
+          <h3 className="text-gray-500 text-sm mb-1">欠缴预警</h3>
+          <div className="flex items-baseline gap-1">
+            <p className="text-2xl font-bold text-gray-900">{overdueCount}</p>
+            <span className="text-sm text-gray-500">户</span>
           </div>
         </div>
       </div>
@@ -418,6 +581,10 @@ export default function RiskManagementPage() {
                 onClick={() => {
                   setShowCreateTask(false);
                   setSelectedAlert(null);
+                  setSelectedMerchant(null);
+                  setSelectedRiskType('');
+                  setSuggestedStrategies([]);
+                  setTaskDescription('');
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -427,64 +594,99 @@ export default function RiskManagementPage() {
             <div className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">商户名称</label>
-                  <input
-                    type="text"
-                    defaultValue={selectedAlert?.merchantName || ''}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">选择商户</label>
+                  <select
+                    value={selectedMerchant?.id || ''}
+                    onChange={(e) => {
+                      const merchant = mockMerchants.find(m => m.id === e.target.value);
+                      setSelectedMerchant(merchant || null);
+                    }}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  >
+                    <option value="">请选择商户</option>
+                    {mockMerchants
+                      .filter(m => m.riskLevel === 'high' || m.riskLevel === 'medium')
+                      .map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} - {m.category} (健康度: {m.totalScore}分)
+                        </option>
+                      ))}
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">任务标题</label>
-                  <input
-                    type="text"
-                    placeholder="请输入任务标题"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">任务描述</label>
-                  <textarea
-                    rows={4}
-                    defaultValue={selectedAlert?.message || ''}
-                    placeholder="请输入任务描述"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">优先级</label>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="urgent">紧急</option>
-                      <option value="high">高</option>
-                      <option value="medium">中</option>
-                      <option value="low">低</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">负责人</label>
-                    <input
-                      type="text"
-                      placeholder="请输入负责人"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">截止日期</label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+
+                {selectedMerchant && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">风险类型</label>
+                      <select
+                        value={selectedRiskType}
+                        onChange={(e) => handleRiskTypeChange(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">请选择风险类型</option>
+                        <option value="rent_overdue">租金逾期</option>
+                        <option value="low_revenue">营收下滑</option>
+                        <option value="high_rent_ratio">租售比过高</option>
+                        <option value="customer_complaint">顾客投诉</option>
+                      </select>
+                    </div>
+
+                    {selectedRiskType && suggestedStrategies.length > 0 && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <i className="fa-solid fa-lightbulb text-purple-600"></i>
+                          <h4 className="font-semibold text-purple-900">推荐策略提示</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {suggestedStrategies.map((strategy, idx) => (
+                            <div key={idx} className="bg-white p-3 rounded border border-purple-100">
+                              <div className="flex items-start gap-2">
+                                <span className="text-purple-600 font-bold">{idx + 1}.</span>
+                                <p className="text-sm text-gray-700 flex-1">{strategy}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-purple-600 mt-3">
+                          <i className="fa-solid fa-info-circle mr-1"></i>
+                          这些策略来自知识库中的成功案例，创建任务后可在任务中心查看和采纳
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">任务描述</label>
+                      <textarea
+                        rows={4}
+                        value={taskDescription}
+                        onChange={(e) => setTaskDescription(e.target.value)}
+                        placeholder="请输入任务描述（可选）"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="flex gap-3 pt-4">
-                  <button className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    创建任务
+                  <button
+                    onClick={handleCreateTask}
+                    disabled={!selectedMerchant || !selectedRiskType}
+                    className={`flex-1 px-4 py-3 rounded-lg transition-colors font-medium ${
+                      selectedMerchant && selectedRiskType
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    创建任务并跳转
                   </button>
                   <button
                     onClick={() => {
                       setShowCreateTask(false);
                       setSelectedAlert(null);
+                      setSelectedMerchant(null);
+                      setSelectedRiskType('');
+                      setSuggestedStrategies([]);
+                      setTaskDescription('');
                     }}
                     className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                   >
