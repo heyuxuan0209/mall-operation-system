@@ -135,43 +135,116 @@ export default function RiskManagementPage() {
     }
   };
 
-  // 根据风险类型获取推荐策略
+  // 根据风险类型和商户信息获取推荐策略
   const getSuggestedStrategies = (riskType: string, merchant?: Merchant) => {
     const strategies: string[] = [];
 
-    // 从知识库中匹配相关策略
+    // 获取商户业态大类
+    const merchantCategory = merchant ? merchant.category.split('-')[0] : '';
+
+    // 从知识库中匹配相关策略（同时考虑风险类型和业态）
     const relevantCases = knowledgeBase.filter((c: any) => {
+      // 业态匹配（优先匹配同业态）
+      const categoryMatch = merchantCategory && c.industry.includes(merchantCategory);
+
+      // 风险类型匹配
+      let riskMatch = false;
       if (riskType === 'rent_overdue') {
-        return c.tags.some((t: string) => t.includes('欠租') || t.includes('收缴'));
+        riskMatch = c.tags.some((t: string) =>
+          t.includes('欠租') || t.includes('收缴') || t.includes('租金') || t.includes('欠款')
+        );
       } else if (riskType === 'low_revenue') {
-        return c.tags.some((t: string) => t.includes('营收') || t.includes('业绩'));
+        riskMatch = c.tags.some((t: string) =>
+          t.includes('营收') || t.includes('业绩') || t.includes('销售') || t.includes('客流')
+        );
       } else if (riskType === 'high_rent_ratio') {
-        return c.tags.some((t: string) => t.includes('租售比') || t.includes('租金压力'));
+        riskMatch = c.tags.some((t: string) =>
+          t.includes('租售比') || t.includes('租金压力') || t.includes('成本') || t.includes('降租')
+        );
       } else if (riskType === 'customer_complaint') {
-        return c.tags.some((t: string) => t.includes('投诉') || t.includes('服务'));
+        riskMatch = c.tags.some((t: string) =>
+          t.includes('投诉') || t.includes('服务') || t.includes('口碑') || t.includes('满意度')
+        );
       }
-      return false;
+
+      // 优先返回同时匹配业态和风险类型的案例
+      return riskMatch && (categoryMatch || !merchantCategory);
     });
 
-    // 提取策略
-    relevantCases.slice(0, 3).forEach((c: any) => {
-      if (c.action) strategies.push(c.action);
+    // 按匹配度排序（同业态的排在前面）
+    const sortedCases = relevantCases.sort((a, b) => {
+      const aMatch = merchantCategory && a.industry.includes(merchantCategory) ? 1 : 0;
+      const bMatch = merchantCategory && b.industry.includes(merchantCategory) ? 1 : 0;
+      return bMatch - aMatch;
     });
 
-    // 如果没有匹配的案例，提供通用策略
+    // 提取策略（取前3个最相关的）
+    sortedCases.slice(0, 3).forEach((c: any) => {
+      if (c.action) {
+        // 如果action太长，只取第一句或前100字
+        const actionText = c.action.split('\n')[0].substring(0, 100);
+        strategies.push(actionText);
+      }
+    });
+
+    // 如果没有匹配的案例，根据风险类型和商户业态提供针对性策略
     if (strategies.length === 0) {
       switch (riskType) {
         case 'rent_overdue':
-          strategies.push('协商分期付款方案', '提供短期租金减免', '制定还款计划');
+          if (merchantCategory === '餐饮') {
+            strategies.push(
+              '协商分期付款方案，根据餐饮淡旺季调整还款计划',
+              '提供短期租金减免，配合营销活动提升营收',
+              '引入外卖平台合作，增加收入来源'
+            );
+          } else if (merchantCategory === '零售') {
+            strategies.push(
+              '协商分期付款，结合促销活动加速回款',
+              '优化库存周转，提升资金流动性',
+              '开展会员储值活动，快速回笼资金'
+            );
+          } else {
+            strategies.push(
+              '协商分期付款方案，制定合理还款计划',
+              '提供短期租金减免，帮助商户渡过难关',
+              '协助申请商场扶持基金或贷款'
+            );
+          }
           break;
         case 'low_revenue':
-          strategies.push('开展联合营销活动', '优化商品结构和定价', '加强员工培训提升服务');
+          if (merchantCategory === '餐饮') {
+            strategies.push(
+              '开展联合营销活动，推出套餐优惠吸引客流',
+              '优化菜品结构，增加高毛利产品',
+              '加强服务培训，提升翻台率和客单价'
+            );
+          } else if (merchantCategory === '零售') {
+            strategies.push(
+              '调整商品结构，引入热销品类',
+              '优化陈列和动线，提升进店率',
+              '开展促销活动，提升客流和转化率'
+            );
+          } else {
+            strategies.push(
+              '开展联合营销活动，提升品牌曝光',
+              '优化产品和服务，提升客户满意度',
+              '加强员工培训，提升销售能力'
+            );
+          }
           break;
         case 'high_rent_ratio':
-          strategies.push('协商租金调整', '提供营销支持提升营收', '优化成本结构');
+          strategies.push(
+            '协商租金调整，降低固定成本压力',
+            '提供营销资源支持，帮助提升营收',
+            '优化成本结构，提升经营效率'
+          );
           break;
         case 'customer_complaint':
-          strategies.push('加强服务培训', '优化投诉处理流程', '提升顾客体验');
+          strategies.push(
+            '加强服务培训，提升员工服务意识',
+            '优化投诉处理流程，快速响应客户需求',
+            '建立客户反馈机制，持续改进服务质量'
+          );
           break;
       }
     }

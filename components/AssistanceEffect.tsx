@@ -223,38 +223,86 @@ export default function AssistanceEffect({ task }: AssistanceEffectProps) {
 
       {/* ROI分析 */}
       <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
-        <h4 className="font-semibold text-purple-900 mb-3 text-sm flex items-center gap-2">
-          <DollarSign size={16} />
-          投入产出分析（ROI）
-        </h4>
+        <div className="flex items-start justify-between mb-3">
+          <h4 className="font-semibold text-purple-900 text-sm flex items-center gap-2">
+            <DollarSign size={16} />
+            投入产出分析（ROI）
+          </h4>
+          <button
+            onClick={() => {
+              alert(`ROI计算逻辑说明：
+
+📊 成本计算：
+• 投入成本 = ¥5,000（人力成本、资源投入等）
+
+📈 收益计算：
+• 健康度提升 = 帮扶后评分 - 帮扶前评分
+• 营收增长率 = 健康度提升 × 0.5%
+  （假设健康度每提升1分，月营收增加0.5%）
+• 月度收益 = 平均月营收(¥30万) × 营收增长率
+• 年化收益 = 月度收益 × 12个月
+
+💰 ROI计算：
+• ROI = (年化收益 - 投入成本) / 投入成本 × 100%
+• 回本周期 = 投入成本 / 月度收益
+
+示例：
+若健康度从60分提升到72分（+12分）
+→ 营收增长率 = 12 × 0.5% = 6%
+→ 月度收益 = 30万 × 6% = 1.8万
+→ 年化收益 = 1.8万 × 12 = 21.6万
+→ ROI = (21.6万 - 0.5万) / 0.5万 × 100% = 4220%
+→ 回本周期 = 0.5万 / 1.8万 = 0.28个月`);
+            }}
+            className="text-xs text-purple-600 hover:text-purple-800 underline cursor-pointer"
+          >
+            计算说明
+          </button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div className="text-xs text-purple-700 mb-1">投入成本</div>
+            <div className="text-xs text-purple-700 mb-1 flex items-center gap-1">
+              投入成本
+              <span className="text-[10px] text-purple-500" title="人力成本、资源投入等">ⓘ</span>
+            </div>
             <div className="text-lg font-bold text-purple-900">
               ¥{(roi.cost / 1000).toFixed(1)}k
             </div>
+            <div className="text-[10px] text-purple-600 mt-0.5">人力+资源</div>
           </div>
           <div>
-            <div className="text-xs text-purple-700 mb-1">月度收益</div>
+            <div className="text-xs text-purple-700 mb-1 flex items-center gap-1">
+              月度收益
+              <span className="text-[10px] text-purple-500" title="基于健康度提升的营收增长">ⓘ</span>
+            </div>
             <div className="text-lg font-bold text-purple-900">
               ¥{(roi.monthlyBenefit / 1000).toFixed(1)}k
             </div>
+            <div className="text-[10px] text-purple-600 mt-0.5">营收增长</div>
           </div>
           <div>
-            <div className="text-xs text-purple-700 mb-1">年化收益</div>
+            <div className="text-xs text-purple-700 mb-1 flex items-center gap-1">
+              年化收益
+              <span className="text-[10px] text-purple-500" title="月度收益 × 12个月">ⓘ</span>
+            </div>
             <div className="text-lg font-bold text-purple-900">
               ¥{(roi.annualBenefit / 1000).toFixed(1)}k
             </div>
+            <div className="text-[10px] text-purple-600 mt-0.5">持续效益</div>
           </div>
           <div>
-            <div className="text-xs text-purple-700 mb-1">ROI</div>
+            <div className="text-xs text-purple-700 mb-1 flex items-center gap-1">
+              ROI
+              <span className="text-[10px] text-purple-500" title="投资回报率">ⓘ</span>
+            </div>
             <div className="text-lg font-bold text-purple-900">
               {roi.roi}%
             </div>
+            <div className="text-[10px] text-purple-600 mt-0.5">回报率</div>
           </div>
         </div>
-        <div className="mt-3 text-xs text-purple-700">
-          预计 {roi.paybackMonths.toFixed(1)} 个月回本
+        <div className="mt-3 p-2 bg-white/50 rounded text-xs text-purple-700 border border-purple-100">
+          <strong>计算公式：</strong>健康度每提升1分 → 月营收增加0.5% | 预计 <strong>{roi.paybackMonths.toFixed(1)}</strong> 个月回本
         </div>
       </div>
 

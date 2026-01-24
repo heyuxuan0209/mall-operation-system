@@ -10,12 +10,18 @@ interface IndustryBenchmarkProps {
 }
 
 export default function IndustryBenchmark({ merchant, allMerchants }: IndustryBenchmarkProps) {
-  // 获取同业态商户
+  // 获取业态大类（如"餐饮"、"零售"、"主力店"）
+  const merchantMainCategory = useMemo(() => {
+    return merchant.category.split('-')[0];
+  }, [merchant]);
+
+  // 获取同业态商户（按大类匹配）
   const industryPeers = useMemo(() => {
-    return allMerchants.filter(m =>
-      m.category === merchant.category && m.id !== merchant.id
-    );
-  }, [merchant, allMerchants]);
+    return allMerchants.filter(m => {
+      const mainCategory = m.category.split('-')[0];
+      return mainCategory === merchantMainCategory && m.id !== merchant.id;
+    });
+  }, [merchant, allMerchants, merchantMainCategory]);
 
   // 计算行业平均值
   const industryAverage = useMemo(() => {
@@ -129,7 +135,7 @@ export default function IndustryBenchmark({ merchant, allMerchants }: IndustryBe
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-bold text-slate-900">同业态对比分析</h3>
-          <p className="text-sm text-slate-500">{merchant.category} · 共{industryPeers.length + 1}家商户</p>
+          <p className="text-sm text-slate-500">{merchantMainCategory}类 · 共{industryPeers.length + 1}家商户</p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-brand-600">#{ranking.rank}</div>
