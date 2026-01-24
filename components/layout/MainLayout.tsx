@@ -4,6 +4,7 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import DeadlineAlert from '../DeadlineAlert';
 import CommandPalette from '../CommandPalette';
+import QuickDispatch from '../QuickDispatch';
 
 export default function MainLayout({
   children,
@@ -29,6 +30,9 @@ export default function MainLayout({
 
       {/* 全局命令面板 Cmd+K */}
       <CommandPalette />
+
+      {/* 快速派单浮动按钮 */}
+      <QuickDispatch />
     </div>
   );
 }
