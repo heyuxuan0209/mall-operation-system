@@ -290,7 +290,7 @@ export default function HealthMonitoringPage() {
           )}
         </div>
 
-        {/* 右侧：商户详情 */}
+        {/* 右侧：AI诊断 */}
         <div id="merchant-detail-view" className={`w-full xl:w-1/3 bg-white rounded-xl shadow-sm border border-slate-100 p-4 xl:p-6 order-2 xl:h-auto xl:overflow-y-auto ${!selectedMerchant ? 'hidden xl:block' : ''}`}>
           {selectedMerchant ? (
             <div className="space-y-6">
@@ -433,7 +433,7 @@ export default function HealthMonitoringPage() {
                   ) : (
                     <>
                       <i className="fa-solid fa-wand-magic-sparkles"></i>
-                      AI 健康度诊断
+                      AI 帮扶策略推荐
                     </>
                   )}
                 </button>

@@ -137,14 +137,15 @@ function KnowledgeBaseContent() {
       const searchResult = smartSearch({
         query: searchTerm,
         items: cases,
-        searchFields: ['industry', 'symptoms', 'diagnosis', 'strategy', 'action', 'tags'],
+        searchFields: ['merchantName', 'industry', 'symptoms', 'diagnosis', 'strategy', 'action', 'tags'],
         weights: {
-          'symptoms': 2,      // 症状描述权重最高
-          'diagnosis': 1.8,   // 问题诊断权重次之
-          'tags': 1.5,        // 标签权重
-          'strategy': 1.2,    // 策略权重
-          'action': 1,        // 措施权重
-          'industry': 0.8     // 行业权重最低
+          'merchantName': 2.5, // 商户名称权重最高
+          'symptoms': 2,       // 症状描述权重次之
+          'diagnosis': 1.8,    // 问题诊断权重
+          'tags': 1.5,         // 标签权重
+          'strategy': 1.2,     // 策略权重
+          'action': 1,         // 措施权重
+          'industry': 0.8      // 行业权重最低
         },
         fuzzy: true
       });
@@ -261,7 +262,7 @@ function KnowledgeBaseContent() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">经验知识库</h1>
+        <h1 className="text-3xl font-bold text-gray-900">帮扶案例知识库</h1>
         <p className="text-gray-500 mt-1">浏览成功案例，智能推荐帮扶方案</p>
       </div>
 
@@ -430,7 +431,7 @@ function KnowledgeBaseContent() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="搜索行业、症状、标签..."
+              placeholder="搜索商户名称、行业、症状、标签..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
