@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { mockTasks } from '@/data/tasks/mock-data';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
@@ -11,7 +11,7 @@ import MilestoneManager from '@/components/MilestoneManager';
 import TaskCalendar from '@/components/TaskCalendar';
 import AssistanceEffect from '@/components/AssistanceEffect';
 
-export default function TaskCenterPage() {
+function TaskCenterContent() {
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>(mockTasks as any);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -119,8 +119,8 @@ export default function TaskCenterPage() {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     // 分析商户问题特征
-    const problems = [];
-    const problemTags = [];
+    const problems: string[] = [];
+    const problemTags: string[] = [];
 
     // 从initialMetrics分析问题
     if ((selectedTask as any).initialMetrics) {
@@ -999,5 +999,13 @@ export default function TaskCenterPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TaskCenterPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="text-slate-500">加载中...</div></div>}>
+      <TaskCenterContent />
+    </Suspense>
   );
 }

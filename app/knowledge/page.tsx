@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Filter, BookOpen, Tag, TrendingUp, Eye, X, Star, Copy, CheckCircle } from 'lucide-react';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import { mockMerchants } from '@/data/merchants/mock-data';
 import { Case, Merchant } from '@/types';
 
-export default function KnowledgeBasePage() {
+function KnowledgeBaseContent() {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterIndustry, setFilterIndustry] = useState<string>('all');
@@ -505,5 +505,13 @@ export default function KnowledgeBasePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function KnowledgeBasePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="text-slate-500">加载中...</div></div>}>
+      <KnowledgeBaseContent />
+    </Suspense>
   );
 }
