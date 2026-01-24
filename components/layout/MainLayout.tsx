@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Sidebar from './Sidebar';
+import DeadlineAlert from '../DeadlineAlert';
 
 export default function MainLayout({
   children,
@@ -17,6 +18,9 @@ export default function MainLayout({
          pb-[120px] lg:pb-8 -> 手机上底部留白 120px，电脑上 32px
       */}
       <main className="flex-1 w-full lg:pl-64 relative z-0">
+        {/* 逾期预警横幅 */}
+        <DeadlineAlert />
+
         <div className="max-w-7xl mx-auto p-4 lg:p-8 pb-[120px] lg:pb-8">
           {children}
         </div>

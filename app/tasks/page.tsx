@@ -7,6 +7,7 @@ import knowledgeBase from '@/data/cases/knowledge_base.json';
 import { Task } from '@/types';
 import WorkflowStepper from '@/components/WorkflowStepper';
 import HealthRadar from '@/components/HealthRadar';
+import MilestoneManager from '@/components/MilestoneManager';
 
 export default function TaskCenterPage() {
   const searchParams = useSearchParams();
@@ -598,6 +599,12 @@ export default function TaskCenterPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* 里程碑管理 */}
+                    <MilestoneManager
+                      milestones={(selectedTask as any).milestones || []}
+                      onUpdate={(milestones) => updateTask({ milestones } as any)}
+                    />
 
                     {/* 执行记录 */}
                     <div className="border border-slate-200 rounded-lg p-4 lg:p-6">

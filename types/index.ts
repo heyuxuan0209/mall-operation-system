@@ -59,6 +59,16 @@ export interface TaskLog {
   user: string;
 }
 
+// 任务里程碑类型
+export interface TaskMilestone {
+  id: string;
+  name: string;
+  dueDate: string;
+  completed: boolean;
+  completedAt?: string;
+  description: string;
+}
+
 // 帮扶任务类型
 export interface Task {
   id: string;
@@ -78,6 +88,7 @@ export interface Task {
   updatedAt: string;
   startDate: string;
   deadline: string;
+  milestones?: TaskMilestone[]; // 里程碑
   beforeMetrics?: Merchant['metrics'];
   initialMetrics?: Merchant['metrics']; // 帮扶前指标
   afterMetrics?: Merchant['metrics'];
