@@ -22,8 +22,8 @@ export default function Sidebar() {
         <div className="p-6 flex items-center border-b border-slate-800">
           <i className="fa-solid fa-building-user text-brand-500 text-2xl mr-3"></i>
           <div>
-            <h1 className="text-lg font-bold tracking-tight">商户运营助手 V1</h1>
-            <p className="text-xs text-slate-400">Mall Operation Agent v1.0</p>
+            <h1 className="text-lg font-bold tracking-tight">商户运营助手</h1>
+            <p className="text-xs text-slate-400">Mall Operation Agent</p>
           </div>
         </div>
         <nav className="flex-1 py-6 space-y-1">
