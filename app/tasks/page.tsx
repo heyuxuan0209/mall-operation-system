@@ -236,12 +236,6 @@ function TaskCenterContent() {
     });
     console.log('合并后措施:', allMeasures);
 
-    // 更新任务
-    updateTask({
-      measures: allMeasures,
-      workflowTemplate: template.id // 记录使用的模板
-    } as any);
-
     // 添加日志
     const newLog = {
       id: `l-${Date.now()}`,
@@ -251,7 +245,15 @@ function TaskCenterContent() {
       user: (selectedTask as any).assignedTo?.split(' ')[0] || '运营经理'
     };
     const updatedLogs = [...((selectedTask as any).logs || []), newLog];
-    updateTask({ logs: updatedLogs } as any);
+
+    // 一次性更新任务（包含措施和日志）
+    updateTask({
+      measures: allMeasures,
+      workflowTemplate: template.id,
+      logs: updatedLogs
+    } as any);
+
+    console.log('任务已更新');
 
     // 不关闭模板选择器，允许继续选择其他模板
     alert(`已应用模板"${template.name}"，共添加 ${templateMeasures.length} 条建议措施。\n\n您可以继续选择其他模板或点击"收起模板"关闭。`);
