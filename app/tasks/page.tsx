@@ -655,7 +655,6 @@ function TaskCenterContent() {
                       {showWorkflowTemplate && (
                         <div className="animate-fade-in">
                           <WorkflowTemplate
-                            riskType={(selectedTask as any).riskLevel === 'high' ? 'rent_overdue' : undefined}
                             onApplyTemplate={handleApplyTemplate}
                           />
                         </div>
