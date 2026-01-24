@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Filter, BookOpen, Tag, TrendingUp, Eye, X, Star, Copy, CheckCircle } from 'lucide-react';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import { mockMerchants } from '@/data/merchants/mock-data';
 import { Case, Merchant } from '@/types';
+import { smartSearch } from '@/skills/smart-search';
 
 function KnowledgeBaseContent() {
   const searchParams = useSearchParams();
@@ -112,17 +113,118 @@ function KnowledgeBaseContent() {
     }
   };
 
-  // 筛选案例（支持大类行业筛选）
-  const filteredCases = knowledgeBase.filter(caseItem => {
-    const matchesSearch = caseItem.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caseItem.symptoms.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caseItem.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         caseItem.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesIndustry = filterIndustry === 'all' || caseItem.industry.startsWith(filterIndustry);
-    const matchesTag = filterTag === 'all' || caseItem.tags.includes(filterTag);
-    const matchesFavorites = !showFavoritesOnly || favorites.has(caseItem.id);
-    return matchesSearch && matchesIndustry && matchesTag && matchesFavorites;
-  });
+  // 筛选案例（使用智能搜索引擎）
+  const filteredCases = useMemo(() => {
+    let cases = knowledgeBase;
+
+    // 应用行业筛选
+    if (filterIndustry !== 'all') {
+      cases = cases.filter(c => c.industry.startsWith(filterIndustry));
+    }
+
+    // 应用标签筛选
+    if (filterTag !== 'all') {
+      cases = cases.filter(c => c.tags.includes(filterTag));
+    }
+
+    // 应用收藏筛选
+    if (showFavoritesOnly) {
+      cases = cases.filter(c => favorites.has(c.id));
+    }
+
+    // 如果有搜索词，使用智能搜索引擎
+    if (searchTerm.trim()) {
+      const searchResult = smartSearch({
+        query: searchTerm,
+        items: cases,
+        searchFields: ['industry', 'symptoms', 'diagnosis', 'strategy', 'action', 'tags'],
+        weights: {
+          'symptoms': 2,      // 症状描述权重最高
+          'diagnosis': 1.8,   // 问题诊断权重次之
+          'tags': 1.5,        // 标签权重
+          'strategy': 1.2,    // 策略权重
+          'action': 1,        // 措施权重
+          'industry': 0.8     // 行业权重最低
+        },
+        fuzzy: true
+      });
+
+      // 返回搜索结果（已按相关度排序）
+      return searchResult.results.map(r => r.item);
+    }
+
+    return cases;
+  }, [searchTerm, filterIndustry, filterTag, showFavoritesOnly, favorites]);
+
+  // 案例推荐算法
+  const recommendations = useMemo(() => {
+    // 1. 热门案例（被收藏最多的）
+    const favoriteCounts = new Map<string, number>();
+    // 模拟收藏数据（实际应该从localStorage或数据库获取）
+    knowledgeBase.forEach(c => {
+      favoriteCounts.set(c.id, Math.floor(Math.random() * 50)); // 模拟0-50次收藏
+    });
+
+    const hotCases = [...knowledgeBase]
+      .sort((a, b) => (favoriteCounts.get(b.id) || 0) - (favoriteCounts.get(a.id) || 0))
+      .slice(0, 3);
+
+    // 2. 相似案例（基于当前选中的案例）
+    let similarCases: any[] = [];
+    if (selectedCase) {
+      similarCases = knowledgeBase
+        .filter(c => c.id !== selectedCase.id)
+        .map(c => {
+          let similarity = 0;
+          // 同行业 +30分
+          if (c.industry === selectedCase.industry) similarity += 30;
+          else if (c.industry.split('-')[0] === selectedCase.industry.split('-')[0]) similarity += 15;
+          // 标签重叠度
+          const commonTags = c.tags.filter((t: string) => selectedCase.tags.includes(t));
+          similarity += commonTags.length * 10;
+          return { case: c, similarity };
+        })
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 3)
+        .map(item => item.case);
+    }
+
+    // 3. 适合你的案例（基于用户最近查看的商户类型）
+    // 从localStorage获取最近查看的商户
+    const recentMerchants = typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('recentMerchants') || '[]')
+      : [];
+
+    let forYouCases: any[] = [];
+    if (recentMerchants.length > 0) {
+      // 获取最常查看的行业类型
+      const industryCounts = new Map<string, number>();
+      recentMerchants.forEach((m: any) => {
+        const mainCategory = m.category?.split('-')[0] || '';
+        industryCounts.set(mainCategory, (industryCounts.get(mainCategory) || 0) + 1);
+      });
+
+      const topIndustry = Array.from(industryCounts.entries())
+        .sort((a, b) => b[1] - a[1])[0]?.[0];
+
+      if (topIndustry) {
+        forYouCases = knowledgeBase
+          .filter(c => c.industry.startsWith(topIndustry))
+          .slice(0, 3);
+      }
+    }
+
+    // 如果没有"适合你"的案例，使用最新案例
+    if (forYouCases.length === 0) {
+      forYouCases = [...knowledgeBase].reverse().slice(0, 3);
+    }
+
+    return {
+      hot: hotCases,
+      similar: similarCases,
+      forYou: forYouCases
+    };
+  }, [selectedCase]);
 
   // 按行业分组统计（大类）
   const casesByIndustry = industries.reduce((acc, industry) => {
@@ -251,6 +353,75 @@ function KnowledgeBaseContent() {
         </div>
       </div>
 
+      {/* 案例推荐区域 */}
+      {!searchTerm && !showFavoritesOnly && filterIndustry === 'all' && filterTag === 'all' && (
+        <div className="space-y-4">
+          {/* 热门案例 */}
+          {recommendations.hot.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <TrendingUp className="text-red-500" size={20} />
+                  热门案例
+                </h3>
+                <span className="text-xs text-gray-500">最受欢迎</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recommendations.hot.map((caseItem: any) => (
+                  <div
+                    key={caseItem.id}
+                    onClick={() => setSelectedCase(caseItem)}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all"
+                  >
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">{caseItem.merchantName || caseItem.industry}</h4>
+                    <p className="text-xs text-gray-600 line-clamp-2 mb-2">{caseItem.symptoms}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {caseItem.tags.slice(0, 2).map((tag: string, idx: number) => (
+                        <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 适合你的案例 */}
+          {recommendations.forYou.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Star className="text-yellow-500" size={20} />
+                  适合你的案例
+                </h3>
+                <span className="text-xs text-gray-500">基于浏览历史</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recommendations.forYou.map((caseItem: any) => (
+                  <div
+                    key={caseItem.id}
+                    onClick={() => setSelectedCase(caseItem)}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 cursor-pointer transition-all"
+                  >
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">{caseItem.merchantName || caseItem.industry}</h4>
+                    <p className="text-xs text-gray-600 line-clamp-2 mb-2">{caseItem.symptoms}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {caseItem.tags.slice(0, 2).map((tag: string, idx: number) => (
+                        <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 筛选栏 */}
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4">
@@ -309,6 +480,25 @@ function KnowledgeBaseContent() {
           </div>
         </div>
       </div>
+
+      {/* 搜索结果提示 */}
+      {searchTerm.trim() && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-blue-800">
+            <Search size={16} />
+            <span>
+              搜索 "<strong>{searchTerm}</strong>" 找到 <strong>{filteredCases.length}</strong> 个相关案例
+              {filteredCases.length > 0 && '（已按相关度排序）'}
+            </span>
+          </div>
+          <button
+            onClick={() => setSearchTerm('')}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            清除搜索
+          </button>
+        </div>
+      )}
 
       {/* 案例网格 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
