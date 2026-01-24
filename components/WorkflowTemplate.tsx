@@ -205,7 +205,6 @@ export default function WorkflowTemplate({ riskType, onApplyTemplate }: Workflow
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('应用模板:', selectedTemplate);
                 onApplyTemplate(selectedTemplate);
               }}
               className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"

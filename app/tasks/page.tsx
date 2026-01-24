@@ -215,17 +215,11 @@ function TaskCenterContent() {
 
   // 应用流程模板
   const handleApplyTemplate = (template: any) => {
-    console.log('handleApplyTemplate 被调用', template);
-    if (!selectedTask) {
-      console.log('没有选中的任务');
-      return;
-    }
+    if (!selectedTask) return;
 
     // 从模板中提取建议措施
     const templateMeasures = template.suggestedMeasures || [];
-    console.log('模板措施:', templateMeasures);
     const currentMeasures = selectedTask.measures || [];
-    console.log('当前措施:', currentMeasures);
 
     // 合并措施（去重）
     const allMeasures = [...currentMeasures];
@@ -234,7 +228,6 @@ function TaskCenterContent() {
         allMeasures.push(measure);
       }
     });
-    console.log('合并后措施:', allMeasures);
 
     // 添加日志
     const newLog = {
@@ -252,8 +245,6 @@ function TaskCenterContent() {
       workflowTemplate: template.id,
       logs: updatedLogs
     } as any);
-
-    console.log('任务已更新');
 
     // 不关闭模板选择器，允许继续选择其他模板
     alert(`已应用模板"${template.name}"，共添加 ${templateMeasures.length} 条建议措施。\n\n您可以继续选择其他模板或点击"收起模板"关闭。`);
