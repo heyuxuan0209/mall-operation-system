@@ -215,11 +215,17 @@ function TaskCenterContent() {
 
   // 应用流程模板
   const handleApplyTemplate = (template: any) => {
-    if (!selectedTask) return;
+    console.log('handleApplyTemplate 被调用', template);
+    if (!selectedTask) {
+      console.log('没有选中的任务');
+      return;
+    }
 
     // 从模板中提取建议措施
     const templateMeasures = template.suggestedMeasures || [];
+    console.log('模板措施:', templateMeasures);
     const currentMeasures = selectedTask.measures || [];
+    console.log('当前措施:', currentMeasures);
 
     // 合并措施（去重）
     const allMeasures = [...currentMeasures];
@@ -228,6 +234,7 @@ function TaskCenterContent() {
         allMeasures.push(measure);
       }
     });
+    console.log('合并后措施:', allMeasures);
 
     // 更新任务
     updateTask({

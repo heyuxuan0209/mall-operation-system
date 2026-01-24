@@ -202,7 +202,12 @@ export default function WorkflowTemplate({ riskType, onApplyTemplate }: Workflow
           {/* 应用按钮 */}
           {onApplyTemplate && (
             <button
-              onClick={() => onApplyTemplate(selectedTemplate)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('应用模板:', selectedTemplate);
+                onApplyTemplate(selectedTemplate);
+              }}
               className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               应用此模板
