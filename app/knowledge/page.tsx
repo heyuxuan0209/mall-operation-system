@@ -37,61 +37,79 @@ function KnowledgeBaseContent() {
   // 获取所有标签并按类别分组
   const allTags = Array.from(new Set(knowledgeBase.flatMap(c => c.tags)));
 
-  // 标签分组（MECE原则：问题诊断 → 策略方法 → 执行手段）
+  // 标签分组（MECE原则：问题诊断 → 策略方法 → 执行手段）- 二级分类结构
   const tagGroups = {
-    '问题诊断': allTags.filter(t =>
-      // 位置问题
-      t.includes('冷区') || t.includes('死角') || t.includes('动线') ||
-      // 品牌问题
-      t.includes('品牌老化') || t.includes('产品老化') || t.includes('弱势品牌') || t.includes('同质化') ||
-      // 经营问题
-      t.includes('流量下滑') || t.includes('客单价') || t.includes('坪效') || t.includes('亏损') || t.includes('高租售比') ||
-      // 市场问题
-      t.includes('消费降级') || t.includes('竞品') || t.includes('金价') ||
-      // 管理问题
-      t.includes('人员管理') || t.includes('坐商心态') || t.includes('库存') ||
-      // 硬件问题
-      t.includes('设施老化') || t.includes('硬件老化') || t.includes('新店') || t.includes('老店')
-    ),
-    '策略方法': allTags.filter(t =>
-      // 流量策略
-      t.includes('公域引流') || t.includes('异业联盟') || t.includes('异业互导') || t.includes('票根经济') ||
-      // 营销策略
-      t.includes('体验营销') || t.includes('情感营销') || t.includes('全员营销') || t.includes('暴力折扣') ||
-      // 产品策略
-      t.includes('以旧换新') || t.includes('动态定价') || t.includes('菜品对标') || t.includes('产品年轻化') ||
-      // 客群策略
-      t.includes('B端') || t.includes('下沉市场') || t.includes('商务客群') || t.includes('家庭客') ||
-      // 会员策略
-      t.includes('私域') || t.includes('会员激活') || t.includes('社群')
-    ),
-    '执行手段': allTags.filter(t =>
-      // 线上手段
-      t.includes('探店') || t.includes('直播') || t.includes('抖音') || t.includes('小红书') || t.includes('新媒体') ||
-      // 线下手段
-      t.includes('内购') || t.includes('赞助') || t.includes('联名') || t.includes('盲盒') || t.includes('小样') ||
-      // 空间手段
-      t.includes('陈列') || t.includes('重装') || t.includes('工程') || t.includes('视觉') ||
-      // 价格手段
-      t.includes('降租') || t.includes('工费减免') || t.includes('小克重') || t.includes('性价比') ||
-      // 资源手段
-      t.includes('资源置换') || t.includes('供应商') || t.includes('官方背书') || t.includes('国补')
-    ),
-    '特殊场景': allTags.filter(t => {
-      const problemTags = ['冷区', '死角', '动线', '品牌老化', '产品老化', '弱势品牌', '同质化',
-                          '流量下滑', '客单价', '坪效', '亏损', '高租售比', '消费降级', '竞品',
-                          '金价', '人员管理', '坐商心态', '库存', '设施老化', '硬件老化', '新店', '老店'];
-      const strategyTags = ['公域引流', '异业联盟', '异业互导', '票根经济', '体验营销', '情感营销',
-                           '全员营销', '暴力折扣', '以旧换新', '动态定价', '菜品对标', '产品年轻化',
-                           'B端', '下沉市场', '商务客群', '家庭客', '私域', '会员激活', '社群'];
-      const executionTags = ['探店', '直播', '抖音', '小红书', '新媒体', '内购', '赞助', '联名',
-                            '盲盒', '小样', '陈列', '重装', '工程', '视觉', '降租', '工费减免',
-                            '小克重', '性价比', '资源置换', '供应商', '官方背书', '国补'];
+    '问题诊断': {
+      '位置问题': allTags.filter(t =>
+        t.includes('冷区') || t.includes('死角') || t.includes('动线')
+      ),
+      '品牌问题': allTags.filter(t =>
+        t.includes('品牌老化') || t.includes('产品老化') || t.includes('弱势品牌') || t.includes('同质化')
+      ),
+      '经营问题': allTags.filter(t =>
+        t.includes('流量下滑') || t.includes('客单价') || t.includes('坪效') || t.includes('亏损') || t.includes('高租售比')
+      ),
+      '市场问题': allTags.filter(t =>
+        t.includes('消费降级') || t.includes('竞品') || t.includes('金价')
+      ),
+      '管理问题': allTags.filter(t =>
+        t.includes('人员管理') || t.includes('坐商心态') || t.includes('库存')
+      ),
+      '硬件问题': allTags.filter(t =>
+        t.includes('设施老化') || t.includes('硬件老化') || t.includes('新店') || t.includes('老店')
+      )
+    },
+    '策略方法': {
+      '流量策略': allTags.filter(t =>
+        t.includes('公域引流') || t.includes('异业联盟') || t.includes('异业互导') || t.includes('票根经济')
+      ),
+      '营销策略': allTags.filter(t =>
+        t.includes('体验营销') || t.includes('情感营销') || t.includes('全员营销') || t.includes('暴力折扣')
+      ),
+      '产品策略': allTags.filter(t =>
+        t.includes('以旧换新') || t.includes('动态定价') || t.includes('菜品对标') || t.includes('产品年轻化')
+      ),
+      '客群策略': allTags.filter(t =>
+        t.includes('B端') || t.includes('下沉市场') || t.includes('商务客群') || t.includes('家庭客')
+      ),
+      '会员策略': allTags.filter(t =>
+        t.includes('私域') || t.includes('会员激活') || t.includes('社群')
+      )
+    },
+    '执行手段': {
+      '线上手段': allTags.filter(t =>
+        t.includes('探店') || t.includes('直播') || t.includes('抖音') || t.includes('小红书') || t.includes('新媒体')
+      ),
+      '线下手段': allTags.filter(t =>
+        t.includes('内购') || t.includes('赞助') || t.includes('联名') || t.includes('盲盒') || t.includes('小样')
+      ),
+      '空间手段': allTags.filter(t =>
+        t.includes('陈列') || t.includes('重装') || t.includes('工程') || t.includes('视觉')
+      ),
+      '价格手段': allTags.filter(t =>
+        t.includes('降租') || t.includes('工费减免') || t.includes('小克重') || t.includes('性价比')
+      ),
+      '资源手段': allTags.filter(t =>
+        t.includes('资源置换') || t.includes('供应商') || t.includes('官方背书') || t.includes('国补')
+      )
+    },
+    '特殊场景': {
+      '其他': allTags.filter(t => {
+        const problemTags = ['冷区', '死角', '动线', '品牌老化', '产品老化', '弱势品牌', '同质化',
+                            '流量下滑', '客单价', '坪效', '亏损', '高租售比', '消费降级', '竞品',
+                            '金价', '人员管理', '坐商心态', '库存', '设施老化', '硬件老化', '新店', '老店'];
+        const strategyTags = ['公域引流', '异业联盟', '异业互导', '票根经济', '体验营销', '情感营销',
+                             '全员营销', '暴力折扣', '以旧换新', '动态定价', '菜品对标', '产品年轻化',
+                             'B端', '下沉市场', '商务客群', '家庭客', '私域', '会员激活', '社群'];
+        const executionTags = ['探店', '直播', '抖音', '小红书', '新媒体', '内购', '赞助', '联名',
+                              '盲盒', '小样', '陈列', '重装', '工程', '视觉', '降租', '工费减免',
+                              '小克重', '性价比', '资源置换', '供应商', '官方背书', '国补'];
 
-      return !problemTags.some(p => t.includes(p)) &&
-             !strategyTags.some(s => t.includes(s)) &&
-             !executionTags.some(e => t.includes(e));
-    })
+        return !problemTags.some(p => t.includes(p)) &&
+               !strategyTags.some(s => t.includes(s)) &&
+               !executionTags.some(e => t.includes(e));
+      })
+    }
   };
 
   // 筛选案例（支持大类行业筛选）
@@ -616,29 +634,49 @@ function KnowledgeBaseContent() {
               </button>
             </div>
             <div className="p-6 space-y-6">
-              {Object.entries(tagGroups).map(([groupName, tags]) => {
-                if (tags.length === 0) return null;
+              {Object.entries(tagGroups).map(([groupName, subGroups]) => {
+                // 计算一级分类下的总标签数
+                const totalTags = Object.values(subGroups).reduce((sum, tags) => sum + tags.length, 0);
+                if (totalTags === 0) return null;
+
                 return (
-                  <div key={groupName} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <span className="w-1 h-5 bg-blue-600 rounded"></span>
+                  <div key={groupName} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200 shadow-sm">
+                    {/* 一级分类标题 */}
+                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                      <span className="w-1.5 h-6 bg-blue-600 rounded"></span>
                       {groupName}
-                      <span className="text-xs text-gray-500 font-normal">({tags.length}个标签)</span>
+                      <span className="text-xs text-gray-500 font-normal">({totalTags}个标签)</span>
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag, idx) => {
-                        const tagCount = knowledgeBase.filter(c => c.tags.includes(tag)).length;
+
+                    {/* 二级分类 */}
+                    <div className="space-y-4">
+                      {Object.entries(subGroups).map(([subGroupName, tags]) => {
+                        if (tags.length === 0) return null;
                         return (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              setFilterTag(tag);
-                              setShowTagCloud(false);
-                            }}
-                            className={`px-3 py-1.5 rounded-full border transition-all hover:scale-105 ${getTagColor(tag)}`}
-                          >
-                            {tag} <span className="text-xs opacity-75">({tagCount})</span>
-                          </button>
+                          <div key={subGroupName} className="bg-white rounded-lg p-4 border border-gray-200">
+                            <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                              <span className="w-1 h-4 bg-gray-400 rounded"></span>
+                              {subGroupName}
+                              <span className="text-xs text-gray-500 font-normal">({tags.length}个)</span>
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {tags.map((tag, idx) => {
+                                const tagCount = knowledgeBase.filter(c => c.tags.includes(tag)).length;
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      setFilterTag(tag);
+                                      setShowTagCloud(false);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full border transition-all hover:scale-105 ${getTagColor(tag)}`}
+                                  >
+                                    {tag} <span className="text-xs opacity-75">({tagCount})</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
