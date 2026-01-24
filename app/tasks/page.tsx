@@ -9,6 +9,7 @@ import WorkflowStepper from '@/components/WorkflowStepper';
 import HealthRadar from '@/components/HealthRadar';
 import MilestoneManager from '@/components/MilestoneManager';
 import TaskCalendar from '@/components/TaskCalendar';
+import AssistanceEffect from '@/components/AssistanceEffect';
 
 export default function TaskCenterPage() {
   const searchParams = useSearchParams();
@@ -749,6 +750,9 @@ export default function TaskCenterPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* 帮扶效果评估 */}
+                    <AssistanceEffect task={selectedTask} />
 
                     {/* 帮扶前后对比 */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
