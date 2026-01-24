@@ -375,7 +375,10 @@ export default function DashboardPage() {
                       onClick={() => setSelectedCase(caseItem)}
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-gray-900">{caseItem.industry}</h3>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{caseItem.merchantName || caseItem.industry}</h3>
+                          <p className="text-xs text-gray-500 mt-1">{caseItem.industry}</p>
+                        </div>
                         <span className="text-xs text-gray-500">{caseItem.id}</span>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-3">

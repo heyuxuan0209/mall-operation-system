@@ -246,8 +246,8 @@ function TaskCenterContent() {
     const updatedLogs = [...((selectedTask as any).logs || []), newLog];
     updateTask({ logs: updatedLogs } as any);
 
-    setShowWorkflowTemplate(false);
-    alert(`已应用模板"${template.name}"，共添加 ${templateMeasures.length} 条建议措施`);
+    // 不关闭模板选择器，允许继续选择其他模板
+    alert(`已应用模板"${template.name}"，共添加 ${templateMeasures.length} 条建议措施。\n\n您可以继续选择其他模板或点击"收起模板"关闭。`);
   };
 
   // 添加执行记录
