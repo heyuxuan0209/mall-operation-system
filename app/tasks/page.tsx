@@ -376,6 +376,7 @@ export default function TaskCenterPage() {
           }}
         />
       ) : (
+        <div className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[calc(100vh-180px)]">
         <div className="w-full lg:w-1/3 flex flex-col gap-4 h-[300px] lg:h-full order-1">
           <div className="flex gap-2 mb-2">
             <input
@@ -924,6 +925,7 @@ export default function TaskCenterPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
       )}
 
