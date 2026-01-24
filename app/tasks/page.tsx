@@ -10,6 +10,7 @@ import HealthRadar from '@/components/HealthRadar';
 import MilestoneManager from '@/components/MilestoneManager';
 import TaskCalendar from '@/components/TaskCalendar';
 import AssistanceEffect from '@/components/AssistanceEffect';
+import WorkflowTemplate from '@/components/WorkflowTemplate';
 
 function TaskCenterContent() {
   const searchParams = useSearchParams();
@@ -74,6 +75,9 @@ function TaskCenterContent() {
   const [logContent, setLogContent] = useState('');
   const [logType, setLogType] = useState<'manual' | 'strategy'>('manual');
   const [editingLog, setEditingLog] = useState<any>(null);
+
+  // 流程模板相关
+  const [showWorkflowTemplate, setShowWorkflowTemplate] = useState(false);
 
   // 评估相关
   const [showNotMetOptions, setShowNotMetOptions] = useState(false);
@@ -209,6 +213,43 @@ function TaskCenterContent() {
     updateTask({ measures: [...(selectedTask.measures || []), measure] });
   };
 
+  // 应用流程模板
+  const handleApplyTemplate = (template: any) => {
+    if (!selectedTask) return;
+
+    // 从模板中提取建议措施
+    const templateMeasures = template.suggestedMeasures || [];
+    const currentMeasures = selectedTask.measures || [];
+
+    // 合并措施（去重）
+    const allMeasures = [...currentMeasures];
+    templateMeasures.forEach((measure: string) => {
+      if (!allMeasures.includes(measure)) {
+        allMeasures.push(measure);
+      }
+    });
+
+    // 更新任务
+    updateTask({
+      measures: allMeasures,
+      workflowTemplate: template.id // 记录使用的模板
+    } as any);
+
+    // 添加日志
+    const newLog = {
+      id: `l-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      action: `应用流程模板：${template.name}`,
+      type: 'manual',
+      user: (selectedTask as any).assignedTo?.split(' ')[0] || '运营经理'
+    };
+    const updatedLogs = [...((selectedTask as any).logs || []), newLog];
+    updateTask({ logs: updatedLogs } as any);
+
+    setShowWorkflowTemplate(false);
+    alert(`已应用模板"${template.name}"，共添加 ${templateMeasures.length} 条建议措施`);
+  };
+
   // 添加执行记录
   const handleAddLog = (action: string, type: 'manual' | 'strategy_adopted') => {
     if (!selectedTask) return [];
@@ -312,6 +353,127 @@ function TaskCenterContent() {
       'exit': '转招商(备商/清退)'
     };
     return map[stage] || stage;
+  };
+
+  // 验证阶段切换
+  const validateStageTransition = (currentStage: string, nextStage: string): { valid: boolean; message?: string } => {
+    // 定义阶段流程
+    const stageFlow: Record<string, string[]> = {
+      'planning': ['executing'],
+      'executing': ['evaluating'],
+      'evaluating': ['completed', 'escalated', 'exit'],
+      'completed': [],
+      'escalated': [],
+      'exit': []
+    };
+
+    // 检查是否是合法的下一阶段
+    const allowedNextStages = stageFlow[currentStage] || [];
+    if (!allowedNextStages.includes(nextStage)) {
+      return {
+        valid: false,
+        message: `不能从"${getStageLabel(currentStage)}"直接切换到"${getStageLabel(nextStage)}"`
+      };
+    }
+
+    // 检查必填字段
+    if (nextStage === 'executing') {
+      if (!selectedTask?.measures || selectedTask.measures.length === 0) {
+        return {
+          valid: false,
+          message: '请至少添加一条帮扶措施后再开始执行'
+        };
+      }
+    }
+
+    if (nextStage === 'evaluating') {
+      if (!(selectedTask as any)?.logs || (selectedTask as any).logs.length === 0) {
+        return {
+          valid: false,
+          message: '请至少添加一条执行记录后再进入评估阶段'
+        };
+      }
+    }
+
+    if (nextStage === 'completed') {
+      if ((selectedTask as any)?.evaluationResult !== 'met') {
+        return {
+          valid: false,
+          message: '请先标记效果达标后再结案'
+        };
+      }
+    }
+
+    return { valid: true };
+  };
+
+  // 切换阶段（带验证）
+  const handleStageTransition = (nextStage: string) => {
+    if (!selectedTask) return;
+
+    const currentStage = (selectedTask as any).stage || 'planning';
+    const validation = validateStageTransition(currentStage, nextStage);
+
+    if (!validation.valid) {
+      alert(validation.message);
+      return;
+    }
+
+    // 添加阶段切换日志
+    const newLog = {
+      id: `l-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      action: `阶段切换：${getStageLabel(currentStage)} → ${getStageLabel(nextStage)}`,
+      type: 'manual',
+      user: (selectedTask as any).assignedTo?.split(' ')[0] || '运营经理'
+    };
+    const updatedLogs = [...((selectedTask as any).logs || []), newLog];
+
+    updateTask({
+      stage: nextStage,
+      logs: updatedLogs
+    } as any);
+  };
+
+  // 获取当前阶段提示
+  const getStageHint = (stage: string) => {
+    const hints: Record<string, { title: string; items: string[]; icon: string; color: string }> = {
+      'planning': {
+        title: '措施制定阶段',
+        items: [
+          '分析商户问题，确定帮扶目标',
+          '可选择标准化流程模板快速制定方案',
+          '使用AI推荐或手动添加帮扶措施',
+          '至少添加1条措施后才能进入执行阶段'
+        ],
+        icon: 'fa-lightbulb',
+        color: 'blue'
+      },
+      'executing': {
+        title: '帮扶执行阶段',
+        items: [
+          '按照制定的措施逐步执行帮扶工作',
+          '及时添加执行记录，记录进展和问题',
+          '可根据实际情况调整帮扶措施',
+          '至少添加1条执行记录后才能进入评估阶段'
+        ],
+        icon: 'fa-tasks',
+        color: 'orange'
+      },
+      'evaluating': {
+        title: '效果评估阶段',
+        items: [
+          '对比帮扶前后的健康度指标变化',
+          '评估帮扶措施的实际效果',
+          '判定效果是否达标',
+          '达标可结案，未达标可升级或转招商'
+        ],
+        icon: 'fa-chart-line',
+        color: 'purple'
+      }
+    };
+
+    return hints[stage] || null;
   };
 
   const getCurrentMetrics = () => {
@@ -453,6 +615,53 @@ function TaskCenterContent() {
               <div className="p-4 lg:p-8 flex-1 overflow-y-auto">
                 {((selectedTask as any).stage === 'planning' || !(selectedTask as any).stage) && (
                   <div className="space-y-6 animate-fade-in">
+                    {/* 阶段提示 */}
+                    {getStageHint('planning') && (
+                      <div className={`bg-${getStageHint('planning')!.color}-50 border border-${getStageHint('planning')!.color}-200 rounded-lg p-4`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <i className={`fa-solid ${getStageHint('planning')!.icon} text-${getStageHint('planning')!.color}-600`}></i>
+                          <h4 className={`font-bold text-${getStageHint('planning')!.color}-900 text-sm`}>
+                            {getStageHint('planning')!.title}
+                          </h4>
+                        </div>
+                        <ul className={`text-xs text-${getStageHint('planning')!.color}-700 space-y-1`}>
+                          {getStageHint('planning')!.items.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 流程模板选择 */}
+                    <div className="border border-blue-200 rounded-lg p-4 lg:p-6 bg-blue-50">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-bold text-blue-800 flex items-center gap-2 text-sm lg:text-base">
+                          <i className="fa-solid fa-diagram-project"></i> 标准化流程模板
+                        </h4>
+                        <button
+                          onClick={() => setShowWorkflowTemplate(!showWorkflowTemplate)}
+                          className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+                        >
+                          {showWorkflowTemplate ? '收起模板' : '选择模板'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-blue-700 mb-3">
+                        根据商户风险类型，选择标准化帮扶流程模板，快速制定帮扶方案
+                      </p>
+
+                      {showWorkflowTemplate && (
+                        <div className="animate-fade-in">
+                          <WorkflowTemplate
+                            riskType={(selectedTask as any).riskLevel === 'high' ? 'rent_overdue' : undefined}
+                            onApplyTemplate={handleApplyTemplate}
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     <div className="border border-slate-200 rounded-lg p-4 lg:p-6 flex flex-col">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-bold text-purple-700 flex items-center gap-2 text-sm lg:text-base">
@@ -555,13 +764,7 @@ function TaskCenterContent() {
 
                     <div className="flex justify-end pt-4 border-t border-slate-100 mt-6 bg-white">
                       <button
-                        onClick={() => {
-                          if (selectedTask.measures && selectedTask.measures.length > 0) {
-                            updateTask({ stage: 'executing' } as any);
-                          } else {
-                            alert('请至少添加一条帮扶措施后再开始执行');
-                          }
-                        }}
+                        onClick={() => handleStageTransition('executing')}
                         disabled={!selectedTask.measures || selectedTask.measures.length === 0}
                         className={`w-full lg:w-auto px-8 py-3 rounded-lg font-bold text-base transition-all ${
                           selectedTask.measures && selectedTask.measures.length > 0
@@ -579,6 +782,26 @@ function TaskCenterContent() {
 
                 {(selectedTask as any).stage === 'executing' && (
                   <div className="space-y-6 animate-fade-in">
+                    {/* 阶段提示 */}
+                    {getStageHint('executing') && (
+                      <div className={`bg-${getStageHint('executing')!.color}-50 border border-${getStageHint('executing')!.color}-200 rounded-lg p-4`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <i className={`fa-solid ${getStageHint('executing')!.icon} text-${getStageHint('executing')!.color}-600`}></i>
+                          <h4 className={`font-bold text-${getStageHint('executing')!.color}-900 text-sm`}>
+                            {getStageHint('executing')!.title}
+                          </h4>
+                        </div>
+                        <ul className={`text-xs text-${getStageHint('executing')!.color}-700 space-y-1`}>
+                          {getStageHint('executing')!.items.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* 帮扶措施 */}
                     <div className="border border-slate-200 rounded-lg p-4 lg:p-6">
                       <div className="flex justify-between items-center mb-4">
@@ -715,7 +938,7 @@ function TaskCenterContent() {
 
                     <div className="flex justify-end pt-4 border-t border-slate-100 mt-6 bg-white">
                       <button
-                        onClick={() => updateTask({ stage: 'evaluating' } as any)}
+                        onClick={() => handleStageTransition('evaluating')}
                         className="w-full lg:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold text-base hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
                       >
                         <i className="fa-solid fa-chart-line mr-2"></i>
@@ -728,6 +951,26 @@ function TaskCenterContent() {
 
                 {((selectedTask as any).stage === 'evaluating' || (selectedTask as any).stage === 'completed' || (selectedTask as any).stage === 'escalated' || (selectedTask as any).stage === 'exit') && (
                   <div className="space-y-6 animate-fade-in">
+                    {/* 阶段提示 */}
+                    {(selectedTask as any).stage === 'evaluating' && getStageHint('evaluating') && (
+                      <div className={`bg-${getStageHint('evaluating')!.color}-50 border border-${getStageHint('evaluating')!.color}-200 rounded-lg p-4`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <i className={`fa-solid ${getStageHint('evaluating')!.icon} text-${getStageHint('evaluating')!.color}-600`}></i>
+                          <h4 className={`font-bold text-${getStageHint('evaluating')!.color}-900 text-sm`}>
+                            {getStageHint('evaluating')!.title}
+                          </h4>
+                        </div>
+                        <ul className={`text-xs text-${getStageHint('evaluating')!.color}-700 space-y-1`}>
+                          {getStageHint('evaluating')!.items.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* 帮扶措施回顾 */}
                     <div className="border border-slate-200 rounded-lg p-4 lg:p-6 bg-slate-50">
                       <h4 className="font-bold text-slate-800 mb-3 text-sm lg:text-base">
