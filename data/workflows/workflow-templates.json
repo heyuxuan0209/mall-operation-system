@@ -1,0 +1,310 @@
+[
+  {
+    "id": "workflow-rent-overdue",
+    "name": "租金逾期帮扶流程",
+    "riskType": "rent_overdue",
+    "description": "针对租金逾期商户的标准化帮扶流程，包含诊断、协商、执行、跟进四个阶段",
+    "stages": [
+      {
+        "stage": "planning",
+        "name": "问题诊断",
+        "description": "了解欠租原因，评估商户经营状况",
+        "duration": "1-2天",
+        "checklist": [
+          "核实欠租金额和时长",
+          "了解商户经营困难原因",
+          "评估商户还款能力",
+          "查看历史缴租记录",
+          "分析商户健康度指标"
+        ],
+        "requiredFields": ["欠租金额", "欠租时长", "困难原因"],
+        "nextStage": "executing"
+      },
+      {
+        "stage": "executing",
+        "name": "方案协商",
+        "description": "与商户协商还款方案，制定帮扶措施",
+        "duration": "2-3天",
+        "checklist": [
+          "提出分期还款方案",
+          "评估租金减免可行性",
+          "制定营收提升计划",
+          "签订还款协议",
+          "明确帮扶措施和时间表"
+        ],
+        "requiredFields": ["还款方案", "帮扶措施", "协议签订"],
+        "nextStage": "following"
+      },
+      {
+        "stage": "following",
+        "name": "执行跟进",
+        "description": "监督还款进度，落实帮扶措施",
+        "duration": "持续跟进",
+        "checklist": [
+          "每周跟进还款进度",
+          "落实营销支持措施",
+          "监控营收变化",
+          "及时调整帮扶方案",
+          "记录执行情况"
+        ],
+        "requiredFields": ["还款进度", "措施落实情况"],
+        "nextStage": "reviewing"
+      },
+      {
+        "stage": "reviewing",
+        "name": "效果评估",
+        "description": "评估帮扶效果，总结经验",
+        "duration": "1-2天",
+        "checklist": [
+          "核实租金是否缴清",
+          "评估商户健康度改善",
+          "总结帮扶经验",
+          "更新知识库案例",
+          "归档任务资料"
+        ],
+        "requiredFields": ["缴租情况", "健康度变化", "经验总结"],
+        "nextStage": "completed"
+      }
+    ],
+    "suggestedMeasures": [
+      "协商分期付款方案",
+      "短期租金减免",
+      "营销活动支持",
+      "引流资源倾斜",
+      "经营指导培训"
+    ],
+    "estimatedDuration": "1-2个月",
+    "successRate": 75
+  },
+  {
+    "id": "workflow-low-revenue",
+    "name": "营收下滑帮扶流程",
+    "riskType": "low_revenue",
+    "description": "针对营收下滑商户的系统性帮扶流程，重点提升经营能力",
+    "stages": [
+      {
+        "stage": "planning",
+        "name": "问题诊断",
+        "description": "分析营收下滑原因，找出关键问题",
+        "duration": "2-3天",
+        "checklist": [
+          "对比历史营收数据",
+          "分析客流量变化",
+          "评估产品竞争力",
+          "调研顾客反馈",
+          "对比同业态表现"
+        ],
+        "requiredFields": ["营收数据", "下滑原因", "竞争分析"],
+        "nextStage": "executing"
+      },
+      {
+        "stage": "executing",
+        "name": "方案制定",
+        "description": "制定营收提升方案，明确帮扶措施",
+        "duration": "3-5天",
+        "checklist": [
+          "制定营销活动方案",
+          "优化产品结构建议",
+          "提升服务质量计划",
+          "引流资源配置",
+          "培训支持安排"
+        ],
+        "requiredFields": ["提升方案", "营销计划", "资源配置"],
+        "nextStage": "following"
+      },
+      {
+        "stage": "following",
+        "name": "执行跟进",
+        "description": "落实帮扶措施，监控营收变化",
+        "duration": "1-2个月",
+        "checklist": [
+          "落实营销活动",
+          "监控日均营收",
+          "跟进产品优化",
+          "收集顾客反馈",
+          "及时调整策略"
+        ],
+        "requiredFields": ["营收数据", "活动效果", "调整记录"],
+        "nextStage": "reviewing"
+      },
+      {
+        "stage": "reviewing",
+        "name": "效果评估",
+        "description": "评估营收改善情况，总结经验",
+        "duration": "1-2天",
+        "checklist": [
+          "对比帮扶前后营收",
+          "评估健康度提升",
+          "分析成功关键因素",
+          "总结可复用经验",
+          "更新知识库"
+        ],
+        "requiredFields": ["营收对比", "改善率", "经验总结"],
+        "nextStage": "completed"
+      }
+    ],
+    "suggestedMeasures": [
+      "联合营销活动",
+      "产品结构优化",
+      "服务质量提升",
+      "引流资源支持",
+      "员工培训指导"
+    ],
+    "estimatedDuration": "2-3个月",
+    "successRate": 68
+  },
+  {
+    "id": "workflow-high-rent-ratio",
+    "name": "租售比过高帮扶流程",
+    "riskType": "high_rent_ratio",
+    "description": "针对租售比过高商户的帮扶流程，平衡成本与收入",
+    "stages": [
+      {
+        "stage": "planning",
+        "name": "问题诊断",
+        "description": "分析租售比过高原因，评估调整空间",
+        "duration": "1-2天",
+        "checklist": [
+          "计算当前租售比",
+          "对比行业标准",
+          "分析营收潜力",
+          "评估租金调整可行性",
+          "了解商户经营困难"
+        ],
+        "requiredFields": ["租售比数据", "行业对比", "调整方案"],
+        "nextStage": "executing"
+      },
+      {
+        "stage": "executing",
+        "name": "方案制定",
+        "description": "制定降本增效方案",
+        "duration": "2-3天",
+        "checklist": [
+          "协商租金调整方案",
+          "制定营收提升计划",
+          "优化成本结构",
+          "提供资源支持",
+          "明确目标租售比"
+        ],
+        "requiredFields": ["租金方案", "增收计划", "目标指标"],
+        "nextStage": "following"
+      },
+      {
+        "stage": "following",
+        "name": "执行跟进",
+        "description": "落实方案，监控租售比变化",
+        "duration": "1-2个月",
+        "checklist": [
+          "落实租金调整",
+          "执行增收措施",
+          "监控租售比变化",
+          "评估措施效果",
+          "及时优化方案"
+        ],
+        "requiredFields": ["租售比数据", "措施效果"],
+        "nextStage": "reviewing"
+      },
+      {
+        "stage": "reviewing",
+        "name": "效果评估",
+        "description": "评估租售比改善情况",
+        "duration": "1天",
+        "checklist": [
+          "计算最新租售比",
+          "评估改善幅度",
+          "分析成功因素",
+          "总结经验教训",
+          "更新知识库"
+        ],
+        "requiredFields": ["租售比对比", "改善分析"],
+        "nextStage": "completed"
+      }
+    ],
+    "suggestedMeasures": [
+      "协商租金调整",
+      "营销活动支持",
+      "成本优化指导",
+      "引流资源倾斜",
+      "经营效率提升"
+    ],
+    "estimatedDuration": "1-2个月",
+    "successRate": 72
+  },
+  {
+    "id": "workflow-customer-complaint",
+    "name": "顾客投诉帮扶流程",
+    "riskType": "customer_complaint",
+    "description": "针对顾客满意度低的商户，提升服务质量",
+    "stages": [
+      {
+        "stage": "planning",
+        "name": "问题诊断",
+        "description": "收集投诉信息，分析服务问题",
+        "duration": "1-2天",
+        "checklist": [
+          "整理投诉记录",
+          "分析投诉类型",
+          "现场服务检查",
+          "员工访谈",
+          "找出核心问题"
+        ],
+        "requiredFields": ["投诉记录", "问题分析", "核心问题"],
+        "nextStage": "executing"
+      },
+      {
+        "stage": "executing",
+        "name": "方案制定",
+        "description": "制定服务改善方案",
+        "duration": "2-3天",
+        "checklist": [
+          "制定服务标准",
+          "安排员工培训",
+          "优化服务流程",
+          "建立反馈机制",
+          "设定改善目标"
+        ],
+        "requiredFields": ["改善方案", "培训计划", "服务标准"],
+        "nextStage": "following"
+      },
+      {
+        "stage": "following",
+        "name": "执行跟进",
+        "description": "落实改善措施，监控满意度",
+        "duration": "1个月",
+        "checklist": [
+          "执行员工培训",
+          "监督服务改善",
+          "收集顾客反馈",
+          "处理新增投诉",
+          "持续优化服务"
+        ],
+        "requiredFields": ["培训记录", "满意度数据", "投诉处理"],
+        "nextStage": "reviewing"
+      },
+      {
+        "stage": "reviewing",
+        "name": "效果评估",
+        "description": "评估服务改善效果",
+        "duration": "1天",
+        "checklist": [
+          "对比投诉数量",
+          "评估满意度提升",
+          "总结改善经验",
+          "固化服务标准",
+          "更新知识库"
+        ],
+        "requiredFields": ["满意度对比", "投诉变化", "经验总结"],
+        "nextStage": "completed"
+      }
+    ],
+    "suggestedMeasures": [
+      "员工服务培训",
+      "服务流程优化",
+      "投诉处理机制",
+      "顾客反馈系统",
+      "服务质量监督"
+    ],
+    "estimatedDuration": "1个月",
+    "successRate": 80
+  }
+]
