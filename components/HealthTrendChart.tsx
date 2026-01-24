@@ -167,9 +167,18 @@ export default function HealthTrendChart({
             <h3 className="text-lg font-bold text-slate-900">健康度趋势分析</h3>
             <p className="text-sm text-slate-500">{merchantName}</p>
           </div>
-          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full border border-blue-200 font-medium">
-            线性回归预测
-          </span>
+          <div className="relative group">
+            <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center cursor-help border border-blue-200">
+              <i className="fa-solid fa-question text-xs"></i>
+            </div>
+            <div className="absolute left-0 top-full mt-2 w-64 bg-slate-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <div className="font-semibold mb-1">预测算法说明</div>
+              <div className="text-slate-300">
+                使用线性回归算法，基于近3个月的历史数据预测未来3个月的健康度趋势。
+              </div>
+              <div className="absolute -top-1 left-4 w-2 h-2 bg-slate-900 transform rotate-45"></div>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {trend === 'up' && (

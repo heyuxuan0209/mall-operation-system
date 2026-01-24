@@ -9,7 +9,7 @@ const menuItems = [
   { id: 'health', label: '监控', fullLabel: '健康度监控', icon: 'fa-heart-pulse', path: '/health' },
   { id: 'risk', label: '派单', fullLabel: '风险与派单', icon: 'fa-triangle-exclamation', path: '/risk' },
   { id: 'tasks', label: '帮扶', fullLabel: '帮扶任务中心', icon: 'fa-hands-holding-circle', path: '/tasks' },
-  { id: 'knowledge', label: '知识库', fullLabel: '帮扶案例知识库', icon: 'fa-book-open', path: '/knowledge' },
+  { id: 'knowledge', label: '知识库', fullLabel: '知识库沉淀', icon: 'fa-book-open', path: '/knowledge' },
 ];
 
 export default function Sidebar() {

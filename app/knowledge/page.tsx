@@ -262,7 +262,7 @@ function KnowledgeBaseContent() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">帮扶案例知识库</h1>
+        <h1 className="text-3xl font-bold text-gray-900">知识库沉淀</h1>
         <p className="text-gray-500 mt-1">浏览成功案例，智能推荐帮扶方案</p>
       </div>
 

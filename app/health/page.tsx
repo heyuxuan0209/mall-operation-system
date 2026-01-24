@@ -294,6 +294,12 @@ export default function HealthMonitoringPage() {
         <div id="merchant-detail-view" className={`w-full xl:w-1/3 bg-white rounded-xl shadow-sm border border-slate-100 p-4 xl:p-6 order-2 xl:h-auto xl:overflow-y-auto ${!selectedMerchant ? 'hidden xl:block' : ''}`}>
           {selectedMerchant ? (
             <div className="space-y-6">
+              {/* AI诊断标题 */}
+              <div className="flex items-center gap-2 pb-3 border-b-2 border-purple-200">
+                <i className="fa-solid fa-robot text-purple-600 text-xl"></i>
+                <h2 className="text-xl font-bold text-purple-900">AI诊断</h2>
+              </div>
+
               <div className="border-b border-slate-100 pb-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -433,7 +439,7 @@ export default function HealthMonitoringPage() {
                   ) : (
                     <>
                       <i className="fa-solid fa-wand-magic-sparkles"></i>
-                      AI 帮扶策略推荐
+                      AI 诊断与帮扶策略推荐
                     </>
                   )}
                 </button>
