@@ -8,6 +8,7 @@ import { Task } from '@/types';
 import WorkflowStepper from '@/components/WorkflowStepper';
 import HealthRadar from '@/components/HealthRadar';
 import MilestoneManager from '@/components/MilestoneManager';
+import TaskCalendar from '@/components/TaskCalendar';
 
 export default function TaskCenterPage() {
   const searchParams = useSearchParams();
@@ -16,6 +17,7 @@ export default function TaskCenterPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState('ALL');
   const [stageFilter, setStageFilter] = useState('ALL');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // 从localStorage加载任务并处理URL参数
   useEffect(() => {
@@ -23,6 +25,12 @@ export default function TaskCenterPage() {
     const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
     const allTasks = [...mockTasks, ...storedTasks];
     setTasks(allTasks as any);
+
+    // 检查URL参数，设置视图模式
+    const view = searchParams.get('view');
+    if (view === 'calendar') {
+      setViewMode('calendar');
+    }
 
     // 检查URL参数，自动打开指定任务
     const taskId = searchParams.get('taskId');
@@ -328,9 +336,46 @@ export default function TaskCenterPage() {
             风险识别 → 帮扶派单 → 评估闭环
           </p>
         </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              viewMode === 'list'
+                ? 'bg-brand-600 text-white'
+                : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            <i className="fa-solid fa-list mr-2"></i>
+            列表视图
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              viewMode === 'calendar'
+                ? 'bg-brand-600 text-white'
+                : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            <i className="fa-solid fa-calendar mr-2"></i>
+            日历视图
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[calc(100vh-180px)]">
+      {viewMode === 'calendar' ? (
+        <TaskCalendar
+          tasks={tasks}
+          onTaskClick={(task) => {
+            setSelectedTask(task);
+            setViewMode('list');
+            setTimeout(() => {
+              if (window.innerWidth < 1024) {
+                document.getElementById('task-detail-view')?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
+          }}
+        />
+      ) : (
         <div className="w-full lg:w-1/3 flex flex-col gap-4 h-[300px] lg:h-full order-1">
           <div className="flex gap-2 mb-2">
             <input
@@ -880,6 +925,7 @@ export default function TaskCenterPage() {
           )}
         </div>
       </div>
+      )}
 
       {showLogModal && (
         <div

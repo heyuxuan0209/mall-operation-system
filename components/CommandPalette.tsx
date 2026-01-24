@@ -127,12 +127,11 @@ export default function CommandPalette() {
               </Command.Item>
 
               <Command.Item
-                onSelect={() => handleSelect(() => router.push('/tasks'))}
+                onSelect={() => handleSelect(() => router.push('/tasks?view=calendar'))}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-100 data-[selected=true]:bg-slate-100"
               >
                 <Calendar size={18} className="text-purple-600" />
                 <span>查看任务日历</span>
-                <span className="ml-auto text-xs text-slate-400">即将推出</span>
               </Command.Item>
 
               <Command.Item
