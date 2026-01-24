@@ -926,7 +926,6 @@ export default function TaskCenterPage() {
           )}
         </div>
       </div>
-      </div>
       )}
 
       {showLogModal && (
