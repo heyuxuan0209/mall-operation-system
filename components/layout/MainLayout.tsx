@@ -3,6 +3,7 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import DeadlineAlert from '../DeadlineAlert';
+import CommandPalette from '../CommandPalette';
 
 export default function MainLayout({
   children,
@@ -25,6 +26,9 @@ export default function MainLayout({
           {children}
         </div>
       </main>
+
+      {/* 全局命令面板 Cmd+K */}
+      <CommandPalette />
     </div>
   );
 }
