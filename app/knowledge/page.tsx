@@ -16,6 +16,9 @@ function KnowledgeBaseContent() {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [showTagCloud, setShowTagCloud] = useState(false);
+  const [showIndustryBreakdown, setShowIndustryBreakdown] = useState(false);
 
   // 检查URL参数，自动打开指定案例
   useEffect(() => {
@@ -42,7 +45,8 @@ function KnowledgeBaseContent() {
                          caseItem.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesIndustry = filterIndustry === 'all' || caseItem.industry === filterIndustry;
     const matchesTag = filterTag === 'all' || caseItem.tags.includes(filterTag);
-    return matchesSearch && matchesIndustry && matchesTag;
+    const matchesFavorites = !showFavoritesOnly || favorites.has(caseItem.id);
+    return matchesSearch && matchesIndustry && matchesTag && matchesFavorites;
   });
 
   // 按行业分组统计
@@ -86,7 +90,15 @@ function KnowledgeBaseContent() {
 
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => {
+            setShowFavoritesOnly(false);
+            setFilterIndustry('all');
+            setFilterTag('all');
+            setSearchTerm('');
+          }}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-blue-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <BookOpen className="text-white" size={24} />
@@ -97,9 +109,13 @@ function KnowledgeBaseContent() {
             <p className="text-2xl font-bold text-gray-900">{knowledgeBase.length}</p>
             <span className="text-sm text-gray-500">个</span>
           </div>
+          <div className="mt-2 text-xs text-blue-600">点击查看全部</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => setShowTagCloud(true)}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <Tag className="text-white" size={24} />
@@ -110,9 +126,13 @@ function KnowledgeBaseContent() {
             <p className="text-2xl font-bold text-gray-900">{allTags.length}</p>
             <span className="text-sm text-gray-500">个</span>
           </div>
+          <div className="mt-2 text-xs text-green-600">点击查看标签云</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => setShowIndustryBreakdown(true)}
+          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="bg-purple-500 w-12 h-12 rounded-lg flex items-center justify-center">
               <TrendingUp className="text-white" size={24} />
@@ -123,18 +143,35 @@ function KnowledgeBaseContent() {
             <p className="text-2xl font-bold text-gray-900">{industries.length}</p>
             <span className="text-sm text-gray-500">个</span>
           </div>
+          <div className="mt-2 text-xs text-purple-600">点击查看分布</div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div
+          onClick={() => {
+            setShowFavoritesOnly(!showFavoritesOnly);
+            if (!showFavoritesOnly) {
+              setFilterIndustry('all');
+              setFilterTag('all');
+            }
+          }}
+          className={`bg-white rounded-xl shadow-sm p-6 border cursor-pointer hover:shadow-md transition-all hover:scale-105 ${
+            showFavoritesOnly ? 'border-orange-300 ring-2 ring-orange-200' : 'border-gray-100'
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
-            <div className="bg-orange-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <Star className="text-white" size={24} />
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+              showFavoritesOnly ? 'bg-orange-500' : 'bg-orange-400'
+            }`}>
+              <Star className="text-white" size={24} fill={showFavoritesOnly ? 'white' : 'none'} />
             </div>
           </div>
           <h3 className="text-gray-500 text-sm mb-1">我的收藏</h3>
           <div className="flex items-baseline gap-1">
             <p className="text-2xl font-bold text-gray-900">{favorites.size}</p>
             <span className="text-sm text-gray-500">个</span>
+          </div>
+          <div className="mt-2 text-xs text-orange-600">
+            {showFavoritesOnly ? '显示全部案例' : '只看收藏'}
           </div>
         </div>
       </div>
@@ -499,6 +536,97 @@ function KnowledgeBaseContent() {
                 >
                   取消
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 标签云弹窗 */}
+      {showTagCloud && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">标签云</h2>
+                <p className="text-sm text-gray-500 mt-1">点击标签筛选相关案例</p>
+              </div>
+              <button
+                onClick={() => setShowTagCloud(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex flex-wrap gap-3">
+                {allTags.map((tag, idx) => {
+                  const tagCount = knowledgeBase.filter(c => c.tags.includes(tag)).length;
+                  const fontSize = Math.min(24, 12 + tagCount * 2);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setFilterTag(tag);
+                        setShowTagCloud(false);
+                      }}
+                      className={`px-4 py-2 rounded-full border transition-all hover:scale-110 ${getTagColor(tag)}`}
+                      style={{ fontSize: `${fontSize}px` }}
+                    >
+                      {tag} ({tagCount})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 行业分布弹窗 */}
+      {showIndustryBreakdown && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">行业分布</h2>
+                <p className="text-sm text-gray-500 mt-1">点击行业筛选相关案例</p>
+              </div>
+              <button
+                onClick={() => setShowIndustryBreakdown(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                {industries.map(industry => {
+                  const count = casesByIndustry[industry];
+                  const percentage = ((count / knowledgeBase.length) * 100).toFixed(1);
+                  return (
+                    <div
+                      key={industry}
+                      onClick={() => {
+                        setFilterIndustry(industry);
+                        setShowIndustryBreakdown(false);
+                      }}
+                      className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-gray-900">{industry}</span>
+                        <span className="text-sm text-gray-600">{count} 个案例</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500 text-right">{percentage}%</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
