@@ -5,6 +5,7 @@ import { mockMerchants } from '@/data/merchants/mock-data';
 import { Merchant } from '@/types';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import HealthTrendChart from '@/components/HealthTrendChart';
+import IndustryBenchmark from '@/components/IndustryBenchmark';
 
 export default function HealthMonitoringPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
@@ -392,6 +393,14 @@ export default function HealthMonitoringPage() {
                   merchantName={selectedMerchant.name}
                   currentScore={selectedMerchant.totalScore}
                   showPrediction={true}
+                />
+              </div>
+
+              {/* 同业态对比分析 */}
+              <div>
+                <IndustryBenchmark
+                  merchant={selectedMerchant}
+                  allMerchants={mockMerchants}
                 />
               </div>
 
