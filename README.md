@@ -1,36 +1,185 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 商场运营AI助手 - 商户健康度监测与帮扶系统
 
-## Getting Started
+## 📋 项目概述
 
-First, run the development server:
+基于Next.js 14 + TypeScript构建的商场运营智能管理系统，实现商户经营诊断、问题定位、帮扶措施推荐、效果评估与案例沉淀的完整闭环。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🎯 核心功能
+
+### 已实现
+- ✅ **运营总览** - 实时数据大屏，展示商户健康度分布、业态营收对比、月度趋势
+- ✅ **健康度监测** - 商户健康度评分、风险等级分类、多维度指标监控
+- ✅ **响应式布局** - 侧边栏导航、顶部搜索栏、卡片式数据展示
+
+### 待开发
+- ⏳ **风险与派单** - 风险预警、智能派单、任务分配
+- ⏳ **帮扶任务中心** - 任务跟踪、效果评估、进度管理
+- ⏳ **经验知识库** - 案例检索、RAG智能推荐、案例沉淀
+- ⏳ **AI诊断引擎** - Claude API集成、智能诊断报告生成
+
+## 🛠️ 技术栈
+
+- **框架**: Next.js 14 (App Router)
+- **语言**: TypeScript
+- **样式**: Tailwind CSS
+- **图表**: Recharts
+- **图标**: Lucide React
+- **AI**: Claude 3.5 Sonnet (待集成)
+
+## 📁 项目结构
+
+```
+mall-operation-system/
+├── app/                      # Next.js App Router
+│   ├── page.tsx             # 运营总览页面
+│   ├── health/              # 健康度监测
+│   │   └── page.tsx
+│   ├── risk/                # 风险与派单(待开发)
+│   ├── tasks/               # 帮扶任务中心(待开发)
+│   └── knowledge/           # 经验知识库(待开发)
+├── components/              # React组件
+│   ├── layout/              # 布局组件
+│   │   ├── MainLayout.tsx   # 主布局
+│   │   ├── Sidebar.tsx      # 侧边栏
+│   │   └── Header.tsx       # 顶部导航
+│   ├── dashboard/           # 仪表盘组件(待开发)
+│   ├── merchants/           # 商户组件(待开发)
+│   ├── tasks/               # 任务组件(待开发)
+│   └── knowledge/           # 知识库组件(待开发)
+├── data/                    # 数据文件
+│   ├── cases/               # 案例库
+│   │   └── knowledge_base.json  # 26个金牌案例
+│   └── merchants/           # 商户数据
+│       └── mock-data.ts     # 模拟商户数据
+├── types/                   # TypeScript类型定义
+│   └── index.ts
+├── lib/                     # 工具函数
+│   └── utils.ts
+└── public/                  # 静态资源
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 快速开始
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. 安装依赖
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. 启动开发服务器
+```bash
+npm run dev
+```
 
-## Learn More
+### 3. 访问应用
+打开浏览器访问: http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+## 📊 数据模型
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 商户数据 (Merchant)
+```typescript
+{
+  id: string;              // 商户ID
+  name: string;            // 商户名称
+  category: string;        // 业态分类
+  floor: string;           // 楼层
+  shopNumber: string;      // 铺位号
+  area: number;            // 面积(㎡)
+  rent: number;            // 月租金
+  lastMonthRevenue: number; // 上月营收
+  rentToSalesRatio: number; // 租售比
+  riskLevel: 'low' | 'medium' | 'high' | 'critical'; // 风险等级
+  totalScore: number;      // 健康度评分(0-100)
+  metrics: {
+    collection: number;     // 租金缴纳(0-100)
+    operational: number;    // 经营表现(0-100)
+    siteQuality: number;    // 现场品质(0-100)
+    customerReview: number; // 顾客满意度(0-100)
+    riskResistance: number; // 抗风险能力(0-100)
+  }
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 帮扶案例 (Case)
+```typescript
+{
+  id: string;              // 案例ID
+  industry: string;        // 业态
+  tags: string[];          // 标签
+  symptoms: string;        // 症状
+  diagnosis: string;       // 诊断
+  strategy: string;        // 策略
+  action: string;          // 具体措施
+  result?: string;         // 效果
+}
+```
 
-## Deploy on Vercel
+## 🎨 页面预览
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 运营总览
+- 4个核心指标卡片(商户总数、总营收、健康商户、高危预警)
+- 健康度分布饼图
+- 业态营收对比柱状图
+- 月度趋势双轴折线图
+- 高危商户预警列表
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 健康度监测
+- 商户卡片网格展示
+- 搜索与筛选功能
+- 健康度评分可视化
+- 商户详情弹窗
+- 关键指标监控
+
+## 📝 开发计划
+
+### Phase 1: 基础框架 ✅
+- [x] 项目初始化
+- [x] 布局组件
+- [x] 运营总览页面
+- [x] 健康度监测页面
+
+### Phase 2: 核心功能 (进行中)
+- [ ] 风险预警系统
+- [ ] 任务派单功能
+- [ ] 帮扶任务跟踪
+- [ ] 效果评估模块
+
+### Phase 3: AI集成
+- [ ] Claude API集成
+- [ ] RAG检索系统
+- [ ] 智能诊断报告
+- [ ] 案例自动沉淀
+
+### Phase 4: 优化完善
+- [ ] 数据持久化(数据库)
+- [ ] 用户权限管理
+- [ ] 导出报告功能
+- [ ] 性能优化
+
+## 🔧 配置说明
+
+### 环境变量
+创建 `.env.local` 文件:
+```env
+# Claude API配置(待集成)
+ANTHROPIC_API_KEY=your_api_key_here
+
+# 数据库配置(待集成)
+DATABASE_URL=your_database_url_here
+```
+
+## 📖 参考文档
+
+- [Next.js 文档](https://nextjs.org/docs)
+- [Tailwind CSS 文档](https://tailwindcss.com/docs)
+- [Recharts 文档](https://recharts.org/)
+- [Claude API 文档](https://docs.anthropic.com/)
+
+## 👥 开发团队
+
+- 产品设计: 基于商户健康度分级及帮扶数字化文档
+- 技术架构: Next.js 14 + TypeScript + Tailwind CSS
+- AI能力: Claude 3.5 Sonnet
+
+## 📄 许可证
+
+MIT License
