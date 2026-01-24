@@ -287,9 +287,24 @@ function KnowledgeBaseContent() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">全部标签</option>
-              {allTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
+              {Object.entries(tagGroups).map(([groupName, subGroups]) => {
+                // 计算一级分类下的总标签数
+                const totalTags = Object.values(subGroups).reduce((sum, tags) => sum + tags.length, 0);
+                if (totalTags === 0) return null;
+
+                return (
+                  <optgroup key={groupName} label={`${groupName} (${totalTags}个)`}>
+                    {Object.entries(subGroups).map(([subGroupName, tags]) => {
+                      if (tags.length === 0) return null;
+                      return tags.map(tag => (
+                        <option key={tag} value={tag}>
+                          　├ {subGroupName} - {tag}
+                        </option>
+                      ));
+                    })}
+                  </optgroup>
+                );
+              })}
             </select>
           </div>
         </div>
