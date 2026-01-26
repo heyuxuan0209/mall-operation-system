@@ -87,9 +87,23 @@ body {
 /* Touch feedback */
 .touch-feedback {
   transition: transform 0.1s ease, opacity 0.1s ease;
+  will-change: transform, opacity;
 }
 
 .touch-feedback:active {
   transform: scale(0.98);
   opacity: 0.9;
+}
+
+/* GPU acceleration for animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth scrolling */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Users, AlertTriangle, Activity, BookOpen, ArrowRight, X } from 'lucide-react';
 import { mockMerchants, getStatistics } from '@/data/merchants/mock-data';
 import { Merchant } from '@/types';
@@ -9,7 +9,6 @@ import knowledgeBase from '@/data/cases/knowledge_base.json';
 import { useSwipe } from '@/hooks/useSwipe';
 
 export default function DashboardPage() {
-  const stats = getStatistics(mockMerchants);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [selectedCase, setSelectedCase] = useState<any>(null);
@@ -17,28 +16,37 @@ export default function DashboardPage() {
   const [aiDiagnosis, setAiDiagnosis] = useState<any>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
+  // 使用useMemo缓存统计数据
+  const stats = useMemo(() => getStatistics(mockMerchants), []);
+
+  // 使用useCallback缓存关闭函数
+  const closeCardModal = useCallback(() => setSelectedCard(null), []);
+  const closeMerchantModal = useCallback(() => setSelectedMerchant(null), []);
+  const closeCaseModal = useCallback(() => setSelectedCase(null), []);
+  const closeRiskModal = useCallback(() => setSelectedRiskLevel(null), []);
+
   // 滑动手势支持
   const cardModalSwipe = useSwipe({
-    onSwipeDown: () => setSelectedCard(null),
+    onSwipeDown: closeCardModal,
   }, { threshold: 100 });
 
   const merchantModalSwipe = useSwipe({
-    onSwipeDown: () => setSelectedMerchant(null),
+    onSwipeDown: closeMerchantModal,
   }, { threshold: 100 });
 
   const caseModalSwipe = useSwipe({
-    onSwipeDown: () => setSelectedCase(null),
+    onSwipeDown: closeCaseModal,
   }, { threshold: 100 });
 
   const riskModalSwipe = useSwipe({
-    onSwipeDown: () => setSelectedRiskLevel(null),
+    onSwipeDown: closeRiskModal,
   }, { threshold: 100 });
 
   // 计算高风险商户数
   const highRiskCount = stats.highRiskCount;
 
-  // 统计卡片数据
-  const statCards = [
+  // 使用useMemo缓存统计卡片数据
+  const statCards = useMemo(() => [
     {
       key: 'total',
       title: '商户总数',
@@ -83,33 +91,34 @@ export default function DashboardPage() {
       trendUp: true,
       cases: knowledgeBase
     }
-  ];
+  ], [stats, highRiskCount]);
 
-  // 近6个月风险商户数量趋势 - 改为新的4级分类
-  const riskTrend = [
+  // 使用useMemo缓存趋势数据
+  const riskTrend = useMemo(() => [
     { month: '8月', high: 3, medium: 2, low: 4, none: 0 },
     { month: '9月', high: 2, medium: 3, low: 3, none: 1 },
     { month: '10月', high: 3, medium: 2, low: 2, none: 2 },
     { month: '11月', high: 2, medium: 3, low: 3, none: 1 },
     { month: '12月', high: 2, medium: 2, low: 2, none: 2 },
     { month: '1月', high: 1, medium: 1, low: 2, none: 2 }
-  ];
+  ], []);
 
-  // 健康度分布数据 - 改为4级分类
-  const healthDistribution = [
+  // 使用useMemo缓存健康度分布数据
+  const healthDistribution = useMemo(() => [
     { name: '高风险', value: stats.highRiskCount, color: '#ef4444', level: 'high' },
     { name: '中风险', value: stats.mediumRiskCount, color: '#f97316', level: 'medium' },
     { name: '低风险', value: stats.lowRiskCount, color: '#eab308', level: 'low' },
     { name: '无风险', value: stats.noneRiskCount, color: '#22c55e', level: 'none' }
-  ];
+  ], [stats]);
 
-  // 待处理商户（风险商户）
-  const pendingMerchants = mockMerchants.filter(m =>
-    m.riskLevel === 'high' || m.riskLevel === 'medium'
+  // 使用useMemo缓存待处理商户
+  const pendingMerchants = useMemo(() =>
+    mockMerchants.filter(m => m.riskLevel === 'high' || m.riskLevel === 'medium'),
+    []
   );
 
-  // 获取风险等级颜色 - 更新为4级
-  const getRiskColor = (level: string) => {
+  // 使用useCallback缓存函数
+  const getRiskColor = useCallback((level: string) => {
     switch (level) {
       case 'high': return 'bg-red-100 text-red-700 border-red-200';
       case 'medium': return 'bg-orange-100 text-orange-700 border-orange-200';
@@ -117,10 +126,21 @@ export default function DashboardPage() {
       case 'none': return 'bg-green-100 text-green-700 border-green-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
-  };
+  }, []);
 
-  // 生成AI诊断报告
-  const handleGenerateAiDiagnosis = async () => {
+  // 使用useCallback缓存函数
+  const getRiskText = useCallback((level: string) => {
+    switch (level) {
+      case 'high': return '高风险';
+      case 'medium': return '中风险';
+      case 'low': return '低风险';
+      case 'none': return '无风险';
+      default: return '未知';
+    }
+  }, []);
+
+  // 使用useCallback缓存AI诊断函数
+  const handleGenerateAiDiagnosis = useCallback(async () => {
     if (!selectedMerchant) return;
     setIsGeneratingAi(true);
 
@@ -163,10 +183,10 @@ export default function DashboardPage() {
 
     setAiDiagnosis(diagnosis);
     setIsGeneratingAi(false);
-  };
+  }, [selectedMerchant, aiDiagnosis]);
 
-  // 创建帮扶任务（跳转到帮扶任务中心）
-  const handleCreateTask = () => {
+  // 使用useCallback缓存创建任务函数
+  const handleCreateTask = useCallback(() => {
     if (!selectedMerchant) return;
 
     // 生成新任务ID
@@ -203,18 +223,7 @@ export default function DashboardPage() {
 
     // 跳转到任务中心并自动打开该任务
     window.location.href = `/tasks?taskId=${newTaskId}`;
-  };
-
-  // 获取风险等级文本 - 更新为4级
-  const getRiskText = (level: string) => {
-    switch (level) {
-      case 'high': return '高风险';
-      case 'medium': return '中风险';
-      case 'low': return '低风险';
-      case 'none': return '无风险';
-      default: return '未知';
-    }
-  };
+  }, [selectedMerchant, aiDiagnosis]);
 
   return (
     <div className="space-y-6">
