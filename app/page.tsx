@@ -432,48 +432,90 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 // 商户列表展示
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商户名称</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">业态</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">楼层</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">月营收</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">租售比</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">健康度</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">风险等级</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {statCards.find(c => c.key === selectedCard)?.merchants?.map((merchant) => (
-                        <tr key={merchant.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-sm text-gray-900">{merchant.name}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{merchant.category}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{merchant.floor}</td>
-                          <td className="py-3 px-4 text-sm text-gray-900">
-                            ¥{(merchant.lastMonthRevenue / 10000).toFixed(1)}万
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            <span className={merchant.rentToSalesRatio > 0.25 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                <>
+                  {/* 移动端卡片式布局 */}
+                  <div className="md:hidden space-y-3">
+                    {statCards.find(c => c.key === selectedCard)?.merchants?.map((merchant) => (
+                      <div key={merchant.id} className="bg-white border border-gray-200 rounded-lg p-4 active:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-base">{merchant.name}</h4>
+                            <p className="text-sm text-gray-500 mt-1">{merchant.category}</p>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getRiskColor(merchant.riskLevel)}`}>
+                            {getRiskText(merchant.riskLevel)}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs text-gray-500">楼层</p>
+                            <p className="text-sm font-medium text-gray-900 mt-1">{merchant.floor}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">月营收</p>
+                            <p className="text-sm font-medium text-gray-900 mt-1">¥{(merchant.lastMonthRevenue / 10000).toFixed(1)}万</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">租售比</p>
+                            <p className={`text-sm font-medium mt-1 ${merchant.rentToSalesRatio > 0.25 ? 'text-red-600' : 'text-gray-900'}`}>
                               {(merchant.rentToSalesRatio * 100).toFixed(1)}%
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            <span className={merchant.totalScore < 60 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">健康度</p>
+                            <p className={`text-sm font-medium mt-1 ${merchant.totalScore < 60 ? 'text-red-600' : 'text-gray-900'}`}>
                               {merchant.totalScore}分
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getRiskColor(merchant.riskLevel)}`}>
-                              {getRiskText(merchant.riskLevel)}
-                            </span>
-                          </td>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 桌面端表格布局 */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商户名称</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">业态</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">楼层</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">月营收</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">租售比</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">健康度</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">风险等级</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {statCards.find(c => c.key === selectedCard)?.merchants?.map((merchant) => (
+                          <tr key={merchant.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 text-sm text-gray-900">{merchant.name}</td>
+                            <td className="py-3 px-4 text-sm text-gray-600">{merchant.category}</td>
+                            <td className="py-3 px-4 text-sm text-gray-600">{merchant.floor}</td>
+                            <td className="py-3 px-4 text-sm text-gray-900">
+                              ¥{(merchant.lastMonthRevenue / 10000).toFixed(1)}万
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              <span className={merchant.rentToSalesRatio > 0.25 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                                {(merchant.rentToSalesRatio * 100).toFixed(1)}%
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              <span className={merchant.totalScore < 60 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                                {merchant.totalScore}分
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getRiskColor(merchant.riskLevel)}`}>
+                                {getRiskText(merchant.riskLevel)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -762,7 +804,55 @@ export default function DashboardPage() {
 
             {/* 弹窗内容 */}
             <div className="p-4 md:p-6">
-              <div className="overflow-x-auto">
+              {/* 移动端卡片式布局 */}
+              <div className="md:hidden space-y-3">
+                {mockMerchants
+                  .filter(m => m.riskLevel === selectedRiskLevel)
+                  .map((merchant) => (
+                    <div key={merchant.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 text-base">{merchant.name}</h4>
+                          <p className="text-sm text-gray-500 mt-1">{merchant.category}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">楼层</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">{merchant.floor}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">月营收</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">¥{(merchant.lastMonthRevenue / 10000).toFixed(1)}万</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">租售比</p>
+                          <p className={`text-sm font-medium mt-1 ${merchant.rentToSalesRatio > 0.25 ? 'text-red-600' : 'text-gray-900'}`}>
+                            {(merchant.rentToSalesRatio * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">健康度</p>
+                          <p className={`text-sm font-medium mt-1 ${merchant.totalScore < 60 ? 'text-red-600' : 'text-gray-900'}`}>
+                            {merchant.totalScore}分
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedRiskLevel(null);
+                          setSelectedMerchant(merchant);
+                        }}
+                        className="w-full px-4 py-2 min-h-[44px] bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors"
+                      >
+                        查看详情
+                      </button>
+                    </div>
+                  ))}
+              </div>
+
+              {/* 桌面端表格布局 */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
