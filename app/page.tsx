@@ -202,8 +202,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">运营总览</h1>
-        <p className="text-gray-500 mt-1">实时监控商场运营数据与商户健康状况</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">运营总览</h1>
+        <p className="text-sm md:text-base text-gray-500 mt-1">实时监控商场运营数据与商户健康状况</p>
       </div>
 
       {/* 统计卡片 - 可点击下钻 */}
@@ -242,9 +242,30 @@ export default function DashboardPage() {
       {/* 图表区域 - 左右分布 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 商户健康度分布 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">商户健康度分布</h3>
-          <ResponsiveContainer width="100%" height={350}>
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">商户健康度分布</h3>
+          <ResponsiveContainer width="100%" height={300} className="md:hidden">
+            <PieChart>
+              <Pie
+                data={healthDistribution}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                onClick={(data) => setSelectedRiskLevel(data.level)}
+                style={{ cursor: 'pointer' }}
+              >
+                {healthDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={350} className="hidden md:block">
             <PieChart>
               <Pie
                 data={healthDistribution}
@@ -276,9 +297,22 @@ export default function DashboardPage() {
         </div>
 
         {/* 近6个月风险商户数量趋势 - 堆积柱状图 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">近6个月各风险商户数量趋势</h3>
-          <ResponsiveContainer width="100%" height={350}>
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">近6个月各风险商户数量趋势</h3>
+          <ResponsiveContainer width="100%" height={300} className="md:hidden">
+            <BarChart data={riskTrend}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" style={{ fontSize: '12px' }} />
+              <YAxis style={{ fontSize: '12px' }} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Bar dataKey="high" stackId="a" fill="#ef4444" name="高风险" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="medium" stackId="a" fill="#f97316" name="中风险" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="low" stackId="a" fill="#eab308" name="低风险" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="none" stackId="a" fill="#22c55e" name="无风险" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={350} className="hidden md:block">
             <BarChart data={riskTrend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
@@ -295,10 +329,10 @@ export default function DashboardPage() {
       </div>
 
       {/* 待处理商户清单 */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">待处理商户清单</h3>
-          <span className="text-sm text-gray-500">共 {pendingMerchants.length} 家商户需要关注</span>
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">待处理商户清单</h3>
+          <span className="text-xs md:text-sm text-gray-500">共 {pendingMerchants.length} 家商户需要关注</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pendingMerchants.map((merchant) => (
@@ -335,7 +369,7 @@ export default function DashboardPage() {
                 </span>
                 <button
                   onClick={() => setSelectedMerchant(merchant)}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                  className="px-3 py-2 min-h-[36px] bg-blue-600 text-white text-sm rounded hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center gap-1"
                 >
                   去处理
                   <ArrowRight size={14} />
@@ -348,23 +382,23 @@ export default function DashboardPage() {
 
       {/* 卡片下钻弹窗 */}
       {selectedCard && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
+          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-4xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
             {/* 弹窗头部 */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                 {statCards.find(c => c.key === selectedCard)?.title}详情
               </h2>
               <button
                 onClick={() => setSelectedCard(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 -mr-2"
               >
                 <X size={24} />
               </button>
             </div>
 
             {/* 弹窗内容 */}
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               {selectedCard === 'knowledge' ? (
                 // 知识库案例展示
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -448,24 +482,24 @@ export default function DashboardPage() {
 
       {/* 商户详情弹窗（去处理） */}
       {selectedMerchant && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
+          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-2xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
             {/* 弹窗头部 */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedMerchant.name}</h2>
-                <p className="text-gray-500 mt-1">{selectedMerchant.category}</p>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{selectedMerchant.name}</h2>
+                <p className="text-sm md:text-base text-gray-500 mt-1">{selectedMerchant.category}</p>
               </div>
               <button
                 onClick={() => setSelectedMerchant(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 -mr-2"
               >
                 <X size={24} />
               </button>
             </div>
 
             {/* 弹窗内容 */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-6">
               {/* 风险等级 */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">风险等级:</span>
@@ -544,11 +578,11 @@ export default function DashboardPage() {
               </div>
 
               {/* 操作按钮 */}
-              <div className="flex gap-3">
+              <div className="flex flex-col md:flex-row gap-3">
                 <button
                   onClick={handleGenerateAiDiagnosis}
                   disabled={isGeneratingAi}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 md:py-3 min-h-[44px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isGeneratingAi ? (
                     <span className="flex items-center justify-center gap-2">
@@ -561,7 +595,7 @@ export default function DashboardPage() {
                 </button>
                 <button
                   onClick={handleCreateTask}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="flex-1 px-4 py-3 md:py-3 min-h-[44px] border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium"
                 >
                   创建帮扶任务
                 </button>
@@ -635,24 +669,24 @@ export default function DashboardPage() {
 
       {/* 案例详情弹窗 */}
       {selectedCase && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
+          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-3xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
             {/* 弹窗头部 */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedCase.industry}</h2>
-                <p className="text-gray-500 mt-1 text-sm">{selectedCase.id}</p>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{selectedCase.industry}</h2>
+                <p className="text-xs md:text-sm text-gray-500 mt-1">{selectedCase.id}</p>
               </div>
               <button
                 onClick={() => setSelectedCase(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 -mr-2"
               >
                 <X size={24} />
               </button>
             </div>
 
             {/* 弹窗内容 */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-6">
               {/* 标签 */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">标签</h3>
@@ -696,11 +730,11 @@ export default function DashboardPage() {
               </div>
 
               {/* 操作按钮 */}
-              <div className="flex gap-3 pt-4 border-t">
-                <button className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+              <div className="flex flex-col md:flex-row gap-3 pt-4 border-t">
+                <button className="flex-1 px-4 py-3 min-h-[44px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium">
                   应用此案例
                 </button>
-                <button className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                <button className="flex-1 px-4 py-3 min-h-[44px] border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium">
                   收藏案例
                 </button>
               </div>
@@ -711,23 +745,23 @@ export default function DashboardPage() {
 
       {/* 饼图点击下钻弹窗 */}
       {selectedRiskLevel && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
+          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-4xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
             {/* 弹窗头部 */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                 {getRiskText(selectedRiskLevel)}商户列表
               </h2>
               <button
                 onClick={() => setSelectedRiskLevel(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 -mr-2"
               >
                 <X size={24} />
               </button>
             </div>
 
             {/* 弹窗内容 */}
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
