@@ -350,110 +350,128 @@ export default function RiskManagementPage() {
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">风险与派单</h1>
-          <p className="text-gray-500 mt-1">实时监控风险预警，快速创建帮扶任务</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">风险与派单</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">实时监控风险预警，快速创建帮扶任务</p>
         </div>
         <div className="flex gap-2">
           {selectedAlerts.size > 0 && (
             <button
               onClick={() => setShowBatchCreate(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base"
             >
-              <Plus size={20} />
-              批量派单 ({selectedAlerts.size})
+              <Plus size={18} className="md:hidden" />
+              <Plus size={20} className="hidden md:block" />
+              <span className="hidden md:inline">批量派单 ({selectedAlerts.size})</span>
+              <span className="md:hidden">({selectedAlerts.size})</span>
             </button>
           )}
           <button
             onClick={() => setShowCreateTask(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
           >
-            <Plus size={20} />
-            创建任务
+            <Plus size={18} className="md:hidden" />
+            <Plus size={20} className="hidden md:block" />
+            <span className="hidden md:inline">创建任务</span>
           </button>
         </div>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
         <div
           onClick={() => handleCardClick('unresolved')}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-red-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-red-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">待处理预警</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">待处理预警</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{stats.unresolvedAlerts}</p>
-            <span className="text-sm text-gray-500">条</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.unresolvedAlerts}</p>
+            <span className="text-xs md:text-sm text-gray-500">条</span>
+          </div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-red-600">
+            <span className="text-[10px] md:text-xs">环比 +12%</span>
           </div>
         </div>
 
         <div
           onClick={() => handleCardClick('high')}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-orange-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <Clock className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-orange-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <Clock className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">高危预警</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">高危预警</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{stats.highSeverity}</p>
-            <span className="text-sm text-gray-500">条</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.highSeverity}</p>
+            <span className="text-xs md:text-sm text-gray-500">条</span>
+          </div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-red-600">
+            <span className="text-[10px] md:text-xs">环比 +8%</span>
           </div>
         </div>
 
         <div
           onClick={() => handleCardClick('resolved')}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <CheckCircle className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-green-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <CheckCircle className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">已处理</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">已处理</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-lg md:text-2xl font-bold text-gray-900">
               {mockRiskAlerts.filter(a => a.resolved).length}
             </p>
-            <span className="text-sm text-gray-500">条</span>
+            <span className="text-xs md:text-sm text-gray-500">条</span>
+          </div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-green-600">
+            <span className="text-[10px] md:text-xs">环比 +15%</span>
           </div>
         </div>
 
         <div
           onClick={() => handleCardClick('rent_ratio')}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-purple-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <XCircle className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-purple-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <XCircle className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">租售比预警</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">租售比预警</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{stats.byType.high_rent_ratio}</p>
-            <span className="text-sm text-gray-500">条</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.byType.high_rent_ratio}</p>
+            <span className="text-xs md:text-sm text-gray-500">条</span>
+          </div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-orange-600">
+            <span className="text-[10px] md:text-xs">环比 +5%</span>
           </div>
         </div>
 
         <div
           onClick={() => handleCardClick('overdue')}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-yellow-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <DollarSign className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-yellow-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <DollarSign className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">欠缴预警</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">欠缴预警</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{overdueCount}</p>
-            <span className="text-sm text-gray-500">户</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{overdueCount}</p>
+            <span className="text-xs md:text-sm text-gray-500">户</span>
+          </div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-yellow-600">
+            <span className="text-[10px] md:text-xs">环比 +3%</span>
           </div>
         </div>
       </div>

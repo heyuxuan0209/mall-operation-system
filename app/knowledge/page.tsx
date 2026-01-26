@@ -287,7 +287,9 @@ function KnowledgeBaseContent() {
             <p className="text-lg md:text-2xl font-bold text-gray-900">{knowledgeBase.length}</p>
             <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-blue-600 hidden md:block">点击查看全部</div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-green-600">
+            <span className="text-[10px] md:text-xs">环比 +12.3%</span>
+          </div>
         </div>
 
         <div
@@ -304,7 +306,9 @@ function KnowledgeBaseContent() {
             <p className="text-lg md:text-2xl font-bold text-gray-900">{allTags.length}</p>
             <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-green-600 hidden md:block">点击查看标签云</div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-green-600">
+            <span className="text-[10px] md:text-xs">环比 +8.5%</span>
+          </div>
         </div>
 
         <div
@@ -321,7 +325,9 @@ function KnowledgeBaseContent() {
             <p className="text-lg md:text-2xl font-bold text-gray-900">{industries.length}</p>
             <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-purple-600 hidden md:block">点击查看分布</div>
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-blue-600">
+            <span className="text-[10px] md:text-xs">环比 +0%</span>
+          </div>
         </div>
 
         <div
@@ -348,8 +354,8 @@ function KnowledgeBaseContent() {
             <p className="text-lg md:text-2xl font-bold text-gray-900">{favorites.size}</p>
             <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-orange-600 hidden md:block">
-            {showFavoritesOnly ? '显示全部案例' : '只看收藏'}
+          <div className="mt-1 md:mt-2 flex items-center gap-1 text-gray-500">
+            <span className="text-[10px] md:text-xs">环比 --</span>
           </div>
         </div>
       </div>

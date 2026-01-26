@@ -54,7 +54,7 @@ export default function DashboardPage() {
       unit: '户',
       icon: Users,
       color: 'bg-blue-500',
-      trend: '+2户',
+      trend: '+2.5%',
       trendUp: true,
       merchants: mockMerchants
     },
@@ -65,8 +65,8 @@ export default function DashboardPage() {
       unit: '户',
       icon: AlertTriangle,
       color: 'bg-red-500',
-      trend: '-2户',
-      trendUp: false,
+      trend: '-15.2%',
+      trendUp: true, // 降低是好事
       merchants: mockMerchants.filter(m => m.riskLevel === 'high')
     },
     {
@@ -76,7 +76,7 @@ export default function DashboardPage() {
       unit: '分',
       icon: Activity,
       color: 'bg-green-500',
-      trend: '+3分',
+      trend: '+4.8%',
       trendUp: true,
       merchants: [...mockMerchants].sort((a, b) => b.totalScore - a.totalScore)
     },
@@ -87,7 +87,7 @@ export default function DashboardPage() {
       unit: '个',
       icon: BookOpen,
       color: 'bg-purple-500',
-      trend: '+5个',
+      trend: '+12.3%',
       trendUp: true,
       cases: knowledgeBase
     }
@@ -247,19 +247,14 @@ export default function DashboardPage() {
                 <div className={`${card.color} w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center`}>
                   <Icon className="text-white" size={16} />
                 </div>
-                <div className={`hidden md:flex items-center gap-1 text-sm ${card.trendUp ? 'text-green-600' : 'text-red-600'}`}>
-                  {card.trendUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                  <span>{card.trend}</span>
-                </div>
               </div>
               <h3 className="text-gray-500 text-xs md:text-sm mb-1">{card.title}</h3>
               <div className="flex items-baseline gap-1">
                 <p className="text-lg md:text-2xl font-bold text-gray-900">{card.value}</p>
                 <span className="text-xs md:text-sm text-gray-500">{card.unit}</span>
               </div>
-              <div className="mt-2 md:mt-3 text-xs text-blue-600 hidden md:flex items-center gap-1">
-                <span>查看详情</span>
-                <ArrowRight size={14} />
+              <div className={`mt-1 md:mt-2 flex items-center gap-1 text-[10px] md:text-xs ${card.trendUp ? 'text-green-600' : 'text-red-600'}`}>
+                <span>环比 {card.trend}</span>
               </div>
             </div>
           );
