@@ -6,6 +6,7 @@ import { mockMerchants, getStatistics } from '@/data/merchants/mock-data';
 import { Merchant } from '@/types';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
+import { useSwipe } from '@/hooks/useSwipe';
 
 export default function DashboardPage() {
   const stats = getStatistics(mockMerchants);
@@ -15,6 +16,23 @@ export default function DashboardPage() {
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<string | null>(null);
   const [aiDiagnosis, setAiDiagnosis] = useState<any>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // 滑动手势支持
+  const cardModalSwipe = useSwipe({
+    onSwipeDown: () => setSelectedCard(null),
+  }, { threshold: 100 });
+
+  const merchantModalSwipe = useSwipe({
+    onSwipeDown: () => setSelectedMerchant(null),
+  }, { threshold: 100 });
+
+  const caseModalSwipe = useSwipe({
+    onSwipeDown: () => setSelectedCase(null),
+  }, { threshold: 100 });
+
+  const riskModalSwipe = useSwipe({
+    onSwipeDown: () => setSelectedRiskLevel(null),
+  }, { threshold: 100 });
 
   // 计算高风险商户数
   const highRiskCount = stats.highRiskCount;
@@ -214,7 +232,7 @@ export default function DashboardPage() {
             <div
               key={card.key}
               onClick={() => setSelectedCard(card.key)}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+              className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all touch-feedback"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`${card.color} w-12 h-12 rounded-lg flex items-center justify-center`}>
@@ -338,7 +356,8 @@ export default function DashboardPage() {
           {pendingMerchants.map((merchant) => (
             <div
               key={merchant.id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all touch-feedback cursor-pointer"
+              onClick={() => setSelectedMerchant(merchant)}
             >
               {/* 商户名称和业态 */}
               <div className="mb-3">
@@ -362,18 +381,15 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* 底部：风险标签 + 去处理按钮 */}
+              {/* 底部：风险标签 */}
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <span className={`px-2 py-1 rounded text-xs font-medium border ${getRiskColor(merchant.riskLevel)}`}>
                   {getRiskText(merchant.riskLevel)}
                 </span>
-                <button
-                  onClick={() => setSelectedMerchant(merchant)}
-                  className="px-3 py-2 min-h-[36px] bg-blue-600 text-white text-sm rounded hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center gap-1"
-                >
+                <span className="text-xs text-blue-600 flex items-center gap-1">
                   去处理
                   <ArrowRight size={14} />
-                </button>
+                </span>
               </div>
             </div>
           ))}
@@ -383,7 +399,14 @@ export default function DashboardPage() {
       {/* 卡片下钻弹窗 */}
       {selectedCard && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
-          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-4xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
+          <div
+            ref={cardModalSwipe.ref}
+            className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-4xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto transition-transform"
+            style={{
+              transform: `translateY(${cardModalSwipe.dragOffset}px)`,
+              opacity: cardModalSwipe.dragOffset > 0 ? 1 - cardModalSwipe.dragOffset / 300 : 1,
+            }}
+          >
             {/* 弹窗头部 */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
               <h2 className="text-xl md:text-2xl font-bold text-gray-900">
@@ -525,7 +548,14 @@ export default function DashboardPage() {
       {/* 商户详情弹窗（去处理） */}
       {selectedMerchant && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
-          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-2xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
+          <div
+            ref={merchantModalSwipe.ref}
+            className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-2xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto transition-transform"
+            style={{
+              transform: `translateY(${merchantModalSwipe.dragOffset}px)`,
+              opacity: merchantModalSwipe.dragOffset > 0 ? 1 - merchantModalSwipe.dragOffset / 300 : 1,
+            }}
+          >
             {/* 弹窗头部 */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
               <div>
@@ -712,7 +742,14 @@ export default function DashboardPage() {
       {/* 案例详情弹窗 */}
       {selectedCase && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
-          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-3xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
+          <div
+            ref={caseModalSwipe.ref}
+            className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-3xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto transition-transform"
+            style={{
+              transform: `translateY(${caseModalSwipe.dragOffset}px)`,
+              opacity: caseModalSwipe.dragOffset > 0 ? 1 - caseModalSwipe.dragOffset / 300 : 1,
+            }}
+          >
             {/* 弹窗头部 */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
               <div>
@@ -788,7 +825,14 @@ export default function DashboardPage() {
       {/* 饼图点击下钻弹窗 */}
       {selectedRiskLevel && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-4 p-0">
-          <div className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-4xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto">
+          <div
+            ref={riskModalSwipe.ref}
+            className="bg-white rounded-xl md:rounded-xl rounded-none md:max-w-4xl w-full max-h-[100vh] md:max-h-[90vh] overflow-y-auto transition-transform"
+            style={{
+              transform: `translateY(${riskModalSwipe.dragOffset}px)`,
+              opacity: riskModalSwipe.dragOffset > 0 ? 1 - riskModalSwipe.dragOffset / 300 : 1,
+            }}
+          >
             {/* 弹窗头部 */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 md:p-6 flex items-center justify-between">
               <h2 className="text-xl md:text-2xl font-bold text-gray-900">
