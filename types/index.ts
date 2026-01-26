@@ -122,3 +122,130 @@ export interface Statistics {
   activeTasks: number;
   completedTasks: number;
 }
+
+// 通知类型
+export interface AppNotification {
+  id: string;
+  type: 'task_deadline' | 'task_assigned' | 'task_status_change' | 'task_overdue';
+  title: string;
+  message: string;
+  taskId: string;
+  merchantName: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  read: boolean;
+  createdAt: string;
+  scheduledFor?: string; // 定时通知时间
+}
+
+// 通知设置类型
+export interface NotificationSettings {
+  enabled: boolean;
+  browserNotifications: boolean;
+  deadlineReminders: {
+    enabled: boolean;
+    days: number[]; // [3, 1, 0] 表示提前3天、1天、当天提醒
+  };
+  taskAssignment: boolean;
+  statusChanges: boolean;
+  overdueAlerts: boolean;
+}
+
+// 团队成员类型
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: 'assistant' | 'manager';
+  avatar?: string;
+  status: 'online' | 'offline' | 'busy';
+  email?: string;
+  phone?: string;
+  createdAt: string;
+}
+
+// 团队类型
+export interface Team {
+  id: string;
+  name: string;
+  members: TeamMember[];
+  leaderId: string; // 团队负责人ID
+  createdAt: string;
+}
+
+// 任务转派记录类型
+export interface TaskTransfer {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  reason: string;
+  transferredAt: string;
+}
+
+// ==================== 现场巡店相关类型 ====================
+
+// 媒体附件类型
+export interface MediaAttachment {
+  id: string;
+  type: 'image' | 'audio';
+  data: string;                    // Base64编码数据
+  thumbnail?: string;              // 缩略图（仅图片）
+  size: number;                    // 字节大小
+  mimeType: string;                // MIME类型
+  createdAt: string;
+  duration?: number;               // 音频时长（秒）
+  geolocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
+}
+
+// 签到数据类型
+export interface CheckInData {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  userId: string;
+  userName: string;
+  timestamp: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    address?: string;              // 可选：反向地理编码地址
+  };
+  distance?: number;               // 与商户位置的距离（米）
+}
+
+// 快速评分数据
+export interface QuickRating {
+  id: string;
+  merchantId: string;
+  timestamp: string;
+  ratings: {
+    collection: number;            // 租金缴纳 0-100
+    operational: number;           // 经营表现 0-100
+    siteQuality: number;           // 现场品质 0-100
+    customerReview: number;        // 顾客满意度 0-100
+    riskResistance: number;        // 抗风险能力 0-100
+  };
+  notes?: string;
+  photos?: string[];               // MediaAttachment IDs
+}
+
+// 巡店记录类型
+export interface InspectionRecord {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  taskId?: string;                 // 关联任务（可选）
+  inspectorId: string;
+  inspectorName: string;
+  checkIn: CheckInData;
+  rating?: QuickRating;
+  photos: MediaAttachment[];
+  audioNotes: MediaAttachment[];
+  textNotes: string;
+  issues: string[];                // 发现的问题列表
+  createdAt: string;
+  updatedAt: string;
+}
