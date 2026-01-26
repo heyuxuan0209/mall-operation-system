@@ -262,12 +262,12 @@ function KnowledgeBaseContent() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">知识库沉淀</h1>
-        <p className="text-gray-500 mt-1">浏览成功案例，智能推荐帮扶方案</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">知识库沉淀</h1>
+        <p className="text-gray-500 mt-1 text-sm md:text-base">浏览成功案例，智能推荐帮扶方案</p>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         <div
           onClick={() => {
             setShowFavoritesOnly(false);
@@ -275,53 +275,53 @@ function KnowledgeBaseContent() {
             setFilterTag('all');
             setSearchTerm('');
           }}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-blue-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <BookOpen className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-blue-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <BookOpen className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">案例总数</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">案例总数</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{knowledgeBase.length}</p>
-            <span className="text-sm text-gray-500">个</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{knowledgeBase.length}</p>
+            <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-blue-600">点击查看全部</div>
+          <div className="mt-2 text-xs text-blue-600 hidden md:block">点击查看全部</div>
         </div>
 
         <div
           onClick={() => setShowTagCloud(true)}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-green-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <Tag className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-green-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <Tag className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">标签数量</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">标签数量</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{allTags.length}</p>
-            <span className="text-sm text-gray-500">个</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{allTags.length}</p>
+            <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-green-600">点击查看标签云</div>
+          <div className="mt-2 text-xs text-green-600 hidden md:block">点击查看标签云</div>
         </div>
 
         <div
           onClick={() => setShowIndustryBreakdown(true)}
-          className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
+          className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all hover:scale-105"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-purple-500 w-12 h-12 rounded-lg flex items-center justify-center">
-              <TrendingUp className="text-white" size={24} />
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className="bg-purple-500 w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center">
+              <TrendingUp className="text-white" size={16} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">行业覆盖</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">行业覆盖</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{industries.length}</p>
-            <span className="text-sm text-gray-500">个</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{industries.length}</p>
+            <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-purple-600">点击查看分布</div>
+          <div className="mt-2 text-xs text-purple-600 hidden md:block">点击查看分布</div>
         </div>
 
         <div
@@ -332,23 +332,23 @@ function KnowledgeBaseContent() {
               setFilterTag('all');
             }
           }}
-          className={`bg-white rounded-xl shadow-sm p-6 border cursor-pointer hover:shadow-md transition-all hover:scale-105 ${
+          className={`bg-white rounded-xl shadow-sm p-3 md:p-6 border cursor-pointer hover:shadow-md transition-all hover:scale-105 ${
             showFavoritesOnly ? 'border-orange-300 ring-2 ring-orange-200' : 'border-gray-100'
           }`}
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center ${
               showFavoritesOnly ? 'bg-orange-500' : 'bg-orange-400'
             }`}>
-              <Star className="text-white" size={24} fill={showFavoritesOnly ? 'white' : 'none'} />
+              <Star className="text-white" size={16} fill={showFavoritesOnly ? 'white' : 'none'} />
             </div>
           </div>
-          <h3 className="text-gray-500 text-sm mb-1">我的收藏</h3>
+          <h3 className="text-gray-500 text-xs md:text-sm mb-1">我的收藏</h3>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-gray-900">{favorites.size}</p>
-            <span className="text-sm text-gray-500">个</span>
+            <p className="text-lg md:text-2xl font-bold text-gray-900">{favorites.size}</p>
+            <span className="text-xs md:text-sm text-gray-500">个</span>
           </div>
-          <div className="mt-2 text-xs text-orange-600">
+          <div className="mt-2 text-xs text-orange-600 hidden md:block">
             {showFavoritesOnly ? '显示全部案例' : '只看收藏'}
           </div>
         </div>

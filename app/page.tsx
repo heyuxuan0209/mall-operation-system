@@ -234,30 +234,30 @@ export default function DashboardPage() {
       </div>
 
       {/* 统计卡片 - 可点击下钻 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.key}
               onClick={() => setSelectedCard(card.key)}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all touch-feedback"
+              className="bg-white rounded-xl shadow-sm p-3 md:p-6 border border-gray-100 cursor-pointer hover:shadow-md transition-all touch-feedback"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`${card.color} w-12 h-12 rounded-lg flex items-center justify-center`}>
-                  <Icon className="text-white" size={24} />
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className={`${card.color} w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center`}>
+                  <Icon className="text-white" size={16} />
                 </div>
-                <div className={`flex items-center gap-1 text-sm ${card.trendUp ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`hidden md:flex items-center gap-1 text-sm ${card.trendUp ? 'text-green-600' : 'text-red-600'}`}>
                   {card.trendUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                   <span>{card.trend}</span>
                 </div>
               </div>
-              <h3 className="text-gray-500 text-sm mb-1">{card.title}</h3>
+              <h3 className="text-gray-500 text-xs md:text-sm mb-1">{card.title}</h3>
               <div className="flex items-baseline gap-1">
-                <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                <span className="text-sm text-gray-500">{card.unit}</span>
+                <p className="text-lg md:text-2xl font-bold text-gray-900">{card.value}</p>
+                <span className="text-xs md:text-sm text-gray-500">{card.unit}</span>
               </div>
-              <div className="mt-3 text-xs text-blue-600 flex items-center gap-1">
+              <div className="mt-2 md:mt-3 text-xs text-blue-600 hidden md:flex items-center gap-1">
                 <span>查看详情</span>
                 <ArrowRight size={14} />
               </div>
