@@ -1,5 +1,5 @@
 import { MediaAttachment } from '@/types';
-import { blobToBase64 } from './compression';
+import { blobToBase64 } from '@/skills/image-processor';
 
 /**
  * 音频存储服务

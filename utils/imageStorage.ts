@@ -1,5 +1,5 @@
 import { MediaAttachment, PhotoAttachment } from '@/types';
-import { compressImage, generateThumbnail, blobToBase64, getBase64Size } from './compression';
+import { compressImage, generateThumbnail, blobToBase64, getBase64Size } from '@/skills/image-processor';
 
 /**
  * 图片存储服务

@@ -1,4 +1,9 @@
 import { AppNotification, NotificationSettings, Task } from '../types';
+import {
+  checkTaskDeadlines,
+  createTaskAssignedNotification,
+  createTaskStatusChangeNotification,
+} from '@/skills/notification-builder';
 
 /**
  * 通知服务类
@@ -86,138 +91,29 @@ class NotificationService {
    */
   checkDeadlines(): AppNotification[] {
     const settings = this.getSettings();
-    if (!settings.enabled || !settings.deadlineReminders.enabled) {
-      return [];
-    }
-
-    // 获取所有任务
     const tasks = this.getAllTasks();
-    const now = new Date();
-    const notifications: AppNotification[] = [];
+    const existingNotifications = this.getNotifications();
 
-    // 获取上次检查时间
-    const lastCheck = localStorage.getItem(this.STORAGE_KEY_LAST_CHECK);
-    const lastCheckDate = lastCheck ? new Date(lastCheck) : new Date(0);
-
-    tasks.forEach((task) => {
-      // 跳过已完成或已退出的任务
-      if (task.stage === 'completed' || task.stage === 'exit') {
-        return;
-      }
-
-      const deadline = new Date(task.deadline);
-      const diffTime = deadline.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      // 检查是否需要发送提醒
-      settings.deadlineReminders.days.forEach((day) => {
-        if (diffDays === day) {
-          // 检查是否已经发送过这个提醒（避免重复）
-          const notificationId = `deadline_${task.id}_${day}`;
-          const existingNotifications = this.getNotifications();
-          const alreadySent = existingNotifications.some(n => n.id === notificationId);
-
-          if (!alreadySent) {
-            let message = '';
-            let priority: AppNotification['priority'] = 'medium';
-
-            if (day === 0) {
-              message = `任务今天到期！请及时处理`;
-              priority = 'high';
-            } else if (day === 1) {
-              message = `任务明天到期，请注意`;
-              priority = 'medium';
-            } else {
-              message = `任务将在${day}天后到期`;
-              priority = 'low';
-            }
-
-            notifications.push({
-              id: notificationId,
-              type: 'task_deadline',
-              title: `【截止提醒】${task.merchantName}`,
-              message,
-              taskId: task.id,
-              merchantName: task.merchantName,
-              priority,
-              read: false,
-              createdAt: new Date().toISOString()
-            });
-          }
-        }
-      });
-
-      // 检查逾期任务
-      if (diffDays < 0 && settings.overdueAlerts) {
-        const daysOverdue = Math.abs(diffDays);
-        const notificationId = `overdue_${task.id}_${daysOverdue}`;
-        const existingNotifications = this.getNotifications();
-        const alreadySent = existingNotifications.some(n => n.id === notificationId);
-
-        // 每天只发送一次逾期提醒
-        if (!alreadySent) {
-          notifications.push({
-            id: notificationId,
-            type: 'task_overdue',
-            title: `【逾期警告】${task.merchantName}`,
-            message: `任务已逾期${daysOverdue}天，请尽快处理！`,
-            taskId: task.id,
-            merchantName: task.merchantName,
-            priority: 'urgent',
-            read: false,
-            createdAt: new Date().toISOString()
-          });
-        }
-      }
-    });
-
-    // 更新最后检查时间
-    localStorage.setItem(this.STORAGE_KEY_LAST_CHECK, now.toISOString());
-
-    return notifications;
+    // 使用 notification-builder skill
+    return checkTaskDeadlines(tasks, settings, existingNotifications);
   }
 
   /**
    * 创建任务分配通知
+   *
+   * @deprecated 使用 @/skills/notification-builder 的 createTaskAssignedNotification
    */
   createTaskAssignedNotification(task: Task): AppNotification {
-    return {
-      id: `assigned_${task.id}_${Date.now()}`,
-      type: 'task_assigned',
-      title: `【新任务】${task.merchantName}`,
-      message: `您有一个新的帮扶任务：${task.title}`,
-      taskId: task.id,
-      merchantName: task.merchantName,
-      priority: 'high',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
+    return createTaskAssignedNotification(task);
   }
 
   /**
    * 创建任务状态变更通知
+   *
+   * @deprecated 使用 @/skills/notification-builder 的 createTaskStatusChangeNotification
    */
   createTaskStatusChangeNotification(task: Task, oldStage: string, newStage: string): AppNotification {
-    const stageNames: Record<string, string> = {
-      planning: '措施制定',
-      executing: '执行中',
-      evaluating: '效果评估',
-      completed: '已完成',
-      escalated: '已升级',
-      exit: '已退出'
-    };
-
-    return {
-      id: `status_${task.id}_${Date.now()}`,
-      type: 'task_status_change',
-      title: `【状态变更】${task.merchantName}`,
-      message: `任务阶段从"${stageNames[oldStage]}"变更为"${stageNames[newStage]}"`,
-      taskId: task.id,
-      merchantName: task.merchantName,
-      priority: 'medium',
-      read: false,
-      createdAt: new Date().toISOString()
-    };
+    return createTaskStatusChangeNotification(task, oldStage, newStage);
   }
 
   /**

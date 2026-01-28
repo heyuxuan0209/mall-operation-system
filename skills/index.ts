@@ -1,20 +1,92 @@
 /**
  * Mall Operation Agent - Skills Library
  *
- * 可复用的核心能力模块
+ * 统一导出所有业务逻辑技能模块
+ *
+ * Skills是纯业务逻辑模块，具有以下特征：
+ * - ✅ 100%纯函数，无副作用
+ * - ✅ 高度可复用，跨模块通用
+ * - ✅ 逻辑独立完整，无强依赖
+ * - ✅ 完整的TypeScript类型定义
+ *
+ * ## 使用方式
+ *
+ * ### 方式1: 从统一入口导入（推荐用于探索）
+ * ```typescript
+ * import * as Skills from '@/skills';
+ * const result = Skills.HealthCalculator.analyzeHealth(merchant);
+ * ```
+ *
+ * ### 方式2: 从具体模块导入（推荐用于生产）
+ * ```typescript
+ * import { analyzeHealth } from '@/skills/health-calculator';
+ * const result = analyzeHealth(merchant);
+ * ```
+ *
+ * @module skills
  */
 
-// AI智能匹配引擎
-export * from './ai-matcher';
+// ==================== 健康度分析 ====================
+import * as HealthCalculator from './health-calculator';
+import * as AIDiagnosisEngine from './ai-diagnosis-engine';
+import * as TrendPredictor from './trend-predictor';
 
-// 健康度计算器
-export * from './health-calculator';
+// ==================== 风险管理 ====================
+import * as RiskAssessor from './risk-assessor';
+import * as RiskDetector from './risk-detector';
 
-// 风险识别器
-export * from './risk-detector';
+// ==================== 任务管理 ====================
+import * as TaskLifecycleManager from './task-lifecycle-manager';
+import * as ROICalculator from './roi-calculator';
 
-// 任务生命周期管理器
-export * from './task-lifecycle-manager';
+// ==================== 知识库 ====================
+import * as KnowledgeManager from './knowledge-manager';
+import * as AIMatcher from './ai-matcher';
+import * as EnhancedAIMatcher from './enhanced-ai-matcher';
+import * as SmartSearch from './smart-search';
+import * as TagClassifier from './tag-classifier';
 
-// 知识库管理器
-export * from './knowledge-manager';
+// ==================== 现场巡店 ====================
+import * as InspectionAnalyzer from './inspection-analyzer';
+import * as ImageProcessor from './image-processor';
+
+// ==================== 通知系统 ====================
+import * as NotificationBuilder from './notification-builder';
+
+// 导出命名空间
+export {
+  // 健康度分析
+  HealthCalculator,
+  AIDiagnosisEngine,
+  TrendPredictor,
+
+  // 风险管理
+  RiskAssessor,
+  RiskDetector,
+
+  // 任务管理
+  TaskLifecycleManager,
+  ROICalculator,
+
+  // 知识库
+  KnowledgeManager,
+  AIMatcher,
+  EnhancedAIMatcher,
+  SmartSearch,
+  TagClassifier,
+
+  // 现场巡店
+  InspectionAnalyzer,
+  ImageProcessor,
+
+  // 通知系统
+  NotificationBuilder,
+};
+
+// 同时导出常用函数（按需添加，避免冲突）
+export { analyzeHealth } from './health-calculator';
+export { generateDiagnosisReport } from './ai-diagnosis-engine';
+export { predictHealthTrend } from './trend-predictor';
+export { generateFocusPoints, generateChecklist } from './inspection-analyzer';
+export { compressImage, generateThumbnail } from './image-processor';
+export { checkTaskDeadlines, createTaskAssignedNotification } from './notification-builder';
