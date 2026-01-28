@@ -47,20 +47,24 @@ class SpeechRecognitionService {
     }
 
     if (this.isListening) {
+      console.log('[SpeechRecognition] Already listening, skipping start');
       return;
     }
 
+    console.log('[SpeechRecognition] Starting recognition with options:', options);
     this.transcript = '';
     this.recognition.lang = options.lang || 'zh-CN';
     this.recognition.continuous = options.continuous ?? true;
     this.recognition.interimResults = options.interimResults ?? true;
 
     this.recognition.onresult = (event: any) => {
+      console.log('[SpeechRecognition] Got result event:', event);
       let interimTranscript = '';
       let finalTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
+        console.log(`[SpeechRecognition] Result ${i}: "${transcript}", isFinal: ${event.results[i].isFinal}`);
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
         } else {
@@ -70,6 +74,7 @@ class SpeechRecognitionService {
 
       if (finalTranscript) {
         this.transcript += finalTranscript;
+        console.log('[SpeechRecognition] Final transcript updated:', this.transcript);
       }
 
       if (options.onResult) {
@@ -81,18 +86,54 @@ class SpeechRecognitionService {
     };
 
     this.recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
+      console.error('[SpeechRecognition] Error:', event.error, event);
       if (options.onError) {
         options.onError(event.error);
       }
     };
 
     this.recognition.onend = () => {
+      console.log('[SpeechRecognition] Recognition ended');
       this.isListening = false;
     };
 
+    this.recognition.onstart = () => {
+      console.log('[SpeechRecognition] Recognition started successfully');
+    };
+
+    this.recognition.onaudiostart = () => {
+      console.log('[SpeechRecognition] Audio capturing started');
+    };
+
+    this.recognition.onsoundstart = () => {
+      console.log('[SpeechRecognition] Sound detected');
+    };
+
+    this.recognition.onspeechstart = () => {
+      console.log('[SpeechRecognition] Speech detected');
+    };
+
+    this.recognition.onspeechend = () => {
+      console.log('[SpeechRecognition] Speech ended');
+    };
+
+    this.recognition.onsoundend = () => {
+      console.log('[SpeechRecognition] Sound ended');
+    };
+
+    this.recognition.onaudioend = () => {
+      console.log('[SpeechRecognition] Audio capturing ended');
+    };
+
     this.isListening = true;
-    this.recognition.start();
+    try {
+      this.recognition.start();
+      console.log('[SpeechRecognition] Start command issued');
+    } catch (err) {
+      console.error('[SpeechRecognition] Failed to start:', err);
+      this.isListening = false;
+      throw err;
+    }
   }
 
   /**

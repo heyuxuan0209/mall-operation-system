@@ -230,9 +230,20 @@ export function generateDiagnosisReport(
     caseId: c.id
   }));
 
-  // 7. 评估风险等级
+  // 7. 评估风险等级（使用5等级标准）
   const avgScore = Object.values(merchant.metrics).reduce((a, b) => a + b, 0) / 5;
-  const riskLevel = avgScore < 50 ? 'high' : avgScore < 70 ? 'medium' : 'low';
+  let riskLevel: string;
+  if (avgScore >= 90) {
+    riskLevel = 'none';      // 无风险：90-100
+  } else if (avgScore >= 80) {
+    riskLevel = 'low';       // 低风险：80-89
+  } else if (avgScore >= 60) {
+    riskLevel = 'medium';    // 中风险：60-79
+  } else if (avgScore >= 40) {
+    riskLevel = 'high';      // 高风险：40-59
+  } else {
+    riskLevel = 'critical';  // 极高风险：0-39
+  }
 
   return {
     merchantName: merchant.name,

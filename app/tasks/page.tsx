@@ -99,6 +99,18 @@ function TaskCenterContent() {
     return matchesSearch && matchesRisk && matchesStage;
   });
 
+  // 辅助函数：获取风险等级样式和文本
+  const getRiskBadge = (level: string) => {
+    const config = {
+      'critical': { className: 'bg-purple-100 text-purple-700', text: '极高风险' },
+      'high': { className: 'bg-red-100 text-red-700', text: '高风险' },
+      'medium': { className: 'bg-orange-100 text-orange-700', text: '中风险' },
+      'low': { className: 'bg-yellow-100 text-yellow-700', text: '低风险' },
+      'none': { className: 'bg-green-100 text-green-700', text: '无风险' }
+    };
+    return config[level as keyof typeof config] || config.medium;
+  };
+
   const updateTask = (updates: Partial<Task>) => {
     if (!selectedTask) return;
     const updated = { ...selectedTask, ...updates };
@@ -576,8 +588,8 @@ function TaskCenterContent() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-bold text-slate-800">{task.merchantName}</h4>
-                  <span className={'px-2 py-0.5 text-[10px] rounded-full font-bold uppercase ' + ((task as any).riskLevel === 'high' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700')}>
-                    {(task as any).riskLevel === 'high' ? '高风险' : '中风险'}
+                  <span className={'px-2 py-0.5 text-[10px] rounded-full font-bold uppercase ' + getRiskBadge((task as any).riskLevel || 'medium').className}>
+                    {getRiskBadge((task as any).riskLevel || 'medium').text}
                   </span>
                 </div>
                 <div className="flex items-center text-xs text-slate-500 mb-2">

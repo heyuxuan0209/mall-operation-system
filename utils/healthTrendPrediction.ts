@@ -184,14 +184,16 @@ export function generateRiskAlert(
   let message: string;
   let suggestedActions: string[];
 
-  if (lowestScore < 50) {
+  // 使用与5等级标准对齐的阈值
+  if (lowestScore < 40) {
     riskLevel = 'high';
-    message = `预警：预计健康度将降至${lowestScore}分，存在高风险`;
+    message = `预警：预计健康度将降至${lowestScore}分，存在极高风险`;
     suggestedActions = [
-      '立即启动帮扶流程',
-      '安排专人跟进',
+      '立即启动紧急帮扶流程',
+      '安排专人驻点跟进',
       '制定紧急改善方案',
-      '加强日常监控'
+      '加强日常监控',
+      '评估业态调整可能性'
     ];
   } else if (lowestScore < threshold) {
     riskLevel = 'medium';

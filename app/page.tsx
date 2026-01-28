@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Users, AlertTriangle, Activity, BookOpen, ArrowRight, X } from 'lucide-react';
-import { mockMerchants, getStatistics } from '@/data/merchants/mock-data';
+import { getStatistics } from '@/data/merchants/mock-data';
 import { Merchant } from '@/types';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import { useSwipe } from '@/hooks/useSwipe';
+import { merchantDataManager } from '@/utils/merchantDataManager';
 
 export default function DashboardPage() {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -16,8 +17,24 @@ export default function DashboardPage() {
   const [aiDiagnosis, setAiDiagnosis] = useState<any>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
-  // 使用useMemo缓存统计数据
-  const stats = useMemo(() => getStatistics(mockMerchants), []);
+  // 使用动态商户数据（从 localStorage 读取最新数据）
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+
+  // 加载商户数据并监听变化
+  useEffect(() => {
+    // 初始加载
+    setMerchants(merchantDataManager.getAllMerchants());
+
+    // 监听数据变化
+    const unsubscribe = merchantDataManager.onMerchantsChange((updatedMerchants) => {
+      setMerchants(updatedMerchants);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // 使用动态商户数据计算统计
+  const stats = useMemo(() => getStatistics(merchants), [merchants]);
 
   // 使用useCallback缓存关闭函数
   const closeCardModal = useCallback(() => setSelectedCard(null), []);
@@ -56,7 +73,7 @@ export default function DashboardPage() {
       color: 'bg-blue-500',
       trend: '+2.5%',
       trendUp: true,
-      merchants: mockMerchants
+      merchants: merchants
     },
     {
       key: 'highRisk',
@@ -67,7 +84,7 @@ export default function DashboardPage() {
       color: 'bg-red-500',
       trend: '-15.2%',
       trendUp: true, // 降低是好事
-      merchants: mockMerchants.filter(m => m.riskLevel === 'high')
+      merchants: merchants.filter(m => m.riskLevel === 'high')
     },
     {
       key: 'avgHealth',
@@ -78,7 +95,7 @@ export default function DashboardPage() {
       color: 'bg-green-500',
       trend: '+4.8%',
       trendUp: true,
-      merchants: [...mockMerchants].sort((a, b) => b.totalScore - a.totalScore)
+      merchants: [...merchants].sort((a, b) => b.totalScore - a.totalScore)
     },
     {
       key: 'knowledge',
@@ -91,7 +108,7 @@ export default function DashboardPage() {
       trendUp: true,
       cases: knowledgeBase
     }
-  ], [stats, highRiskCount]);
+  ], [stats, highRiskCount, merchants]);
 
   // 使用useMemo缓存趋势数据
   const riskTrend = useMemo(() => [
@@ -113,13 +130,14 @@ export default function DashboardPage() {
 
   // 使用useMemo缓存待处理商户
   const pendingMerchants = useMemo(() =>
-    mockMerchants.filter(m => m.riskLevel === 'high' || m.riskLevel === 'medium'),
-    []
+    merchants.filter(m => m.riskLevel === 'high' || m.riskLevel === 'medium'),
+    [merchants]
   );
 
   // 使用useCallback缓存函数
   const getRiskColor = useCallback((level: string) => {
     switch (level) {
+      case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'high': return 'bg-red-100 text-red-700 border-red-200';
       case 'medium': return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'low': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
@@ -131,6 +149,7 @@ export default function DashboardPage() {
   // 使用useCallback缓存函数
   const getRiskText = useCallback((level: string) => {
     switch (level) {
+      case 'critical': return '极高风险';
       case 'high': return '高风险';
       case 'medium': return '中风险';
       case 'low': return '低风险';
@@ -854,7 +873,7 @@ export default function DashboardPage() {
             <div className="p-4 md:p-6">
               {/* 移动端卡片式布局 */}
               <div className="md:hidden space-y-3">
-                {mockMerchants
+                {merchants
                   .filter(m => m.riskLevel === selectedRiskLevel)
                   .map((merchant) => (
                     <div key={merchant.id} className="bg-white border border-gray-200 rounded-lg p-4">
@@ -914,7 +933,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockMerchants
+                    {merchants
                       .filter(m => m.riskLevel === selectedRiskLevel)
                       .map((merchant) => (
                         <tr key={merchant.id} className="border-b border-gray-100 hover:bg-gray-50">

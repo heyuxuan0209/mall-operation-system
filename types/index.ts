@@ -10,7 +10,7 @@ export interface Merchant {
   lastMonthRevenue: number; // 上月营收
   rentToSalesRatio: number; // 租售比
   status: 'operating' | 'closed' | 'renovating'; // 经营状态
-  riskLevel: 'none' | 'low' | 'medium' | 'high'; // 风险等级: 无风险、低风险、中风险、高风险
+  riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none'; // 风险等级: 极高风险、高风险、中风险、低风险、无风险
   totalScore: number; // 健康度总评分 0-100
   metrics: {
     collection: number; // 租金缴纳进度 0-100
@@ -83,7 +83,7 @@ export interface Task {
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   stage: 'planning' | 'executing' | 'evaluating' | 'completed' | 'escalated' | 'exit'; // 工作流阶段
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  riskLevel: 'high' | 'medium' | 'low';
+  riskLevel: 'critical' | 'high' | 'medium' | 'low';
   createdAt: string;
   updatedAt: string;
   startDate: string;
@@ -199,6 +199,22 @@ export interface MediaAttachment {
   };
 }
 
+// Phase 3: 语音笔记扩展类型
+export interface VoiceNote extends MediaAttachment {
+  interviewType: 'businessPain' | 'improvementNeeds' | 'riskAssessment' | 'freeNote';
+  transcript?: string;             // 转录文本
+  keywords?: string[];             // 关键词提取（未来扩展）
+  sentiment?: 'positive' | 'neutral' | 'negative';  // 情感分析（未来扩展）
+}
+
+// Phase 3: 拍照分类标注扩展类型
+export interface PhotoAttachment extends MediaAttachment {
+  category: 'people' | 'merchandise' | 'place'; // 人/货/场
+  tags: string[];                  // 预设标签
+  description?: string;            // 文字描述
+  issueLevel?: 'good' | 'normal' | 'warning' | 'critical'; // 问题等级
+}
+
 // 签到数据类型
 export interface CheckInData {
   id: string;
@@ -214,6 +230,7 @@ export interface CheckInData {
     address?: string;              // 可选：反向地理编码地址
   };
   distance?: number;               // 与商户位置的距离（米）
+  merchantProfile?: MerchantProfile; // Phase 2: 商户画像（签到后自动获取）
 }
 
 // 快速评分数据
@@ -222,11 +239,15 @@ export interface QuickRating {
   merchantId: string;
   timestamp: string;
   ratings: {
-    collection: number;            // 租金缴纳 0-100
-    operational: number;           // 经营表现 0-100
-    siteQuality: number;           // 现场品质 0-100
-    customerReview: number;        // 顾客满意度 0-100
-    riskResistance: number;        // 抗风险能力 0-100
+    // Phase 3: 新的5个维度
+    staffCondition: number;        // 员工状态 0-100
+    merchandiseDisplay: number;    // 货品陈列 0-100
+    storeEnvironment: number;      // 卖场环境 0-100
+    managementCapability: number;  // 店长管理能力 0-100
+    safetyCompliance: number;      // 安全合规 0-100
+  };
+  dimensionNotes?: {               // 各维度备注（可选）
+    [key: string]: string;
   };
   notes?: string;
   photos?: string[];               // MediaAttachment IDs
@@ -248,4 +269,25 @@ export interface InspectionRecord {
   issues: string[];                // 发现的问题列表
   createdAt: string;
   updatedAt: string;
+}
+
+// ==================== Phase 2: 签到智能化相关类型 ====================
+
+// 商户画像类型
+export interface MerchantProfile {
+  healthScore: number;             // 健康度得分 0-100
+  riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none'; // 风险等级
+  alerts: string[];                // 预警标签列表
+  weakestDimension: string;        // 最薄弱维度
+  focusPoints: string[];           // 核心观察点
+  checklistType: 'opening' | 'closing' | 'routine'; // 检查类型
+  checklist: ChecklistItem[];      // 检查清单
+}
+
+// 检查清单项类型
+export interface ChecklistItem {
+  id: string;
+  label: string;                   // 检查项名称
+  checked: boolean;                // 是否已勾选
+  category?: string;               // 分类（可选）
 }

@@ -1,51 +1,86 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, Mic, MapPin, Star, Save } from 'lucide-react';
 import ImageUploader from '@/components/inspection/ImageUploader';
 import VoiceRecorder from '@/components/inspection/VoiceRecorder';
 import QuickCheckIn from '@/components/inspection/QuickCheckIn';
 import QuickRatingComponent from '@/components/inspection/QuickRating';
-import { MediaAttachment, CheckInData, QuickRating } from '@/types';
+import SaveFeedbackModal from '@/components/inspection/SaveFeedbackModal';
+import { PhotoAttachment, CheckInData, QuickRating, Merchant, VoiceNote } from '@/types';
+import { inspectionServiceInstance } from '@/utils/inspectionService';
+import { DEFAULT_MERCHANT_LOCATION } from '@/utils/merchantData';
+import { merchantDataManager } from '@/utils/merchantDataManager';
 
 export default function InspectionPage() {
-  const [photos, setPhotos] = useState<MediaAttachment[]>([]);
-  const [audioNote, setAudioNote] = useState<{ attachment: MediaAttachment; transcript?: string } | null>(null);
+  // Phase 4: 集成保存流程和反馈弹窗
+  const [photos, setPhotos] = useState<PhotoAttachment[]>([]);
+  const [audioNote, setAudioNote] = useState<VoiceNote | null>(null);
   const [checkIn, setCheckIn] = useState<CheckInData | null>(null);
   const [rating, setRating] = useState<QuickRating | null>(null);
   const [textNotes, setTextNotes] = useState('');
 
-  // 模拟商户信息
-  const merchant = {
-    id: 'M001',
-    name: '星巴克咖啡',
-    location: { lat: 31.230416, lng: 121.473701 }, // 示例坐标（上海）
-  };
+  // 反馈弹窗状态
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<{
+    merchantName: string;
+    oldScore: number;
+    newScore: number;
+    highlights: {
+      improvements: string[];
+      concerns: string[];
+    };
+  } | null>(null);
+
+  // 商户数据 - 使用统一数据管理器
+  const [merchant, setMerchant] = useState<Merchant | null>(null);
+
+  // 初始化商户数据并监听变化
+  useEffect(() => {
+    // 加载海底捞数据 (M001)
+    const merchantData = merchantDataManager.getMerchant('M001');
+    setMerchant(merchantData);
+
+    // 监听数据变化
+    const unsubscribe = merchantDataManager.onMerchantsChange(() => {
+      const updatedMerchant = merchantDataManager.getMerchant('M001');
+      setMerchant(updatedMerchant);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // 如果商户数据还未加载，显示加载状态
+  if (!merchant) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
+
+  const merchantLocation = DEFAULT_MERCHANT_LOCATION;
 
   const handleSaveInspection = () => {
-    const inspection = {
-      id: `inspection_${Date.now()}`,
-      merchantId: merchant.id,
-      merchantName: merchant.name,
-      inspectorId: 'user_001',
-      inspectorName: '当前用户',
-      checkIn: checkIn!,
+    // 使用巡检服务保存记录并获取反馈
+    const result = inspectionServiceInstance.saveInspection(
+      merchant,
+      checkIn!,
       rating,
       photos,
-      audioNotes: audioNote ? [audioNote.attachment] : [],
-      textNotes: audioNote?.transcript || textNotes,
-      issues: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      audioNote ? [audioNote] : [],
+      audioNote?.transcript || textNotes
+    );
 
-    // 保存到LocalStorage
-    const stored = localStorage.getItem('inspection_records');
-    const records = stored ? JSON.parse(stored) : [];
-    records.unshift(inspection);
-    localStorage.setItem('inspection_records', JSON.stringify(records));
+    // 显示反馈弹窗
+    setFeedbackData(result.feedback);
+    setShowFeedback(true);
+  };
 
-    alert('巡店记录已保存！');
+  const handleCloseFeedback = () => {
+    setShowFeedback(false);
+
+    // 商户数据会通过 onMerchantsChange 自动更新，无需手动刷新
 
     // 重置表单
     setPhotos([]);
@@ -80,7 +115,8 @@ export default function InspectionPage() {
           <QuickCheckIn
             merchantId={merchant.id}
             merchantName={merchant.name}
-            merchantLocation={merchant.location}
+            merchantLocation={merchantLocation}
+            merchant={merchant}
             onCheckIn={setCheckIn}
           />
         </div>
@@ -104,8 +140,8 @@ export default function InspectionPage() {
           <VoiceRecorder
             maxDuration={120}
             withSpeechRecognition={true}
-            onRecordComplete={(attachment, transcript) => {
-              setAudioNote({ attachment, transcript });
+            onRecordComplete={(voiceNote) => {
+              setAudioNote(voiceNote);
             }}
           />
         </div>
@@ -160,6 +196,18 @@ export default function InspectionPage() {
           </ul>
         </div>
       </div>
+
+      {/* 反馈弹窗 */}
+      {showFeedback && feedbackData && (
+        <SaveFeedbackModal
+          isOpen={showFeedback}
+          onClose={handleCloseFeedback}
+          merchantName={feedbackData.merchantName}
+          oldScore={feedbackData.oldScore}
+          newScore={feedbackData.newScore}
+          highlights={feedbackData.highlights}
+        />
+      )}
     </div>
   );
 }

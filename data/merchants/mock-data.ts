@@ -10,7 +10,7 @@ export const mockMerchants: Merchant[] = [
     shopNumber: '401',
     area: 450,
     rent: 132000,
-    lastMonthRevenue: 173000,
+    lastMonthRevenue: 471000, // 修正：确保租售比为28% (132000/471000=0.28)
     rentToSalesRatio: 0.28,
     status: 'operating',
     riskLevel: 'high', // 高风险
@@ -41,7 +41,7 @@ export const mockMerchants: Merchant[] = [
     lastMonthRevenue: 280000,
     rentToSalesRatio: 0.16,
     status: 'operating',
-    riskLevel: 'none', // 无风险
+    riskLevel: 'low', // 低风险（修正：88分应为低风险80-89，不是无风险）
     totalScore: 88,
     metrics: {
       collection: 95,
@@ -125,7 +125,7 @@ export const mockMerchants: Merchant[] = [
     lastMonthRevenue: 320000,
     rentToSalesRatio: 0.297,
     status: 'operating',
-    riskLevel: 'medium', // 中风险
+    riskLevel: 'high', // 高风险（修正：58分应为高风险，不是中风险）
     totalScore: 58,
     metrics: {
       collection: 75,
@@ -176,10 +176,11 @@ export const mockMerchants: Merchant[] = [
 export function getStatistics(merchants: Merchant[]) {
   return {
     totalMerchants: merchants.length,
-    noneRiskCount: merchants.filter(m => m.riskLevel === 'none').length,
-    lowRiskCount: merchants.filter(m => m.riskLevel === 'low').length,
-    mediumRiskCount: merchants.filter(m => m.riskLevel === 'medium').length,
+    criticalRiskCount: merchants.filter(m => m.riskLevel === 'critical').length,
     highRiskCount: merchants.filter(m => m.riskLevel === 'high').length,
+    mediumRiskCount: merchants.filter(m => m.riskLevel === 'medium').length,
+    lowRiskCount: merchants.filter(m => m.riskLevel === 'low').length,
+    noneRiskCount: merchants.filter(m => m.riskLevel === 'none').length,
     averageHealthScore: Math.round(merchants.reduce((sum, m) => sum + m.totalScore, 0) / merchants.length),
     totalRevenue: merchants.reduce((sum, m) => sum + m.lastMonthRevenue, 0),
     averageRentRatio: merchants.reduce((sum, m) => sum + m.rentToSalesRatio, 0) / merchants.length,

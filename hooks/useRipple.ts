@@ -43,26 +43,6 @@ export function useRipple() {
     }, 600);
   }, []);
 
-  const RippleContainer = useCallback(() => {
-    if (ripples.length === 0) return null;
-
-    return (
-      <span className="absolute inset-0 overflow-hidden rounded-inherit pointer-events-none">
-        {ripples.map((ripple) => (
-          <span
-            key={ripple.id}
-            className="absolute bg-white/30 rounded-full animate-ripple"
-            style={{
-              left: ripple.x - ripple.size / 2,
-              top: ripple.y - ripple.size / 2,
-              width: ripple.size,
-              height: ripple.size,
-            }}
-          />
-        ))}
-      </span>
-    );
-  }, [ripples]);
-
-  return { addRipple, RippleContainer };
+  // 返回涟漪数据，让组件自己渲染
+  return { addRipple, ripples };
 }

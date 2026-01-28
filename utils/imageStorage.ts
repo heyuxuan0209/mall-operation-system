@@ -1,4 +1,4 @@
-import { MediaAttachment } from '@/types';
+import { MediaAttachment, PhotoAttachment } from '@/types';
 import { compressImage, generateThumbnail, blobToBase64, getBase64Size } from './compression';
 
 /**
@@ -33,7 +33,7 @@ class ImageStorageService {
   async uploadImage(
     file: File,
     geolocation?: GeolocationPosition
-  ): Promise<MediaAttachment> {
+  ): Promise<PhotoAttachment> {
     // 1. 校验文件类型
     if (!file.type.startsWith('image/')) {
       throw new Error('只支持图片文件');
@@ -57,8 +57,8 @@ class ImageStorageService {
     // 5. 转Base64
     const base64 = await blobToBase64(compressedBlob);
 
-    // 6. 创建MediaAttachment对象
-    const attachment: MediaAttachment = {
+    // 6. 创建PhotoAttachment对象（暂不包含分类，由组件层添加）
+    const attachment: PhotoAttachment = {
       id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'image',
       data: base64,
@@ -71,6 +71,9 @@ class ImageStorageService {
         longitude: geolocation.coords.longitude,
         accuracy: geolocation.coords.accuracy,
       } : undefined,
+      // Phase 3: 分类标注字段（由组件层设置）
+      category: 'place',
+      tags: [],
     };
 
     // 7. 存储
@@ -84,7 +87,7 @@ class ImageStorageService {
    */
   async captureFromCamera(
     geolocation?: GeolocationPosition
-  ): Promise<MediaAttachment> {
+  ): Promise<PhotoAttachment> {
     return new Promise((resolve, reject) => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -112,7 +115,7 @@ class ImageStorageService {
   /**
    * 保存图片到LocalStorage
    */
-  private saveImage(attachment: MediaAttachment): void {
+  private saveImage(attachment: PhotoAttachment): void {
     if (typeof window === 'undefined') return;
     const images = this.getAllImages();
     images.push(attachment);
@@ -128,7 +131,7 @@ class ImageStorageService {
   /**
    * 获取所有图片
    */
-  getAllImages(): MediaAttachment[] {
+  getAllImages(): PhotoAttachment[] {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(this.STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -137,7 +140,7 @@ class ImageStorageService {
   /**
    * 获取图片
    */
-  getImage(id: string): MediaAttachment | null {
+  getImage(id: string): PhotoAttachment | null {
     const images = this.getAllImages();
     return images.find(img => img.id === id) || null;
   }

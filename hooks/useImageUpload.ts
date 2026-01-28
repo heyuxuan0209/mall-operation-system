@@ -1,21 +1,22 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { MediaAttachment } from '@/types';
+import { PhotoAttachment } from '@/types';
 import { imageStorage } from '@/utils/imageStorage';
 
 interface UseImageUploadReturn {
-  images: MediaAttachment[];
+  images: PhotoAttachment[];
   isUploading: boolean;
-  uploadImage: (file: File) => Promise<void>;
-  capturePhoto: () => Promise<void>;
+  uploadImage: (file: File) => Promise<PhotoAttachment>;
+  capturePhoto: () => Promise<PhotoAttachment>;
   deleteImage: (id: string) => void;
+  updateImage: (id: string, updates: Partial<PhotoAttachment>) => void;
   storageInfo: { used: number; total: number; percentage: number };
   error: string | null;
 }
 
 export function useImageUpload(maxImages: number = 5): UseImageUploadReturn {
-  const [images, setImages] = useState<MediaAttachment[]>([]);
+  const [images, setImages] = useState<PhotoAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [storageInfo, setStorageInfo] = useState({ used: 0, total: 5242880, percentage: 0 });
@@ -27,10 +28,11 @@ export function useImageUpload(maxImages: number = 5): UseImageUploadReturn {
     }
   }, []);
 
-  const uploadImage = useCallback(async (file: File) => {
+  const uploadImage = useCallback(async (file: File): Promise<PhotoAttachment> => {
     if (images.length >= maxImages) {
-      setError(`最多只能上传${maxImages}张图片`);
-      return;
+      const errorMsg = `最多只能上传${maxImages}张图片`;
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
 
     setIsUploading(true);
@@ -52,17 +54,21 @@ export function useImageUpload(maxImages: number = 5): UseImageUploadReturn {
       const attachment = await imageStorage.uploadImage(file, geolocation);
       setImages(prev => [...prev, attachment]);
       setStorageInfo(imageStorage.getStorageInfo());
+      return attachment;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '上传失败');
+      const errorMsg = err instanceof Error ? err.message : '上传失败';
+      setError(errorMsg);
+      throw new Error(errorMsg);
     } finally {
       setIsUploading(false);
     }
   }, [images.length, maxImages]);
 
-  const capturePhoto = useCallback(async () => {
+  const capturePhoto = useCallback(async (): Promise<PhotoAttachment> => {
     if (images.length >= maxImages) {
-      setError(`最多只能上传${maxImages}张图片`);
-      return;
+      const errorMsg = `最多只能上传${maxImages}张图片`;
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
 
     setIsUploading(true);
@@ -84,8 +90,11 @@ export function useImageUpload(maxImages: number = 5): UseImageUploadReturn {
       const attachment = await imageStorage.captureFromCamera(geolocation);
       setImages(prev => [...prev, attachment]);
       setStorageInfo(imageStorage.getStorageInfo());
+      return attachment;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '拍照失败');
+      const errorMsg = err instanceof Error ? err.message : '拍照失败';
+      setError(errorMsg);
+      throw new Error(errorMsg);
     } finally {
       setIsUploading(false);
     }
@@ -97,12 +106,17 @@ export function useImageUpload(maxImages: number = 5): UseImageUploadReturn {
     setStorageInfo(imageStorage.getStorageInfo());
   }, []);
 
+  const updateImage = useCallback((id: string, updates: Partial<PhotoAttachment>) => {
+    setImages(prev => prev.map(img => img.id === id ? { ...img, ...updates } : img));
+  }, []);
+
   return {
     images,
     isUploading,
     uploadImage,
     capturePhoto,
     deleteImage,
+    updateImage,
     storageInfo,
     error,
   };

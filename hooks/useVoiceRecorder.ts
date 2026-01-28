@@ -80,21 +80,30 @@ export function useVoiceRecorder(options?: {
 
       // 启动语音识别（如果支持且启用）
       if (withSpeech) {
+        console.log('[useVoiceRecorder] Attempting to start speech recognition');
         const speechRecognition = getSpeechRecognition();
         if (speechRecognition.isSupported()) {
+          console.log('[useVoiceRecorder] Speech recognition is supported');
           speechRecognition.clearTranscript();
           await speechRecognition.startRecognition({
             continuous: true,
             interimResults: true,
             onResult: (text, isFinal) => {
+              console.log('[useVoiceRecorder] Got speech result:', { text, isFinal });
               if (isFinal) {
-                setTranscript(prev => prev + text);
+                setTranscript(prev => {
+                  const newTranscript = prev + text;
+                  console.log('[useVoiceRecorder] Updated transcript:', newTranscript);
+                  return newTranscript;
+                });
               }
             },
             onError: (err) => {
-              console.warn('Speech recognition error:', err);
+              console.warn('[useVoiceRecorder] Speech recognition error:', err);
             },
           });
+        } else {
+          console.warn('[useVoiceRecorder] Speech recognition not supported');
         }
       }
     } catch (err) {
@@ -116,9 +125,11 @@ export function useVoiceRecorder(options?: {
 
     // 停止语音识别
     if (withSpeech) {
+      console.log('[useVoiceRecorder] Stopping speech recognition');
       const speechRecognition = getSpeechRecognition();
       if (speechRecognition.isSupported()) {
         const finalTranscript = speechRecognition.stopRecognition();
+        console.log('[useVoiceRecorder] Final transcript from stop:', finalTranscript);
         if (finalTranscript) {
           setTranscript(finalTranscript);
         }

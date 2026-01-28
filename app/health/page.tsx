@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { mockMerchants } from '@/data/merchants/mock-data';
 import { Merchant } from '@/types';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import HealthTrendChart from '@/components/HealthTrendChart';
 import IndustryBenchmark from '@/components/IndustryBenchmark';
+import { merchantDataManager } from '@/utils/merchantDataManager';
 
 export default function HealthMonitoringPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
@@ -20,8 +20,32 @@ export default function HealthMonitoringPage() {
   const [aiDiagnosis, setAiDiagnosis] = useState<any>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
+  // 使用动态商户数据
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
   const isMobileView = windowWidth < 1280;
+
+  // 加载商户数据并监听变化
+  useEffect(() => {
+    // 初始加载
+    setMerchants(merchantDataManager.getAllMerchants());
+
+    // 监听数据变化
+    const unsubscribe = merchantDataManager.onMerchantsChange((updatedMerchants) => {
+      setMerchants(updatedMerchants);
+
+      // 如果当前选中的商户数据更新了，同步更新 selectedMerchant
+      if (selectedMerchant) {
+        const updated = updatedMerchants.find(m => m.id === selectedMerchant.id);
+        if (updated) {
+          setSelectedMerchant(updated);
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -29,7 +53,7 @@ export default function HealthMonitoringPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const filteredMerchants = mockMerchants.filter(m => {
+  const filteredMerchants = merchants.filter(m => {
     if (filterRisk !== 'ALL' && m.riskLevel !== filterRisk) return false;
     return true;
   });
@@ -45,12 +69,14 @@ export default function HealthMonitoringPage() {
 
   const getRiskBadge = (level: string) => {
     const styles = {
+      'critical': 'bg-purple-100 text-purple-800 border-purple-200',
       'high': 'bg-red-100 text-red-800 border-red-200',
       'medium': 'bg-orange-100 text-orange-800 border-orange-200',
       'low': 'bg-yellow-100 text-yellow-800 border-yellow-200',
       'none': 'bg-green-100 text-green-800 border-green-200',
     };
     const text = {
+      'critical': '极高风险',
       'high': '高风险',
       'medium': '中风险',
       'low': '低风险',
@@ -311,7 +337,7 @@ export default function HealthMonitoringPage() {
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm bg-slate-50 p-3 rounded-lg">
                   <div>
                     <span className="text-slate-500 block text-xs">租售比</span>
-                    <span className="font-medium">{(selectedMerchant.rentToSalesRatio * 100).toFixed(0)}%</span>
+                    <span className="font-medium">{(selectedMerchant.rentToSalesRatio * 100).toFixed(1)}%</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs">上月销售</span>
@@ -406,7 +432,7 @@ export default function HealthMonitoringPage() {
               <div>
                 <IndustryBenchmark
                   merchant={selectedMerchant}
-                  allMerchants={mockMerchants}
+                  allMerchants={merchants}
                 />
               </div>
 

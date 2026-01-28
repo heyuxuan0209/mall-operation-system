@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MallGuard AI - 商户运营健康度监测系统",
-  description: "智能商户经营诊断、问题定位、帮扶措施推荐、效果评估与案例沉淀",
+  title: "Mall Operation Agent",
+  description: "AI-powered mall operation and merchant health monitoring system",
 };
 
 export default function RootLayout({
