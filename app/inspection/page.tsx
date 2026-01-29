@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Camera, Mic, MapPin, Star, Save } from 'lucide-react';
+import { Camera, Mic, MapPin, Star, Save, List } from 'lucide-react';
 import ImageUploader from '@/components/inspection/ImageUploader';
 import VoiceRecorder from '@/components/inspection/VoiceRecorder';
 import QuickCheckIn from '@/components/inspection/QuickCheckIn';
@@ -97,10 +97,21 @@ export default function InspectionPage() {
       {/* 页面头部 */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">现场巡店</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {merchant.name} · 快速记录现场情况
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">现场巡店</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                {merchant.name} · 快速记录现场情况
+              </p>
+            </div>
+            <a
+              href="/inspection/batch"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-all text-sm font-medium"
+            >
+              <List size={18} />
+              <span>批量巡检</span>
+            </a>
+          </div>
         </div>
       </div>
 
