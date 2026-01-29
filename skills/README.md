@@ -167,6 +167,188 @@ const newCase = generateCaseFromTask(completedTask);
 
 ---
 
+### 6. Token监控器 (token-monitor.ts)
+
+**功能**：监控Token使用情况，生成标准化提醒
+
+**等级标准**：
+- Safe（安全）: 0-49% - 继续工作
+- Warning（警告）: 50-69% - 建议保存
+- Urgent（紧急）: 70-79% - 强烈建议保存
+- Critical（危急）: 80-100% - 必须立即保存
+
+**主要函数**：
+- `monitorTokenUsage()` - 监控Token使用
+- `calculateTokenPercentage()` - 计算使用百分比
+- `getTokenLevel()` - 获取使用等级
+- `generateReminderMessage()` - 生成提醒消息
+- `estimateRemainingFiles()` - 估算可处理文件数
+
+**使用示例**：
+```typescript
+import { monitorTokenUsage } from '@/skills/token-monitor';
+
+const result = monitorTokenUsage(120000, 200000);
+
+if (result.shouldRemind) {
+  console.log(result.reminderMessage);
+  // 🟡 Token使用警告 (60.0%) - 建议保存当前进度
+}
+
+console.log(result.level); // 'warning'
+console.log(result.percentage); // 60.0
+```
+
+---
+
+### 7. 保存位置检测器 (save-location-detector.ts)
+
+**功能**：判断文件应该保存到项目内部还是外部文档
+
+**判断规则**：
+- **Internal（项目内部）**: 源码文件、测试文件、配置文件、项目文档
+- **External（外部文档）**: 教程、博客、笔记、总结
+
+**主要函数**：
+- `detectSaveLocation()` - 检测保存位置
+- `inferContentTypeFromExtension()` - 从扩展名推断类型
+- `isProjectInternalPath()` - 判断是否项目路径
+- `isProjectContent()` - 判断是否项目内容
+- `getSuggestedPath()` - 获取建议路径
+
+**使用示例**：
+```typescript
+import { detectSaveLocation } from '@/skills/save-location-detector';
+
+// 基于路径检测
+const result = detectSaveLocation({
+  filePath: '/project/app/page.tsx'
+});
+
+console.log(result.location); // 'internal'
+console.log(result.contentType); // 'source-code'
+console.log(result.confidence); // 95
+
+// 基于文件名和内容检测
+const result2 = detectSaveLocation({
+  fileName: '小红书教程.md',
+  content: '# Claude Code 实战教程\n...'
+});
+
+console.log(result2.location); // 'external'
+console.log(result2.suggestions); // ['建议保存到外部文档目录', ...]
+```
+
+---
+
+### 8. 文档生成器 (documentation-generator/)
+
+**功能**：自动生成CONTEXT.md、VERSION.md、CHANGELOG.md更新
+
+**子模块**：
+- `types.ts` - 类型定义
+- `helpers.ts` - 辅助函数
+- `context.ts` - CONTEXT.md生成
+- `version.ts` - VERSION.md生成
+- `changelog.ts` - CHANGELOG.md生成
+- `index.ts` - 统一导出
+
+**主要函数**：
+- `generateAllDocumentation()` - 一键生成所有文档
+- `generateContextUpdate()` - 生成CONTEXT.md更新
+- `generateVersionUpdate()` - 生成VERSION.md更新
+- `generateChangelogUpdate()` - 生成CHANGELOG.md更新
+- `generateDocumentationFromCommit()` - 从Git提交生成
+
+**使用示例**：
+```typescript
+import { generateAllDocumentation } from '@/skills/documentation-generator';
+
+const result = generateAllDocumentation(
+  {
+    type: 'feat',
+    summary: '添加批量巡检功能',
+    details: ['支持批量上传', '实现批量评分'],
+    files: {
+      added: ['app/inspection/batch/page.tsx'],
+      modified: ['components/inspection/ImageUploader.tsx'],
+      deleted: []
+    },
+    stats: {
+      linesAdded: 300,
+      linesDeleted: 20,
+      filesChanged: 2
+    },
+    date: '2026-01-29'
+  },
+  'v2.1'
+);
+
+console.log(result.context.content); // CONTEXT.md内容
+console.log(result.version.content); // VERSION.md内容
+console.log(result.changelog.content); // CHANGELOG.md内容
+```
+
+---
+
+### 9. 工作流提醒器 (workflow-reminder.ts)
+
+**功能**：综合判断何时应该提醒用户保存进度
+
+**判断维度**：
+- Token使用率（超过阈值）
+- 工作时长（分钟数）
+- 功能完成数
+- 文件修改数
+
+**提醒等级**：
+- Low（低）: 任一阈值触发 - 可以考虑保存
+- Medium（中）: Token>50% OR 时间>60min OR 功能>3 - 建议保存
+- High（高）: Token>70% OR 时间>90min OR 功能>5 - 强烈建议保存
+- Critical（危急）: Token>80% OR 时间>120min - 必须立即保存
+
+**主要函数**：
+- `checkWorkflowReminder()` - 检查工作流提醒
+- `shouldRemindUser()` - 判断是否应该提醒
+- `getReminderTrigger()` - 获取触发原因
+- `calculateUrgency()` - 计算紧急程度
+- `getDefaultStrategy()` - 获取默认策略
+- `estimateRemainingWorkTime()` - 估算剩余工作时间
+
+**使用示例**：
+```typescript
+import { checkWorkflowReminder } from '@/skills/workflow-reminder';
+
+const result = checkWorkflowReminder({
+  tokenUsage: { current: 120000, max: 200000 },
+  timeElapsed: 75,
+  featuresCompleted: 4,
+  filesModified: 12
+});
+
+if (result.shouldRemind) {
+  console.log(result.message);
+  /*
+  🟡 提醒: 建议保存工作进度
+
+  **触发原因**:
+    - Token使用率 60.0% (阈值: 50%)
+    - 工作时长 75 分钟 (阈值: 60 分钟)
+    - 已完成 4 个功能 (阈值: 3)
+
+  **操作建议**:
+    1. 🟡 建议保存当前进度
+    2. 可以生成CONTEXT.md记录当前状态
+    3. 如果功能完整，建议提交commit
+  */
+}
+
+console.log(result.urgency); // 'medium'
+console.log(result.trigger); // 'multiple-factors'
+```
+
+---
+
 ## 使用指南
 
 ### 安装依赖
@@ -240,9 +422,23 @@ describe('AI Matcher', () => {
 
 ## 版本历史
 
+- **v2.1** (2026-01-29)
+  - 新增工作流自动化模块（4个新Skills）
+  - Token监控器 - 监控Token使用并生成提醒
+  - 保存位置检测器 - 智能判断文件保存位置
+  - 文档生成器 - 自动生成CONTEXT/VERSION/CHANGELOG
+  - 工作流提醒器 - 综合判断何时提醒保存
+  - 总计19个Skills
+
+- **v2.0** (2026-01-28)
+  - 新增巡检分析模块（2个Skills）
+  - 巡检分析器 - 智能分析商户现场状况
+  - 图片处理器 - 图片压缩和缩略图生成
+  - 总计15个Skills
+
 - **v1.0** (2026-01-24)
   - 初始版本
-  - 包含5个核心 Skills
+  - 包含13个核心Skills
   - 从主代码库中提取并封装
 
 ---

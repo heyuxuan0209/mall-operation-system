@@ -53,6 +53,12 @@ import * as ImageProcessor from './image-processor';
 // ==================== 通知系统 ====================
 import * as NotificationBuilder from './notification-builder';
 
+// ==================== 工作流自动化 ====================
+import * as TokenMonitor from './token-monitor';
+import * as SaveLocationDetector from './save-location-detector';
+import * as DocumentationGenerator from './documentation-generator';
+import * as WorkflowReminder from './workflow-reminder';
+
 // 导出命名空间
 export {
   // 健康度分析
@@ -81,6 +87,12 @@ export {
 
   // 通知系统
   NotificationBuilder,
+
+  // 工作流自动化
+  TokenMonitor,
+  SaveLocationDetector,
+  DocumentationGenerator,
+  WorkflowReminder,
 };
 
 // 同时导出常用函数（按需添加，避免冲突）
@@ -90,3 +102,9 @@ export { predictHealthTrend } from './trend-predictor';
 export { generateFocusPoints, generateChecklist } from './inspection-analyzer';
 export { compressImage, generateThumbnail } from './image-processor';
 export { checkTaskDeadlines, createTaskAssignedNotification } from './notification-builder';
+
+// 工作流自动化常用函数
+export { monitorTokenUsage } from './token-monitor';
+export { detectSaveLocation } from './save-location-detector';
+export { generateAllDocumentation } from './documentation-generator';
+export { checkWorkflowReminder } from './workflow-reminder';
