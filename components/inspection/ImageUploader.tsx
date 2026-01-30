@@ -1,14 +1,24 @@
 'use client';
 
 import React from 'react';
-import { Camera, Upload, X, Image as ImageIcon, Tag, Info, Check } from 'lucide-react';
-import { PhotoAttachment } from '@/types';
+import { Camera, Upload, X, Image as ImageIcon, Tag, Info, Check, Sparkles } from 'lucide-react';
+import { PhotoAttachment, Merchant } from '@/types';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import {
+  suggestPhotoClassification,
+  getChecklistType,
+  formatConfidence,
+  type PhotoClassificationSuggestion,
+  type MerchantContext,
+} from '@/utils/smartPhotoClassifier';
+import { generateMerchantInsights } from '@/skills/inspection-analyzer';
 
 interface ImageUploaderProps {
   maxImages?: number;
   onImagesChange?: (images: PhotoAttachment[]) => void;
   initialImages?: PhotoAttachment[];
+  // 新增：商户信息（用于智能分类）
+  merchant?: Merchant;
 }
 
 // Phase 3: 拍照分类定义
@@ -56,6 +66,7 @@ export default function ImageUploader({
   maxImages = 5,
   onImagesChange,
   initialImages = [],
+  merchant,
 }: ImageUploaderProps) {
   const { images: baseImages, isUploading, uploadImage: baseUploadImage, capturePhoto: baseCapturePhoto, deleteImage, storageInfo, error } =
     useImageUpload(maxImages);
@@ -71,6 +82,10 @@ export default function ImageUploader({
   const [filterCategory, setFilterCategory] = React.useState<PhotoCategory | 'all'>('all');
   const prevBaseImagesRef = React.useRef<PhotoAttachment[]>([]);
 
+  // 新增：AI建议状态
+  const [aiSuggestion, setAiSuggestion] = React.useState<PhotoClassificationSuggestion | null>(null);
+  const [showAiSuggestion, setShowAiSuggestion] = React.useState(true);
+
   // 监听 baseImages 变化，当有新图片时弹出分类选择
   React.useEffect(() => {
     const newPhotos = baseImages.filter(
@@ -85,10 +100,32 @@ export default function ImageUploader({
       setSelectedTags([]);
       setDescription('');
       setIssueLevel('good');
+      setShowAiSuggestion(true);
+
+      // 生成AI建议
+      if (merchant) {
+        const merchantContext: MerchantContext = {
+          category: merchant.category,
+          weakestDimension: generateMerchantInsights(merchant).weakestDimension,
+          riskLevel: merchant.riskLevel,
+          totalScore: merchant.totalScore,
+        };
+
+        const suggestion = suggestPhotoClassification({
+          merchantContext,
+          checklistType: getChecklistType(),
+          timeOfDay: new Date(),
+          recentPhotos: photos,
+        });
+
+        setAiSuggestion(suggestion);
+      } else {
+        setAiSuggestion(null);
+      }
     }
 
     prevBaseImagesRef.current = baseImages;
-  }, [baseImages]);
+  }, [baseImages, merchant, photos]);
 
   // 通知父组件图片变化
   React.useEffect(() => {
@@ -149,6 +186,16 @@ export default function ImageUploader({
     }
     setShowClassifyModal(false);
     setPendingPhoto(null);
+  };
+
+  // 使用AI建议
+  const handleUseAiSuggestion = () => {
+    if (!aiSuggestion) return;
+
+    setSelectedCategory(aiSuggestion.category);
+    setSelectedTags(aiSuggestion.tags.slice(0, 2).map(t => t.tag)); // 使用前2个推荐标签
+    setIssueLevel(aiSuggestion.issueLevel);
+    setShowAiSuggestion(false);
   };
 
   // 切换标签选择
@@ -355,6 +402,73 @@ export default function ImageUploader({
                 />
               </div>
 
+              {/* AI建议 */}
+              {aiSuggestion && showAiSuggestion && (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={18} className="text-purple-600" />
+                      <h4 className="text-sm font-semibold text-purple-900">AI 智能建议</h4>
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                        置信度 {formatConfidence(aiSuggestion.confidence)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowAiSuggestion(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* 推荐内容 */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">分类:</span>
+                      <span className="font-medium text-purple-900">
+                        {photoCategories[aiSuggestion.category].icon} {photoCategories[aiSuggestion.category].label}
+                      </span>
+                      <span className="text-purple-600">⭐推荐</span>
+                    </div>
+
+                    <div className="flex items-start gap-2 text-sm">
+                      <span className="text-gray-600 flex-shrink-0">标签:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {aiSuggestion.tags.slice(0, 3).map((tagObj, i) => (
+                          <span
+                            key={i}
+                            className="bg-white border border-purple-200 text-purple-700 px-2 py-0.5 rounded text-xs"
+                          >
+                            {tagObj.tag} <span className="text-purple-400">{Math.round(tagObj.score * 100)}%</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2 text-sm">
+                      <span className="text-gray-600 flex-shrink-0">等级:</span>
+                      <span className={`font-medium ${issueLevels[aiSuggestion.issueLevel].textColor}`}>
+                        {issueLevels[aiSuggestion.issueLevel].label}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start gap-2 text-xs text-gray-600 bg-white/50 rounded p-2">
+                      <Info size={14} className="flex-shrink-0 mt-0.5" />
+                      <span>{aiSuggestion.reasoning}</span>
+                    </div>
+                  </div>
+
+                  {/* 快捷按钮 */}
+                  <button
+                    onClick={handleUseAiSuggestion}
+                    className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <Check size={16} />
+                    使用 AI 建议
+                  </button>
+                </div>
+              )}
+
               {/* 选择分类 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -362,24 +476,33 @@ export default function ImageUploader({
                   选择分类 *
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {Object.entries(photoCategories).map(([key, cat]) => (
-                    <button
-                      key={key}
-                      onClick={() => setSelectedCategory(key as PhotoCategory)}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        selectedCategory === key
-                          ? `${cat.borderColor} ${cat.bgColor}`
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="text-3xl mb-2">{cat.icon}</div>
-                      <div className={`text-sm font-medium ${
-                        selectedCategory === key ? cat.textColor : 'text-gray-700'
-                      }`}>
-                        {cat.label}
-                      </div>
-                    </button>
-                  ))}
+                  {Object.entries(photoCategories).map(([key, cat]) => {
+                    const isRecommended = aiSuggestion?.category === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedCategory(key as PhotoCategory)}
+                        className={`p-4 rounded-lg border-2 transition-all relative ${
+                          selectedCategory === key
+                            ? `${cat.borderColor} ${cat.bgColor}`
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {isRecommended && (
+                          <span className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Sparkles size={10} />
+                            推荐
+                          </span>
+                        )}
+                        <div className="text-3xl mb-2">{cat.icon}</div>
+                        <div className={`text-sm font-medium ${
+                          selectedCategory === key ? cat.textColor : 'text-gray-700'
+                        }`}>
+                          {cat.label}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -390,20 +513,29 @@ export default function ImageUploader({
                     选择标签（可多选）
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {photoCategories[selectedCategory].tags.map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => toggleTag(tag)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                          selectedTags.includes(tag)
-                            ? `${photoCategories[selectedCategory].bgColor} ${photoCategories[selectedCategory].textColor} border ${photoCategories[selectedCategory].borderColor}`
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {selectedTags.includes(tag) && <Check size={14} className="inline mr-1" />}
-                        {tag}
-                      </button>
-                    ))}
+                    {photoCategories[selectedCategory].tags.map((tag) => {
+                      const recommendedTag = aiSuggestion?.tags.find(t => t.tag === tag);
+                      const isRecommended = !!recommendedTag;
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors relative ${
+                            selectedTags.includes(tag)
+                              ? `${photoCategories[selectedCategory].bgColor} ${photoCategories[selectedCategory].textColor} border ${photoCategories[selectedCategory].borderColor}`
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {selectedTags.includes(tag) && <Check size={14} className="inline mr-1" />}
+                          {tag}
+                          {isRecommended && (
+                            <span className="ml-1 text-purple-600">
+                              ⭐ {Math.round(recommendedTag.score * 100)}%
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
