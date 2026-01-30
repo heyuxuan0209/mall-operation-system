@@ -291,3 +291,64 @@ export interface ChecklistItem {
   checked: boolean;                // 是否已勾选
   category?: string;               // 分类（可选）
 }
+
+// ==================== Sprint 1: 管理驾驶舱相关类型 ====================
+
+// 巡检策略 - 定义不同风险等级的巡检频率
+export interface InspectionPolicy {
+  id: string;
+  riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  requiredFrequency: {
+    interval: 'daily' | 'weekly' | 'monthly';
+    count: number;  // 如每周2次
+  };
+  priority: 'urgent' | 'high' | 'normal' | 'low';
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 巡检统计结果
+export interface InspectionStats {
+  period: 'today' | 'week' | 'month';
+  periodLabel: string;
+  totalMerchants: number;
+  requiredInspections: number;
+  completedInspections: number;
+  completionRate: number;
+  overdueCount: number;
+  byRiskLevel: Array<{
+    riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+    totalMerchants: number;
+    inspectedMerchants: number;
+    coverageRate: number;
+    requiredByPolicy: number;
+  }>;
+  byInspector: Array<{
+    inspectorId: string;
+    inspectorName: string;
+    assignedMerchants: number;
+    completedInspections: number;
+    completionRate: number;
+    avgPhotosPerInspection: number;
+    avgRating: number;
+    qualityScore: number;  // 质量评分 = 平均评分*0.5 + 平均照片数*5
+  }>;
+}
+
+// 超期商户
+export interface OverdueMerchant {
+  merchant: Merchant;
+  lastInspectionDate: string | null;
+  overdueDays: number;
+  requiredFrequency: InspectionPolicy['requiredFrequency'];
+  priority: InspectionPolicy['priority'];
+}
+
+// 巡检趋势数据
+export interface InspectionTrendData {
+  date: string;
+  requiredCount: number;
+  completedCount: number;
+  completionRate: number;
+}

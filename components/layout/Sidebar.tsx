@@ -7,6 +7,7 @@ import NotificationBell from '@/components/NotificationBell';
 
 const menuItems = [
   { id: 'dashboard', label: '总览', fullLabel: '运营总览', icon: 'fa-chart-pie', path: '/' },
+  { id: 'inspection-dashboard', label: '驾驶舱', fullLabel: '管理驾驶舱', icon: 'fa-gauge-high', path: '/dashboard' },
   { id: 'health', label: '监控', fullLabel: '健康度监控', icon: 'fa-heart-pulse', path: '/health' },
   { id: 'risk', label: '派单', fullLabel: '风险与派单', icon: 'fa-triangle-exclamation', path: '/risk' },
   { id: 'tasks', label: '帮扶', fullLabel: '帮扶任务中心', icon: 'fa-hands-holding-circle', path: '/tasks' },
