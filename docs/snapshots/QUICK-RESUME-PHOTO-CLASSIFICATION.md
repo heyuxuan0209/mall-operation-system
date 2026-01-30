@@ -1,12 +1,13 @@
 # 智能拍照分类 + 商户对比功能 - 进度快照
 
 **创建时间**: 2026-01-30 12:15
-**Git Commit**: 02624c7
-**工作状态**: 智能拍照分类 ✅ 已完成 | 商户对比功能 ⏳ 待开发
+**更新时间**: 2026-01-30 (商户对比功能完成)
+**Git Commit**: b320464
+**工作状态**: 智能拍照分类 ✅ 已完成 | 商户对比功能 ✅ 已完成
 
 ---
 
-## ✅ 已完成工作 (3.5小时)
+## ✅ 已完成工作
 
 ### 1. 回滚IndexedDB迁移 ✅
 - 回滚了 `utils/merchantDataManager.ts` 到localStorage版本
@@ -14,7 +15,7 @@
 - 保留了 `docs/technical/indexeddb-schema.md` 供将来参考
 - 构建测试通过
 
-### 2. 智能拍照分类功能 ✅ (3小时)
+### 2. 智能拍照分类功能 ✅
 
 #### A. 核心算法 (`utils/smartPhotoClassifier.ts` - 550行)
 
@@ -104,6 +105,66 @@ npm run build
 
 ---
 
+## ✅ 商户对比功能已完成
+
+### 第1步：创建商户选择器 ✅
+**文件**: `components/compare/MerchantSelector.tsx` (330行)
+
+**功能**:
+- ✅ 搜索商户（按名称）
+- ✅ 快速筛选（风险等级、业态）
+- ✅ 多选商户（2-5个）
+- ✅ 显示已选择和可选商户列表
+- ✅ 支持移除已选商户
+- ✅ 选择数量限制提示
+
+### 第2步：创建对比逻辑 ✅
+**文件**: `utils/merchantComparison.ts` (390行)
+
+**功能**:
+- ✅ `compareMerchants()` - 对比数据计算
+- ✅ `generateInsights()` - 生成智能建议（10种洞察类型）
+- ✅ 数据格式化和排序
+- ✅ 工具函数：formatRevenue、formatPercentage、getHealthScoreColor等
+
+**智能洞察类型**:
+1. 最佳表现者
+2. 最差表现者（需要重点关注）
+3. 业态领先者
+4. 健康度差距分析
+5. 风险预警
+6. 营收水平差异
+7. 维度弱项分析
+
+### 第3步：创建对比页面 ✅
+**文件**: `app/compare/page.tsx` (460行)
+
+**包含组件**:
+- ✅ 商户选择器集成
+- ✅ 对比摘要卡片（商户数、平均健康度、平均月营收、平均租售比）
+- ✅ 基础信息对比表（业态、位置、面积、风险等级、健康度、月营收、租金、租售比）
+- ✅ 雷达图（五维健康指标：租金缴纳、经营表现、现场品质、顾客满意度、抗风险能力）
+- ✅ 健康度对比柱状图
+- ✅ 月营收对比柱状图
+- ✅ 租售比对比柱状图
+- ✅ 智能洞察与建议（分严重程度显示）
+- ✅ 打印功能
+
+**技术栈**:
+- Recharts 图表库（RadarChart、BarChart）
+- 响应式设计
+- 打印友好样式
+
+### 第4步：添加导航入口 ✅
+- ✅ Sidebar添加"商户对比"菜单（fa-chart-column图标）
+- ✅ Health页面添加"对比"按钮
+
+### 第5步：测试 ✅
+- ✅ 构建测试通过
+- ✅ 开发服务器启动成功
+
+---
+
 ## ⏳ 待完成工作 - 商户对比功能 (预计4小时)
 
 ### 第4步：创建商户选择器 (1小时)
@@ -153,6 +214,9 @@ npm run build
 ### 已创建 ✅
 ```
 utils/smartPhotoClassifier.ts (550行) - 智能分类算法
+components/compare/MerchantSelector.tsx (330行) - 商户选择器
+app/compare/page.tsx (460行) - 商户对比页面
+utils/merchantComparison.ts (390行) - 对比逻辑工具
 docs/technical/indexeddb-schema.md - IndexedDB设计文档（保留）
 docs/snapshots/SPRINT1-DASHBOARD-COMPLETE.md - Sprint1完成快照
 ```
@@ -165,19 +229,13 @@ components/inspection/ImageUploader.tsx (+130行)
   - 新增AI建议UI卡片
   - 新增推荐标识
   - 新增快捷按钮
-```
 
-### 待创建 ⏳
-```
-components/compare/MerchantSelector.tsx (300行)
-app/compare/page.tsx (600行)
-utils/merchantComparison.ts (300行)
-```
+components/layout/Sidebar.tsx (+1行)
+  - 添加"商户对比"菜单项
 
-### 待修改 ⏳
-```
-components/layout/Sidebar.tsx - 添加"商户对比"菜单项
-app/health/page.tsx - 添加"对比"按钮
+app/health/page.tsx (+10行)
+  - 添加Link导入
+  - 添加"商户对比"按钮
 ```
 
 ---
@@ -262,6 +320,28 @@ import { RadarChart, Radar, BarChart, Bar, LineChart, Line } from 'recharts';
 
 **最新提交**:
 ```
+commit b320464
+feat: 商户对比分析功能
+
+核心功能:
+- 创建MerchantSelector商户选择器组件
+- 创建merchantComparison对比逻辑工具
+- 创建商户对比页面（雷达图、柱状图、智能洞察）
+- Sidebar添加"商户对比"菜单
+- Health页面添加"对比"按钮
+
+技术实现:
+- 支持2-5个商户多维度对比
+- 雷达图展示五维健康指标
+- 柱状图展示营收、租售比
+- 智能生成洞察与建议
+- 支持打印功能
+
+5 files changed, 1181 insertions(+)
+```
+
+**之前提交**:
+```
 commit 02624c7
 feat: 智能拍照分类建议功能
 
@@ -274,12 +354,6 @@ feat: 智能拍照分类建议功能
 4 files changed, 1266 insertions(+), 35 deletions(-)
 ```
 
-**提交的文件**:
-- M `components/inspection/ImageUploader.tsx`
-- A `docs/snapshots/SPRINT1-DASHBOARD-COMPLETE.md`
-- A `docs/technical/indexeddb-schema.md`
-- A `utils/smartPhotoClassifier.ts`
-
 **分支**: main
 **状态**: 工作区干净，可安全切换
 
@@ -287,21 +361,17 @@ feat: 智能拍照分类建议功能
 
 ## 🎯 下一步行动
 
-### 选项1：继续开发（推荐）
+### 选项1：测试新功能（推荐）
 ```bash
-# 在新窗口运行
-npm run dev
+# 开发服务器已启动
+http://localhost:3000
 
-# 打开浏览器测试智能分类功能
-http://localhost:3000/inspection
-
-# 继续开发商户对比功能
-# 按照第4-8步执行
-```
-
-### 选项2：测试验证
-```bash
-npm run dev
+# 测试商户对比功能：
+1. 访问 /compare 页面，或从健康度监控页面点击"商户对比"按钮
+2. 选择2-5个商户进行对比
+3. 查看对比摘要、雷达图、柱状图
+4. 查看智能洞察与建议
+5. 测试打印功能（点击"打印报告"）
 
 # 测试智能拍照分类：
 1. 访问 /inspection 页面
@@ -309,6 +379,15 @@ npm run dev
 3. 拍照/上传照片
 4. 观察AI建议是否符合预期
 5. 测试"使用AI建议"按钮
+```
+
+### 选项2：继续开发其他功能
+```
+可能的下一步功能：
+- 商户对比：添加导出Excel功能
+- 商户对比：添加健康度趋势折线图
+- 智能拍照：添加历史照片浏览和管理
+- 巡检驾驶舱：增强数据可视化
 ```
 
 ### 选项3：部署上线
@@ -338,7 +417,7 @@ git push
 
 ---
 
-**保存时间**: 2026-01-30 12:15
-**Token使用**: 103,706 / 200,000 (51.9%)
-**状态**: ✅ 代码已提交，可以安全切换窗口
-**恢复方式**: 读取此文件快速了解当前状态，继续开发商户对比功能
+**保存时间**: 2026-01-30 (商户对比功能完成)
+**Token使用**: ~57,000 / 200,000 (28.5%)
+**状态**: ✅ 全部功能已完成并提交，可以安全切换窗口
+**恢复方式**: 读取此文件快速了解当前状态
