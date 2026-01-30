@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>通知系统测试</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>通知系统测试工具</h1>
+    <button onclick="testNotifications()">生成测试通知</button>
+    <button onclick="clearNotifications()">清空通知</button>
+    <button onclick="checkNotifications()">查看通知</button>
+    <pre id="output"></pre>
+
+    <script>
+        function testNotifications() {
+            const testNotifications = [
+                {
+                    id: 'test_1_' + Date.now(),
+                    type: 'task_deadline',
+                    title: '【截止提醒】星巴克咖啡',
+                    message: '任务明天到期，请注意',
+                    taskId: 'T001',
+                    merchantName: '星巴克咖啡',
+                    priority: 'high',
+                    read: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'test_2_' + Date.now(),
+                    type: 'task_overdue',
+                    title: '【逾期警告】海底捞火锅',
+                    message: '任务已逾期2天，请尽快处理！',
+                    taskId: 'T002',
+                    merchantName: '海底捞火锅',
+                    priority: 'urgent',
+                    read: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'test_3_' + Date.now(),
+                    type: 'task_assigned',
+                    title: '【新任务】优衣库',
+                    message: '您有一个新的帮扶任务：提升营业额',
+                    taskId: 'T003',
+                    merchantName: '优衣库',
+                    priority: 'high',
+                    read: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'test_4_' + Date.now(),
+                    type: 'task_status_change',
+                    title: '【状态变更】麦当劳',
+                    message: '任务阶段从"措施制定"变更为"执行中"',
+                    taskId: 'T004',
+                    merchantName: '麦当劳',
+                    priority: 'medium',
+                    read: false,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            // 保存到 localStorage
+            localStorage.setItem('notifications', JSON.stringify(testNotifications));
+            document.getElementById('output').textContent = '已生成 ' + testNotifications.length + ' 条测试通知！\n请刷新页面查看。';
+        }
+
+        function clearNotifications() {
+            localStorage.removeItem('notifications');
+            document.getElementById('output').textContent = '已清空所有通知！';
+        }
+
+        function checkNotifications() {
+            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            document.getElementById('output').textContent = '当前通知数量: ' + notifications.length + '\n\n' + JSON.stringify(notifications, null, 2);
+        }
+    </script>
+</body>
+</html>

@@ -11,6 +11,7 @@ interface QuickCheckInProps {
   merchantName: string;
   merchantLocation?: { lat: number; lng: number };
   merchant: Merchant; // Phase 2: 需要完整的商户数据来生成画像
+  initialCheckIn?: CheckInData | null; // 支持初始签到数据（用于草稿恢复）
   onCheckIn: (checkInData: CheckInData) => void;
 }
 
@@ -19,11 +20,12 @@ export default function QuickCheckIn({
   merchantName,
   merchantLocation,
   merchant,
+  initialCheckIn = null,
   onCheckIn,
 }: QuickCheckInProps) {
   const { location, error, loading, getCurrentLocation } = useGeolocation();
-  const [checked, setChecked] = useState(false);
-  const [checkInData, setCheckInData] = useState<CheckInData | null>(null);
+  const [checked, setChecked] = useState(initialCheckIn !== null);
+  const [checkInData, setCheckInData] = useState<CheckInData | null>(initialCheckIn);
   // 修改为Map存储：itemId -> true(是) | false(否) | null(未选择)
   const [checklistAnswers, setChecklistAnswers] = useState<Map<string, boolean | null>>(new Map());
 

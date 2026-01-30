@@ -61,7 +61,7 @@ export default function ImageUploader({
     useImageUpload(maxImages);
 
   // Phase 3: 扩展为 PhotoAttachment
-  const [photos, setPhotos] = React.useState<PhotoAttachment[]>([]);
+  const [photos, setPhotos] = React.useState<PhotoAttachment[]>(initialImages);
   const [pendingPhoto, setPendingPhoto] = React.useState<PhotoAttachment | null>(null);
   const [showClassifyModal, setShowClassifyModal] = React.useState(false);
   const [selectedCategory, setSelectedCategory] = React.useState<PhotoCategory | null>(null);

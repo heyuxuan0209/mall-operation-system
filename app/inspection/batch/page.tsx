@@ -192,51 +192,39 @@ export default function BatchInspectionPage() {
     }
   }, []);
 
-  // 切换商户时：保存当前草稿 + 加载新商户草稿
+  // 切换商户时：保存当前草稿 + 切换索引（加载草稿由useEffect处理）
   const switchToMerchant = useCallback((index: number) => {
+    // 1. 保存当前商户的草稿（如果存在）
+    if (currentMerchant) {
+      saveDraft(currentMerchant.id);
+    }
+
+    // 2. 切换到新商户（草稿加载由useEffect处理，避免竞态条件）
+    setCurrentIndex(index);
+  }, [currentMerchant, saveDraft]);
+
+  // 当前商户切换时自动加载草稿或重置表单
+  useEffect(() => {
     if (!currentMerchant) return;
 
-    // 1. 保存当前商户的草稿
-    saveDraft(currentMerchant.id);
+    const draft = loadDraft(currentMerchant.id);
 
-    // 2. 切换到新商户
-    setCurrentIndex(index);
-
-    // 3. 加载新商户的草稿
-    const newMerchant = merchants[index];
-    if (newMerchant) {
-      const draft = loadDraft(newMerchant.id);
-
-      if (draft) {
-        setPhotos(draft.photos || []);
-        setAudioNote(draft.audioNote || null);
-        setCheckIn(draft.checkIn || null);
-        setRating(draft.rating || null);
-        setTextNotes(draft.textNotes || '');
-      } else {
-        // 重置表单
-        setPhotos([]);
-        setAudioNote(null);
-        setCheckIn(null);
-        setRating(null);
-        setTextNotes('');
-      }
+    if (draft) {
+      // 有草稿：恢复草稿数据
+      setPhotos(draft.photos || []);
+      setAudioNote(draft.audioNote || null);
+      setCheckIn(draft.checkIn || null);
+      setRating(draft.rating || null);
+      setTextNotes(draft.textNotes || '');
+    } else {
+      // 无草稿：重置表单为空
+      setPhotos([]);
+      setAudioNote(null);
+      setCheckIn(null);
+      setRating(null);
+      setTextNotes('');
     }
-  }, [currentMerchant, merchants, saveDraft, loadDraft]);
-
-  // 加载当前商户草稿
-  useEffect(() => {
-    if (currentMerchant) {
-      const draft = loadDraft(currentMerchant.id);
-      if (draft) {
-        setPhotos(draft.photos || []);
-        setAudioNote(draft.audioNote || null);
-        setCheckIn(draft.checkIn || null);
-        setRating(draft.rating || null);
-        setTextNotes(draft.textNotes || '');
-      }
-    }
-  }, [currentMerchant, loadDraft]);
+  }, [currentMerchant?.id, loadDraft]); // 依赖currentMerchant.id，确保商户切换时触发
 
   // 上一家商户
   const goToPrevious = () => {
@@ -398,10 +386,12 @@ export default function BatchInspectionPage() {
                 <h2 className="text-lg font-semibold text-gray-900">快捷签到</h2>
               </div>
               <QuickCheckIn
+                key={`checkin-${currentMerchant.id}`}
                 merchantId={currentMerchant.id}
                 merchantName={currentMerchant.name}
                 merchantLocation={DEFAULT_MERCHANT_LOCATION}
                 merchant={currentMerchant}
+                initialCheckIn={checkIn}
                 onCheckIn={setCheckIn}
               />
             </div>
@@ -413,7 +403,12 @@ export default function BatchInspectionPage() {
                 <h2 className="text-lg font-semibold text-gray-900">拍照记录</h2>
                 <span className="text-sm text-gray-500">({photos.length}/5)</span>
               </div>
-              <ImageUploader maxImages={5} onImagesChange={setPhotos} />
+              <ImageUploader
+                key={`images-${currentMerchant.id}`}
+                maxImages={5}
+                onImagesChange={setPhotos}
+                initialImages={photos}
+              />
             </div>
 
             {/* 语音笔记 */}
@@ -423,6 +418,7 @@ export default function BatchInspectionPage() {
                 <h2 className="text-lg font-semibold text-gray-900">语音笔记</h2>
               </div>
               <VoiceRecorder
+                key={`voice-${currentMerchant.id}`}
                 maxDuration={120}
                 withSpeechRecognition={true}
                 onRecordComplete={(voiceNote) => {
@@ -438,7 +434,9 @@ export default function BatchInspectionPage() {
                 <h2 className="text-lg font-semibold text-gray-900">快速评分</h2>
               </div>
               <QuickRatingComponent
+                key={`rating-${currentMerchant.id}`}
                 merchantId={currentMerchant.id}
+                initialRatings={rating?.ratings}
                 onRatingChange={setRating}
               />
             </div>

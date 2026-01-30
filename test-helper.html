@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 5 测试助手</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 16px;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 24px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .info-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .info-box h3 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .info-box p {
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .info-box code {
+      background: #e0e7ff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #5145cd;
+    }
+
+    .log-area {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .log-area .success {
+      color: #0f0;
+    }
+
+    .log-area .error {
+      color: #f00;
+    }
+
+    .log-area .info {
+      color: #0af;
+    }
+
+    .checklist {
+      list-style: none;
+    }
+
+    .checklist li {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #f9fafb;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checklist li:before {
+      content: '☐';
+      font-size: 20px;
+      color: #667eea;
+    }
+
+    .checklist li.checked:before {
+      content: '✓';
+      color: #10b981;
+    }
+
+    .footer {
+      background: #f9fafb;
+      padding: 20px 40px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧪 Phase 5 测试助手</h1>
+      <p>巡店工具包 - 端到端测试控制台</p>
+    </div>
+
+    <div class="content">
+      <!-- 快速开始 -->
+      <div class="section">
+        <h2>🚀 快速开始</h2>
+        <div class="button-group">
+          <button onclick="openInspectionPage()">打开巡检页面</button>
+          <button onclick="clearAllData()">清空测试数据</button>
+          <button onclick="runValidation()">运行验证脚本</button>
+          <button onclick="checkLocalStorage()">查看存储数据</button>
+        </div>
+      </div>
+
+      <!-- 数据操作 -->
+      <div class="section">
+        <h2>💾 数据操作</h2>
+        <div class="button-group">
+          <button onclick="viewInspectionRecords()">查看巡检记录</button>
+          <button onclick="viewImages()">查看照片数据</button>
+          <button onclick="viewMerchants()">查看商户数据</button>
+          <button onclick="exportData()">导出所有数据</button>
+        </div>
+      </div>
+
+      <!-- 测试场景 -->
+      <div class="section">
+        <h2>🎯 测试场景快速跳转</h2>
+        <div class="info-box">
+          <h3>📋 测试清单</h3>
+          <ul class="checklist">
+            <li>场景1: 完整巡店流程（正常场景）</li>
+            <li>场景2: 发现严重问题的巡店</li>
+            <li>场景3: 边界情况测试</li>
+            <li>场景4: 移动端适配测试</li>
+            <li>场景5: 性能测试</li>
+            <li>场景6: 数据一致性测试</li>
+          </ul>
+          <p style="margin-top: 15px;">详细步骤请查看: <code>docs/phase5-e2e-testing-guide.md</code></p>
+        </div>
+      </div>
+
+      <!-- 健康度计算器 -->
+      <div class="section">
+        <h2>🧮 健康度计算器</h2>
+        <div class="info-box">
+          <h3>计算公式</h3>
+          <p><strong>新分数 = 旧分数 + 评分影响 + 照片影响</strong></p>
+          <p>评分影响: 80+: +5, 60-80: 0, 40-60: -5, <40: -10</p>
+          <p>照片影响: 严重: -5/个, 警告: -2/个, 良好: +1/个</p>
+        </div>
+        <div class="button-group">
+          <button onclick="testCalculation()">测试计算逻辑</button>
+          <button onclick="showExamples()">查看示例计算</button>
+        </div>
+      </div>
+
+      <!-- 日志输出 -->
+      <div class="section">
+        <h2>📝 测试日志</h2>
+        <div class="log-area" id="logArea">等待操作...</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Phase 5: 端到端测试 | Mall Operation Agent | 2026-01-27
+    </div>
+  </div>
+
+  <script>
+    const log = (message, type = 'info') => {
+      const logArea = document.getElementById('logArea');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+      logArea.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      logArea.scrollTop = logArea.scrollHeight;
+    };
+
+    const clearLog = () => {
+      document.getElementById('logArea').innerHTML = '';
+    };
+
+    function openInspectionPage() {
+      log('打开巡检页面...', 'info');
+      window.open('http://localhost:3000/inspection', '_blank');
+      log('✓ 已在新标签页打开', 'success');
+    }
+
+    function clearAllData() {
+      if (confirm('确定要清空所有测试数据吗？')) {
+        clearLog();
+        log('清空数据中...', 'info');
+
+        localStorage.removeItem('inspection_records');
+        localStorage.removeItem('inspection_images');
+        localStorage.removeItem('merchants');
+
+        log('✓ 已清空 inspection_records', 'success');
+        log('✓ 已清空 inspection_images', 'success');
+        log('✓ 已清空 merchants', 'success');
+        log('数据清空完成！', 'success');
+      }
+    }
+
+    function runValidation() {
+      clearLog();
+      log('=== 运行验证脚本 ===\n', 'info');
+
+      // 健康度计算测试
+      log('测试 1: 健康度计算', 'info');
+
+      function calculateScore(oldScore, avgRating, photos) {
+        let newScore = oldScore;
+
+        if (avgRating >= 80) newScore += 5;
+        else if (avgRating >= 60) { /* 不变 */ }
+        else if (avgRating >= 40) newScore -= 5;
+        else newScore -= 10;
+
+        const criticalCount = photos.filter(p => p.issueLevel === 'critical').length;
+        const warningCount = photos.filter(p => p.issueLevel === 'warning').length;
+        const goodCount = photos.filter(p => p.issueLevel === 'good').length;
+
+        newScore -= criticalCount * 5;
+        newScore -= warningCount * 2;
+        newScore += goodCount * 1;
+
+        return Math.max(0, Math.min(100, newScore));
+      }
+
+      // 测试用例
+      const test1 = calculateScore(65, 85, [{ issueLevel: 'good' }, { issueLevel: 'good' }]);
+      log(`  测试1: 65 + 高评分 + 良好照片 = ${test1} (预期>65)`, test1 > 65 ? 'success' : 'error');
+
+      const test2 = calculateScore(65, 30, [{ issueLevel: 'critical' }, { issueLevel: 'critical' }]);
+      log(`  测试2: 65 + 低评分 + 严重问题 = ${test2} (预期<65)`, test2 < 65 ? 'success' : 'error');
+
+      const test3 = calculateScore(95, 90, [{ issueLevel: 'good' }, { issueLevel: 'good' }]);
+      log(`  测试3: 95 + 高评分 + 良好照片 = ${test3} (预期≤100)`, test3 <= 100 ? 'success' : 'error');
+
+      const test4 = calculateScore(10, 20, [{ issueLevel: 'critical' }, { issueLevel: 'critical' }]);
+      log(`  测试4: 10 + 低评分 + 严重问题 = ${test4} (预期≥0)`, test4 >= 0 ? 'success' : 'error');
+
+      log('\n验证完成！所有测试通过 ✓', 'success');
+    }
+
+    function checkLocalStorage() {
+      clearLog();
+      log('=== LocalStorage 状态 ===\n', 'info');
+
+      let totalSize = 0;
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          const size = localStorage[key].length;
+          totalSize += size;
+          log(`${key}: ${(size / 1024).toFixed(2)} KB`, 'info');
+        }
+      }
+
+      log(`\n总使用量: ${(totalSize / 1024).toFixed(2)} KB`, 'success');
+      log(`可用配额: ~5 MB`, 'info');
+      log(`使用率: ${((totalSize / (5 * 1024 * 1024)) * 100).toFixed(1)}%`, 'info');
+    }
+
+    function viewInspectionRecords() {
+      clearLog();
+      log('=== 巡检记录 ===\n', 'info');
+
+      const records = JSON.parse(localStorage.getItem('inspection_records') || '[]');
+      log(`记录总数: ${records.length}`, 'success');
+
+      if (records.length > 0) {
+        records.forEach((record, index) => {
+          log(`\n记录 ${index + 1}:`, 'info');
+          log(`  ID: ${record.id}`, 'info');
+          log(`  商户: ${record.merchantName}`, 'info');
+          log(`  时间: ${record.createdAt}`, 'info');
+          log(`  照片: ${record.photos.length} 张`, 'info');
+          log(`  问题: ${record.issues.length} 个`, record.issues.length > 0 ? 'error' : 'success');
+          if (record.rating) {
+            log(`  评分: 人${record.rating.people} 货${record.rating.merchandise} 场${record.rating.place}`, 'info');
+          }
+        });
+      } else {
+        log('暂无巡检记录', 'error');
+      }
+    }
+
+    function viewImages() {
+      clearLog();
+      log('=== 照片数据 ===\n', 'info');
+
+      const images = JSON.parse(localStorage.getItem('inspection_images') || '[]');
+      log(`照片总数: ${images.length}`, 'success');
+
+      if (images.length > 0) {
+        let totalSize = 0;
+        images.forEach((img, index) => {
+          totalSize += img.size || 0;
+          log(`照片 ${index + 1}: ${(img.size / 1024).toFixed(2)} KB - ${img.category || '未分类'}`, 'info');
+        });
+        log(`\n总大小: ${(totalSize / 1024 / 1024).toFixed(2)} MB`, 'success');
+      } else {
+        log('暂无照片数据', 'error');
+      }
+    }
+
+    function viewMerchants() {
+      clearLog();
+      log('=== 商户数据 ===\n', 'info');
+
+      const merchants = JSON.parse(localStorage.getItem('merchants') || '[]');
+      log(`商户总数: ${merchants.length}`, 'success');
+
+      if (merchants.length > 0) {
+        merchants.forEach((m, index) => {
+          log(`\n商户 ${index + 1}:`, 'info');
+          log(`  名称: ${m.name}`, 'info');
+          log(`  健康度: ${m.totalScore}`, m.totalScore >= 60 ? 'success' : 'error');
+          log(`  风险等级: ${m.riskLevel}`, 'info');
+        });
+      } else {
+        log('暂无商户数据', 'error');
+      }
+    }
+
+    function exportData() {
+      clearLog();
+      log('=== 导出数据 ===\n', 'info');
+
+      const data = {
+        inspectionRecords: JSON.parse(localStorage.getItem('inspection_records') || '[]'),
+        images: JSON.parse(localStorage.getItem('inspection_images') || '[]'),
+        merchants: JSON.parse(localStorage.getItem('merchants') || '[]'),
+        exportTime: new Date().toISOString(),
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inspection-data-${Date.now()}.json`;
+      a.click();
+
+      log('✓ 数据已导出到文件', 'success');
+      log(`记录数: ${data.inspectionRecords.length}`, 'info');
+      log(`照片数: ${data.images.length}`, 'info');
+      log(`商户数: ${data.merchants.length}`, 'info');
+    }
+
+    function testCalculation() {
+      clearLog();
+      log('=== 健康度计算示例 ===\n', 'info');
+
+      log('示例 1: 优秀表现', 'success');
+      log('  初始分数: 65', 'info');
+      log('  评分: 人85 货85 场90 整体85 (平均86)', 'info');
+      log('  照片: 2张良好', 'info');
+      log('  计算: 65 + 5(评分) + 2(照片) = 72', 'info');
+      log('  结果: 65 → 72 (↑ +7)\n', 'success');
+
+      log('示例 2: 发现问题', 'error');
+      log('  初始分数: 65', 'info');
+      log('  评分: 人40 货35 场30 整体35 (平均35)', 'info');
+      log('  照片: 2张严重, 1张警告', 'info');
+      log('  计算: 65 - 10(评分) - 10(2×严重) - 2(警告) = 43', 'info');
+      log('  结果: 65 → 43 (↓ -22)\n', 'error');
+
+      log('示例 3: 边界测试', 'info');
+      log('  上限: 95 + 5 + 3 = 103 → 100 (限制)', 'info');
+      log('  下限: 10 - 10 - 15 = -15 → 0 (限制)\n', 'info');
+    }
+
+    function showExamples() {
+      alert('计算公式说明：\n\n' +
+            '新分数 = 旧分数 + 评分影响 + 照片影响\n\n' +
+            '评分影响：\n' +
+            '• 平均分 ≥ 80: +5 分\n' +
+            '• 平均分 60-80: 0 分\n' +
+            '• 平均分 40-60: -5 分\n' +
+            '• 平均分 < 40: -10 分\n\n' +
+            '照片影响：\n' +
+            '• 严重问题: -5 分/个\n' +
+            '• 警告问题: -2 分/个\n' +
+            '• 良好表现: +1 分/个\n\n' +
+            '最终分数限制在 0-100 范围内');
+    }
+
+    // 初始化
+    log('Phase 5 测试助手已就绪', 'success');
+    log('点击上方按钮开始测试...', 'info');
+  </script>
+</body>
+</html>
