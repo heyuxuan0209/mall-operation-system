@@ -6,6 +6,7 @@ import knowledgeBase from '@/data/cases/knowledge_base.json';
 import HealthTrendChart from '@/components/HealthTrendChart';
 import IndustryBenchmark from '@/components/IndustryBenchmark';
 import { merchantDataManager } from '@/utils/merchantDataManager';
+import Link from 'next/link';
 
 export default function HealthMonitoringPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
@@ -246,6 +247,14 @@ export default function HealthMonitoringPage() {
             <option value="low">低风险</option>
             <option value="none">无风险</option>
           </select>
+
+          <Link
+            href="/compare"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors whitespace-nowrap"
+          >
+            <i className="fa-solid fa-chart-column"></i>
+            <span className="hidden sm:inline">商户对比</span>
+          </Link>
         </div>
       </div>
 
