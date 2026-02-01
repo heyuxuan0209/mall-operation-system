@@ -59,6 +59,27 @@ export default function InspectionPage() {
     setMerchant(merchantData || mockMerchants[0]);
   }, []);
 
+  // 初始化返回导航参数（必须在 early return 之前）
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setFromArchive(urlParams.get('fromArchive') === 'true');
+
+      const from = urlParams.get('from');
+      if (from) {
+        setReturnPath(from);
+        // 根据来源路径设置返回按钮文字
+        if (from === '/health') {
+          setReturnLabel('返回健康度监控');
+        } else if (from === '/tasks') {
+          setReturnLabel('返回任务中心');
+        } else {
+          setReturnLabel('返回');
+        }
+      }
+    }
+  }, []);
+
   // 如果商户数据还未加载，显示加载状态
   if (!merchant) {
     return (
@@ -98,26 +119,6 @@ export default function InspectionPage() {
   };
 
   const canSave = checkIn !== null;
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      setFromArchive(urlParams.get('fromArchive') === 'true');
-
-      const from = urlParams.get('from');
-      if (from) {
-        setReturnPath(from);
-        // 根据来源路径设置返回按钮文字
-        if (from === '/health') {
-          setReturnLabel('返回健康度监控');
-        } else if (from === '/tasks') {
-          setReturnLabel('返回任务中心');
-        } else {
-          setReturnLabel('返回');
-        }
-      }
-    }
-  }, []);
 
   // 获取返回链接（当不是从档案跳转时使用）
   const getBackLink = () => {
