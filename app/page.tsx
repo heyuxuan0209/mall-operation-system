@@ -401,7 +401,7 @@ export default function DashboardPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">健康度</span>
                   <span className={merchant.totalScore < 60 ? 'text-red-600 font-semibold' : 'text-gray-900'}>
-                    {merchant.totalScore}分
+                    {merchant.totalScore || 0}分
                   </span>
                 </div>
               </div>
@@ -512,7 +512,7 @@ export default function DashboardPage() {
                           <div>
                             <p className="text-xs text-gray-500">健康度</p>
                             <p className={`text-sm font-medium mt-1 ${merchant.totalScore < 60 ? 'text-red-600' : 'text-gray-900'}`}>
-                              {merchant.totalScore}分
+                              {merchant.totalScore || 0}分
                             </p>
                           </div>
                         </div>
@@ -550,7 +550,7 @@ export default function DashboardPage() {
                             </td>
                             <td className="py-3 px-4 text-sm">
                               <span className={merchant.totalScore < 60 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
-                                {merchant.totalScore}分
+                                {merchant.totalScore || 0}分
                               </span>
                             </td>
                             <td className="py-3 px-4">
@@ -634,7 +634,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm text-gray-500">健康度评分</p>
                     <p className={`font-medium ${selectedMerchant.totalScore < 60 ? 'text-red-600' : 'text-gray-900'}`}>
-                      {selectedMerchant.totalScore}分
+                      {selectedMerchant.totalScore || 0}分
                     </p>
                   </div>
                 </div>
@@ -903,7 +903,7 @@ export default function DashboardPage() {
                         <div>
                           <p className="text-xs text-gray-500">健康度</p>
                           <p className={`text-sm font-medium mt-1 ${merchant.totalScore < 60 ? 'text-red-600' : 'text-gray-900'}`}>
-                            {merchant.totalScore}分
+                            {merchant.totalScore || 0}分
                           </p>
                         </div>
                       </div>
@@ -952,7 +952,7 @@ export default function DashboardPage() {
                           </td>
                           <td className="py-3 px-4 text-sm">
                             <span className={merchant.totalScore < 60 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
-                              {merchant.totalScore}分
+                              {merchant.totalScore || 0}分
                             </span>
                           </td>
                           <td className="py-3 px-4">
