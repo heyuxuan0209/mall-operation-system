@@ -36,17 +36,17 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
       </div>
 
       {/* 摘要统计卡片 */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
-          <div className="text-sm text-gray-600 mb-1">总措施数</div>
-          <div className="text-2xl font-bold text-gray-900">{summary.totalMeasures}</div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-4 rounded-lg border border-gray-200">
+          <div className="text-xs md:text-sm text-gray-600 mb-1">总措施数</div>
+          <div className="text-xl md:text-2xl font-bold text-gray-900 truncate">{summary.totalMeasures}</div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-          <div className="text-sm text-green-700 mb-1">高效措施</div>
-          <div className="text-2xl font-bold text-green-700">
-            {summary.highEffectCount}
-            <span className="text-sm ml-1">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 md:p-4 rounded-lg border border-green-200">
+          <div className="text-xs md:text-sm text-green-700 mb-1">高效措施</div>
+          <div className="text-xl md:text-2xl font-bold text-green-700">
+            <span className="truncate block">{summary.highEffectCount}</span>
+            <span className="text-xs md:text-sm">
               ({summary.totalMeasures > 0
                 ? Math.round((summary.highEffectCount / summary.totalMeasures) * 100)
                 : 0}%)
@@ -54,11 +54,11 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
-          <div className="text-sm text-yellow-700 mb-1">中效措施</div>
-          <div className="text-2xl font-bold text-yellow-700">
-            {summary.mediumEffectCount}
-            <span className="text-sm ml-1">
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 md:p-4 rounded-lg border border-yellow-200">
+          <div className="text-xs md:text-sm text-yellow-700 mb-1">中效措施</div>
+          <div className="text-xl md:text-2xl font-bold text-yellow-700">
+            <span className="truncate block">{summary.mediumEffectCount}</span>
+            <span className="text-xs md:text-sm">
               ({summary.totalMeasures > 0
                 ? Math.round((summary.mediumEffectCount / summary.totalMeasures) * 100)
                 : 0}%)
@@ -66,11 +66,11 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
-          <div className="text-sm text-red-700 mb-1">低效措施</div>
-          <div className="text-2xl font-bold text-red-700">
-            {summary.lowEffectCount}
-            <span className="text-sm ml-1">
+        <div className="bg-gradient-to-br from-red-50 to-red-100 p-3 md:p-4 rounded-lg border border-red-200">
+          <div className="text-xs md:text-sm text-red-700 mb-1">低效措施</div>
+          <div className="text-xl md:text-2xl font-bold text-red-700">
+            <span className="truncate block">{summary.lowEffectCount}</span>
+            <span className="text-xs md:text-sm">
               ({summary.totalMeasures > 0
                 ? Math.round((summary.lowEffectCount / summary.totalMeasures) * 100)
                 : 0}%)
@@ -78,15 +78,15 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-          <div className="text-sm text-blue-700 mb-1">平均改善值</div>
-          <div className="text-2xl font-bold text-blue-700">+{summary.avgImprovementAll}分</div>
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 md:p-4 rounded-lg border border-blue-200">
+          <div className="text-xs md:text-sm text-blue-700 mb-1">平均改善值</div>
+          <div className="text-xl md:text-2xl font-bold text-blue-700 truncate">+{summary.avgImprovementAll}分</div>
         </div>
       </div>
 
       {/* 措施效果排行榜 */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-6">
+        <h4 className="text-sm md:text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <i className="fas fa-trophy text-yellow-500"></i>
           措施效果排行榜（Top 10）
         </h4>
@@ -95,13 +95,13 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
           {measureRanking.slice(0, 10).map((stat, index) => (
             <div
               key={stat.measure}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
             >
-              {/* 排名 */}
-              <div className="flex items-center gap-3 flex-1">
+              {/* 排名和措施名称 */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div
                   className={`
-                    w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
+                    w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                     ${index === 0 ? 'bg-yellow-100 text-yellow-700' : ''}
                     ${index === 1 ? 'bg-gray-200 text-gray-700' : ''}
                     ${index === 2 ? 'bg-orange-100 text-orange-700' : ''}
@@ -112,18 +112,18 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
                 </div>
 
                 {/* 措施名称 */}
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">{stat.measure}</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 truncate">{stat.measure}</div>
+                  <div className="text-xs text-gray-500 mt-1 truncate">
                     使用{stat.totalUses}次 · 目标维度: {stat.targetDimensions.join('、')}
                   </div>
                 </div>
               </div>
 
-              {/* 平均改善值 */}
-              <div className="flex items-center gap-4">
+              {/* 统计数据 */}
+              <div className="flex items-center gap-3 md:gap-4 flex-wrap">
                 <div className="text-right">
-                  <div className="text-lg font-bold text-green-600">+{stat.avgImprovement}分</div>
+                  <div className="text-base md:text-lg font-bold text-green-600">+{stat.avgImprovement}分</div>
                   <div className="text-xs text-gray-500">平均改善</div>
                 </div>
 
@@ -143,19 +143,19 @@ export function MeasureEffectivenessAnalysis({ tasks }: MeasureEffectivenessAnal
                 </div>
 
                 {/* 有效性标签 */}
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   {stat.highEffectCount > 0 && (
-                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded whitespace-nowrap">
                       高效×{stat.highEffectCount}
                     </span>
                   )}
                   {stat.mediumEffectCount > 0 && (
-                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">
+                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded whitespace-nowrap">
                       中效×{stat.mediumEffectCount}
                     </span>
                   )}
                   {stat.lowEffectCount > 0 && (
-                    <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">
+                    <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded whitespace-nowrap">
                       低效×{stat.lowEffectCount}
                     </span>
                   )}

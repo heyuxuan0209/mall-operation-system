@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Merchant } from '@/types';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import HealthTrendChart from '@/components/HealthTrendChart';
@@ -10,7 +11,8 @@ import ReturnToArchiveButton from '@/components/ui/ReturnToArchiveButton';
 import { merchantDataManager } from '@/utils/merchantDataManager';
 import Link from 'next/link';
 
-export default function HealthMonitoringPage() {
+function HealthMonitoringContent() {
+  const searchParams = useSearchParams();
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [filterRisk, setFilterRisk] = useState<string>('ALL');
   const [showActionModal, setShowActionModal] = useState(false);
@@ -52,7 +54,24 @@ export default function HealthMonitoringPage() {
     });
 
     return unsubscribe;
-  }, []);
+  }, [selectedMerchant]);
+
+  // 处理URL参数，自动选中商户
+  useEffect(() => {
+    const merchantIdParam = searchParams.get('merchantId');
+    if (merchantIdParam && merchants.length > 0) {
+      const merchant = merchants.find(m => m.id === merchantIdParam);
+      if (merchant) {
+        setSelectedMerchant(merchant);
+        // 移动端滚动到详情视图
+        if (window.innerWidth < 1280) {
+          setTimeout(() => {
+            document.getElementById('merchant-detail-view')?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+      }
+    }
+  }, [searchParams, merchants]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -749,5 +768,13 @@ export default function HealthMonitoringPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function HealthMonitoringPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">加载中...</div>}>
+      <HealthMonitoringContent />
+    </Suspense>
   );
 }

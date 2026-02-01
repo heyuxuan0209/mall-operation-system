@@ -45,21 +45,7 @@ export function StatDetailModal({ type, data, onClose }: StatDetailModalProps) {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} maxWidth="4xl">
-      {/* 标题栏 */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <i className={`fas ${getIcon()} text-indigo-600`}></i>
-          <h3 className="text-lg font-semibold text-gray-900">{getTitle()}</h3>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <i className="fas fa-times text-xl"></i>
-        </button>
-      </div>
-
+    <Modal isOpen={true} onClose={onClose} maxWidth="4xl" title={getTitle()}>
       {/* 内容区域 */}
       <div className="p-6 max-h-[70vh] overflow-y-auto">
         {type === 'snapshots' && <SnapshotList snapshots={data.snapshots || []} />}

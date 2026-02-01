@@ -55,30 +55,30 @@ export function TaskListTab({ merchantId, merchantName }: TaskListTabProps) {
   return (
     <div className="space-y-6">
       {/* 任务统计卡片 */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-lg">
-        <h3 className="text-xl font-bold mb-4">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 md:p-6 rounded-lg overflow-hidden">
+        <h3 className="text-lg md:text-xl font-bold mb-4">
           {merchantName} - 帮扶任务总览
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-            <div className="text-sm opacity-90 mb-1">总任务数</div>
-            <div className="text-3xl font-bold">{merchantTasks.length}</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="bg-white bg-opacity-20 p-3 md:p-4 rounded-lg">
+            <div className="text-xs md:text-sm opacity-90 mb-1">总任务数</div>
+            <div className="text-2xl md:text-3xl font-bold truncate">{merchantTasks.length}</div>
           </div>
-          <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-            <div className="text-sm opacity-90 mb-1">进行中</div>
-            <div className="text-3xl font-bold text-blue-200">
+          <div className="bg-white bg-opacity-20 p-3 md:p-4 rounded-lg">
+            <div className="text-xs md:text-sm opacity-90 mb-1">进行中</div>
+            <div className="text-2xl md:text-3xl font-bold text-blue-200 truncate">
               {tasksByStatus.in_progress.length}
             </div>
           </div>
-          <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-            <div className="text-sm opacity-90 mb-1">已完成</div>
-            <div className="text-3xl font-bold text-green-200">
+          <div className="bg-white bg-opacity-20 p-3 md:p-4 rounded-lg">
+            <div className="text-xs md:text-sm opacity-90 mb-1">已完成</div>
+            <div className="text-2xl md:text-3xl font-bold text-green-200 truncate">
               {tasksByStatus.completed.length}
             </div>
           </div>
-          <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-            <div className="text-sm opacity-90 mb-1">完成率</div>
-            <div className="text-3xl font-bold">
+          <div className="bg-white bg-opacity-20 p-3 md:p-4 rounded-lg">
+            <div className="text-xs md:text-sm opacity-90 mb-1">完成率</div>
+            <div className="text-2xl md:text-3xl font-bold truncate">
               {merchantTasks.length > 0
                 ? Math.round((tasksByStatus.completed.length / merchantTasks.length) * 100)
                 : 0}%

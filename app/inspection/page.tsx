@@ -11,7 +11,7 @@ import ReturnToArchiveButton from '@/components/ui/ReturnToArchiveButton';
 import { PhotoAttachment, CheckInData, QuickRating, Merchant, VoiceNote } from '@/types';
 import { inspectionServiceInstance } from '@/utils/inspectionService';
 import { DEFAULT_MERCHANT_LOCATION } from '@/utils/merchantData';
-import { merchantDataManager } from '@/utils/merchantDataManager';
+import { mockMerchants } from '@/data/merchants/mock-data';
 
 export default function InspectionPage() {
   // Phase 4: 集成保存流程和反馈弹窗
@@ -33,10 +33,10 @@ export default function InspectionPage() {
     };
   } | null>(null);
 
-  // 商户数据 - 使用统一数据管理器
+  // 商户数据
   const [merchant, setMerchant] = useState<Merchant | null>(null);
 
-  // 初始化商户数据并监听变化
+  // 初始化商户数据
   useEffect(() => {
     // 从URL参数获取商户ID，默认为M001（海底捞）
     let merchantId = 'M001';
@@ -49,16 +49,8 @@ export default function InspectionPage() {
     }
 
     // 加载商户数据
-    const merchantData = merchantDataManager.getMerchant(merchantId);
-    setMerchant(merchantData);
-
-    // 监听数据变化
-    const unsubscribe = merchantDataManager.onMerchantsChange(() => {
-      const updatedMerchant = merchantDataManager.getMerchant(merchantId);
-      setMerchant(updatedMerchant);
-    });
-
-    return unsubscribe;
+    const merchantData = mockMerchants.find(m => m.id === merchantId);
+    setMerchant(merchantData || mockMerchants[0]);
   }, []);
 
   // 如果商户数据还未加载，显示加载状态
@@ -90,8 +82,6 @@ export default function InspectionPage() {
 
   const handleCloseFeedback = () => {
     setShowFeedback(false);
-
-    // 商户数据会通过 onMerchantsChange 自动更新，无需手动刷新
 
     // 重置表单
     setPhotos([]);
