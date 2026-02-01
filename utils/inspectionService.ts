@@ -58,8 +58,8 @@ export function getMerchantProfile(merchant: Merchant): MerchantProfile {
   const { type: checklistType, items: checklist } = generateChecklist(new Date());
 
   return {
-    healthScore: totalScore,
-    riskLevel,
+    healthScore: totalScore || 0, // 防止NaN
+    riskLevel: riskLevel || 'none',
     alerts: insights.alerts,
     weakestDimension: insights.weakestDimension,
     focusPoints: insights.focusPoints,

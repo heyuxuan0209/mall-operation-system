@@ -213,7 +213,7 @@ export default function QuickCheckIn({
             <div className="flex-1">
               <div className="text-sm text-gray-500 mb-1">总体健康度</div>
               <div className="text-3xl font-bold text-gray-900">
-                {profile.healthScore}
+                {profile.healthScore?.toFixed?.(0) || 0}
                 <span className="text-lg text-gray-500 ml-1">分</span>
               </div>
             </div>
