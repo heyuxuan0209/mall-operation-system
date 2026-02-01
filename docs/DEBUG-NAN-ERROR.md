@@ -1,31 +1,39 @@
-# 待解决问题 - NaN 错误
+# NaN 错误完整修复记录
 
 **最后更新**: 2026-02-01
-**状态**: 🔴 未解决
+**状态**: ✅ 已解决
 **优先级**: P0 (阻塞)
 
 ---
 
-## 问题现象
+## ✅ 问题已完全修复
 
-**错误信息**:
-```
-Received NaN for the `children` attribute. If this is expected, cast the value to a string.
-```
-
-**错误堆栈**:
-```
-DashboardPage (file:///.../_21f5492e._.js:641:37)
-Array.map
-```
-
-**关键发现**: 错误来自 `DashboardPage`，不是巡店页面！
+所有 NaN 显示错误已修复，包括：
+- 巡店页面 ✅
+- 首页 ✅
 
 ---
 
-## 已修复部分
+## 修复总结
 
-### ✅ 巡店相关组件 (已修复)
+### 1. 首页 (app/page.tsx) ✅
+**Git Commit**: `d7c4d7e`
+
+**修复内容**: 8处 `{merchant.totalScore}` 改为 `{merchant.totalScore || 0}`
+
+**影响位置**:
+- Line 404: 待处理商户列表
+- Line 515: 统计卡片详情弹窗
+- Line 553: 统计卡片表格视图
+- Line 637: 商户详情面板
+- Line 906: AI诊断弹窗商户列表
+- Line 955: AI诊断弹窗表格视图
+
+**修复方法**:
+```bash
+sed -i '' 's/{merchant\.totalScore}/{merchant.totalScore || 0}/g' app/page.tsx
+sed -i '' 's/{selectedMerchant\.totalScore}/{selectedMerchant.totalScore || 0}/g' app/page.tsx
+```
 1. `components/inspection/QuickCheckIn.tsx` - Line 216
    ```tsx
    {profile.healthScore?.toFixed?.(0) || 0}
