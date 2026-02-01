@@ -168,7 +168,7 @@ export default function QuickRatingComponent({
   };
 
   // Phase 3: 使用加权平均计算综合评分
-  const averageScore = calculateSiteQualityFromInspection(ratings);
+  const averageScore = calculateSiteQualityFromInspection(ratings) || 0;
 
   // 找出最���弱环节
   const weakestDimension = dimensions.reduce((min, curr) =>
@@ -181,7 +181,7 @@ export default function QuickRatingComponent({
       <div className="bg-gradient-to-r from-brand-50 to-purple-50 rounded-lg p-6 text-center">
         <div className="text-sm text-gray-600 mb-2">现场品质综合评分</div>
         <div className={`text-5xl font-bold ${getScoreColor(averageScore)} mb-1`}>
-          {averageScore}
+          {Math.round(averageScore) || 0}
         </div>
         <div className="text-sm text-gray-500">{getScoreLabel(averageScore)}</div>
       </div>
@@ -227,8 +227,8 @@ export default function QuickRatingComponent({
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-lg font-bold ${getScoreColor(ratings[dim.key])}`}>
-                  {ratings[dim.key]}
+                <span className={`text-lg font-bold ${getScoreColor(ratings[dim.key] || 0)}`}>
+                  {ratings[dim.key] || 0}
                 </span>
                 <span className="text-xs text-gray-500">分</span>
               </div>
@@ -287,7 +287,7 @@ export default function QuickRatingComponent({
             <div className="flex-1">
               <div className="text-sm font-medium text-orange-900 mb-1">最薄弱环节</div>
               <div className="text-sm text-orange-700">
-                {weakestDimension.label}得分较低（{ratings[weakestDimension.key]}分），建议重点关注和改善
+                {weakestDimension.label}得分较低（{ratings[weakestDimension.key] || 0}分），建议重点关注和改善
               </div>
             </div>
           </div>

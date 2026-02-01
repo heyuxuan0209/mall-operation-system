@@ -91,12 +91,12 @@ export interface InspectionRating {
 
 export function calculateSiteQualityFromInspection(rating: InspectionRating): number {
   const weightedScore =
-    rating.staffCondition * 0.20 +
-    rating.merchandiseDisplay * 0.25 +
-    rating.storeEnvironment * 0.25 +
-    rating.managementCapability * 0.15 +
-    rating.safetyCompliance * 0.15;
-  return Math.round(weightedScore);
+    (rating.staffCondition || 0) * 0.20 +
+    (rating.merchandiseDisplay || 0) * 0.25 +
+    (rating.storeEnvironment || 0) * 0.25 +
+    (rating.managementCapability || 0) * 0.15 +
+    (rating.safetyCompliance || 0) * 0.15;
+  return Math.round(weightedScore) || 0;
 }
 
 /**
