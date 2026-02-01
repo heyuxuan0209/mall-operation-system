@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mall Operation Agent",
+  title: "商户智运Agent",
   description: "AI-powered mall operation and merchant health monitoring system",
 };
 

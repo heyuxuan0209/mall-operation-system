@@ -11,7 +11,7 @@ const menuItems = [
   { id: 'tasks', label: '帮扶', fullLabel: '帮扶任务中心', icon: 'fa-hands-holding-circle', path: '/tasks' },
   { id: 'archives', label: '档案', fullLabel: '帮扶档案库', icon: 'fa-folder-open', path: '/archives' },
   { id: 'inspection', label: '巡店', fullLabel: '现场巡店', icon: 'fa-clipboard-check', path: '/inspection' },
-  { id: 'knowledge', label: '知识库', fullLabel: '知识库沉淀', icon: 'fa-book-open', path: '/knowledge' },
+  { id: 'knowledge', label: '知识库', fullLabel: 'AI帮扶知识库', icon: 'fa-book-open', path: '/knowledge' },
 ];
 
 export default function Sidebar() {
@@ -25,8 +25,8 @@ export default function Sidebar() {
           <div className="flex items-center">
             <i className="fa-solid fa-building-user text-brand-500 text-2xl mr-3"></i>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">商户运营助手</h1>
-              <p className="text-xs text-slate-400">Mall Operation Agent</p>
+              <h1 className="text-lg font-bold tracking-tight">商户智运Agent</h1>
+              <p className="text-xs text-slate-400">Merchant SmartOps AI Agent</p>
             </div>
           </div>
         </div>
