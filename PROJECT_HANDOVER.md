@@ -1,5 +1,5 @@
 # PROJECT_HANDOVER.md
-  # Mall Operation Agent V1.1 - 项目交接文档
+  # 商户智运Agent V1.1 - 项目交接文档
 
   **文档版本**: V1.1  
   **创建日期**: 2026-01-24  
@@ -26,7 +26,7 @@
   ## 1. 项目概述
 
   ### 1.1 项目简介
-  Mall Operation Agent 是一个基于AI的商场商户健康度监控与帮扶管理系统。系统通过智能诊断、趋势预测、知识库沉淀等功能，帮助运营团队提升工作效率，实现数据驱动的精细化管理。
+  商户智运Agent 是一个基于AI的商场商户健康度监控与帮扶管理系统。系统通过智能诊断、趋势预测、AI帮扶知识库等功能，帮助运营团队提升工作效率，实现数据驱动的精细化管理。
 
   ### 1.2 核心价值
   - 🤖 **AI智能诊断**: 自动分析商户问题，推荐帮扶策略
@@ -99,7 +99,7 @@
   │   ├── aiDiagnosis.ts            # AI诊断引擎
   │   ├── healthTrendPrediction.ts  # 健康度预测
   │   ├── taskStateMachine.ts       # 任务状态机
-  │   └── knowledgeBaseSedimentation.ts  # 知识库沉淀
+  │   └── knowledgeBaseSedimentation.ts  # AI帮扶知识库
   │
   ├── types/                        # TypeScript类型定义
   ├── docs/                         # 文档
@@ -150,7 +150,7 @@
                   ↓
               cancelled
 
-  #### 3.1.3 知识库沉淀
+  #### 3.1.3 AI帮扶知识库
   **文件**: `app/knowledge/page.tsx`
 
   **功能**:

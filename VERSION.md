@@ -1,5 +1,5 @@
-# Mall Operation Agent - Version History
-# 商场运营智能体 - 版本历史
+# 商户智运Agent - Version History
+# Merchant SmartOps AI Agent - 版本历史
 
 ---
 
