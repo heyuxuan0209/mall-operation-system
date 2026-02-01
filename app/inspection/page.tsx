@@ -37,6 +37,11 @@ export default function InspectionPage() {
   // 商户数据
   const [merchant, setMerchant] = useState<Merchant | null>(null);
 
+  // 返回导航状态
+  const [fromArchive, setFromArchive] = useState(false);
+  const [returnPath, setReturnPath] = useState('');
+  const [returnLabel, setReturnLabel] = useState('');
+
   // 初始化商户数据
   useEffect(() => {
     // 从URL参数获取商户ID，默认为M001（海底捞）
@@ -93,11 +98,6 @@ export default function InspectionPage() {
   };
 
   const canSave = checkIn !== null;
-
-  // 检查是否从档案页跳转过来
-  const [fromArchive, setFromArchive] = useState(false);
-  const [returnPath, setReturnPath] = useState('');
-  const [returnLabel, setReturnLabel] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
