@@ -88,8 +88,8 @@ export default async function MerchantArchivePage({
           </div>
           <div>
             <div className="text-xs text-gray-500 mb-1">租售比</div>
-            <div className={`font-medium ${merchant.rentToSalesRatio > 25 ? 'text-red-600' : 'text-gray-900'}`}>
-              {merchant.rentToSalesRatio}%
+            <div className={`font-medium ${merchant.rentToSalesRatio > 0.25 ? 'text-red-600' : 'text-gray-900'}`}>
+              {(merchant.rentToSalesRatio * 100).toFixed(1)}%
             </div>
           </div>
           <div>
