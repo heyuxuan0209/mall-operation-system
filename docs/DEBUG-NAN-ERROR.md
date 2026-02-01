@@ -1,16 +1,18 @@
 # NaN 错误完整修复记录
 
 **最后更新**: 2026-02-01
-**状态**: ✅ 已解决
-**优先级**: P0 (阻塞)
+**状态**: ✅ 已完全解决
+**优先级**: P0 (已完成)
 
 ---
 
-## ✅ 问题已完全修复
+## ✅ 所有问题已修复
 
-所有 NaN 显示错误已修复，包括：
-- 巡店页面 ✅
-- 首页 ✅
+### 已解决问题清单
+1. ✅ NaN 显示错误（巡店页面）
+2. ✅ NaN 显示错误（首页）
+3. ✅ React Hooks 顺序错误（巡店页面）
+4. ⚠️ Hydration 警告（浏览器扩展导致，非代码问题）
 
 ---
 
@@ -34,6 +36,11 @@
 sed -i '' 's/{merchant\.totalScore}/{merchant.totalScore || 0}/g' app/page.tsx
 sed -i '' 's/{selectedMerchant\.totalScore}/{selectedMerchant.totalScore || 0}/g' app/page.tsx
 ```
+
+### 2. 巡店页面组件 ✅
+
+**修复文件**:
+
 1. `components/inspection/QuickCheckIn.tsx` - Line 216
    ```tsx
    {profile.healthScore?.toFixed?.(0) || 0}
@@ -66,106 +73,115 @@ sed -i '' 's/{selectedMerchant\.totalScore}/{selectedMerchant.totalScore || 0}/g
    riskLevel: riskLevel || 'none',
    ```
 
----
+### 3. React Hooks 顺序错误 ✅
+**Git Commit**: `755b4e5`
 
-## 待修复部分
+**问题**: `app/inspection/page.tsx` 中新增的 useState 被放在了 useEffect 之后
 
-### 🔴 首页 (app/page.tsx - DashboardPage)
-
-**问题定位**:
-- 错误堆栈指向 `DashboardPage` 第 641 行
-- 在 `Array.map` 中出现 NaN
-- 可能是商户数据、评分数据或趋势数据显示问题
-
-**需要检查的位置**:
-1. 商户列表渲染时的数字字段
-2. 健康度评分显示
-3. 统计卡片数字
-4. 趋势图数据
-
-**可能的NaN来源**:
-```tsx
-// 可能的问题代码示例
-{merchant.totalScore}           // ❌ 可能是 NaN
-{merchant.rentToSalesRatio}     // ❌ 可能是 NaN
-{stats.averageScore}            // ❌ 可能是 NaN
+**错误信息**:
+```
+React has detected a change in the order of Hooks called by InspectionPage.
+Previous render: ... 9. useEffect 10. undefined
+Next render: ... 9. useEffect 10. useState
 ```
 
-**修复模式** (应用到所有数字显示):
+**修复**: 将所有 useState 移动到组件顶部，确保 Hooks 调用顺序一致
+
+**修复前**:
 ```tsx
-// ✅ 正确的防护
+useEffect(() => { ... });  // Hook #9
+const [fromArchive, setFromArchive] = useState(false);  // ❌ Hook #10 - 顺序冲突!
+const [returnPath, setReturnPath] = useState('');
+const [returnLabel, setReturnLabel] = useState('');
+useEffect(() => { ... });  // Hook #13
+```
+
+**修复后**:
+```tsx
+// ✅ 所有 useState 在组件顶部
+const [fromArchive, setFromArchive] = useState(false);
+const [returnPath, setReturnPath] = useState('');
+const [returnLabel, setReturnLabel] = useState('');
+// 所有 useEffect 在 useState 之后
+useEffect(() => { ... });
+useEffect(() => { ... });
+```
+
+### 4. Hydration 警告 ⚠️ (非代码问题)
+
+**警告信息**:
+```
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties.
+<body youdao="bind">
+```
+
+**原因**: **有道翻译 (Youdao Translate) 浏览器扩展**在 React 水合之前修改了 HTML body 标签，添加了 `youdao="bind"` 属性
+
+**验证**: 使用 grep 检查代码中是否有常见的 hydration 错误源（Date.now(), Math.random() 等），结果为空，确认代码无问题
+
+**结论**:
+- ✅ 这是**预期行为**，非代码缺陷
+- ✅ 应用功能正常运行
+- ⚠️ 如需消除警告，可禁用有道翻译扩展或将其排除在该域名之外
+
+---
+
+## Git 提交记录
+
+| Commit | 文件 | 说明 |
+|--------|------|------|
+| `2cf4d37` | utils/inspectionService.ts | 修复 healthScore NaN |
+| `27d5da0` | QuickRating.tsx, health-calculator.ts | 修复评分组件 NaN（4处） |
+| `d7c4d7e` | app/page.tsx | 修复首页 totalScore NaN（8处） |
+| `509e6e0` | docs/DEBUG-NAN-ERROR.md | 创建调试文档 |
+| `06a0a5d` | docs/DEBUG-NAN-ERROR.md | 更新状态为已解决 |
+| `755b4e5` | app/inspection/page.tsx | 修复 React Hooks 顺序错误 |
+
+---
+
+## 防御性编程模式
+
+所有数字显示已应用以下防护模式：
+
+```tsx
+// ✅ 默认值防护
 {merchant.totalScore || 0}
-{(merchant.rentToSalesRatio * 100).toFixed(1) || '0.0'}
-{stats.averageScore?.toFixed(0) || 0}
+
+// ✅ 可选链 + 默认值
+{profile.healthScore?.toFixed?.(0) || 0}
+
+// ✅ 计算函数内部防护
+const weightedScore =
+  (rating.staffCondition || 0) * 0.20 +
+  (rating.merchandiseDisplay || 0) * 0.25 +
+  // ...
+return Math.round(weightedScore) || 0;
 ```
 
 ---
 
-## 调试步骤
-
-### 1. 确认错误页面
-- [ ] 访问首页 `/` 是否报错
-- [ ] 访问 `/health` 是否报错
-- [ ] 访问 `/inspection` 是否报错
-
-### 2. 定位具体位置
-- [ ] 检查 `app/page.tsx` 第 641 行附近代码
-- [ ] 查找所有直接显示数字的地方: `grep -n "{.*\..*}" app/page.tsx`
-- [ ] 查找所有 `.map()` 调用
-
-### 3. 数据检查
-- [ ] `mockMerchants` 数据中是否有 `totalScore` 为 undefined
-- [ ] 计算字段（如租售比）是否可能产生 NaN
-
----
-
-## Git提交记录
-
-**Commit 1**: `2cf4d37` - 修复 inspectionService.ts
-**Commit 2**: `27d5da0` - 修复 QuickRating 和 health-calculator
-
-**待提交**: 首页 NaN 修复
-
----
-
-## 下一步操作
-
-1. **立即**: 检查 `app/page.tsx` (DashboardPage)
-2. **查找**: 所有 `{...}` 包裹的数字显示
-3. **修复**: 添加 `|| 0` 或可选链 `?.`
-4. **验证**: 刷新首页确认错误消失
-5. **提交**: Git commit 完整修复
-
----
-
-## 相关文件清单
+## 相关文件清单（已完成）
 
 ### 已修复 ✅
-- `components/inspection/QuickCheckIn.tsx`
-- `components/inspection/QuickRating.tsx`
-- `skills/health-calculator.ts`
-- `utils/inspectionService.ts`
-
-### 待检查 🔍
-- `app/page.tsx` (DashboardPage) ⭐ 错误源头
-- `components/dashboard/*` (如有)
-- `app/health/page.tsx` (可能)
-- 其他显示商户数据的页面
+- `app/page.tsx` - 首页 totalScore（8处）
+- `app/inspection/page.tsx` - Hooks 顺序错误
+- `components/inspection/QuickCheckIn.tsx` - healthScore 显示
+- `components/inspection/QuickRating.tsx` - 评分显示（4处）
+- `skills/health-calculator.ts` - 计算函数
+- `utils/inspectionService.ts` - 商户档案生成
 
 ---
 
-## 临时解决方案
+## 验证清单
 
-如果需要快速解决，可以：
-1. 暂时注释掉首页的商户列表渲染
-2. 或在 `mockMerchants` 数据中确保所有数字字段都有默认值
+- ✅ 访问首页 `/` - 无 NaN 错误
+- ✅ 访问 `/health` - 无 NaN 错误
+- ✅ 访问 `/inspection` - 无 NaN 错误
+- ✅ 刷新巡店页面 - 无 Hooks 顺序错误
+- ⚠️ Hydration 警告 - 浏览器扩展导致，应用功能正常
 
 ---
 
-## Token 使用情况
+## 结论
 
-- 当前使用: ~108,000 / 200,000
-- 剩余: ~92,000
-- 状态: ✅ 充足，可以继续调试
-
-**建议**: 先提交当前代码，记录问题，然后继续排查首页。
+所有代码层面的问题已修复，应用可以正常使用。剩余的 Hydration 警告由浏览器扩展引起，不影响功能。
