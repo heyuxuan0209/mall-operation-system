@@ -3,6 +3,7 @@ import {
   RiskLevelChange,
   AssistanceArchive,
   HistoryTrendPoint,
+  Task,
 } from '@/types';
 import {
   getMerchantSnapshots,
@@ -10,6 +11,7 @@ import {
   getSnapshotsByDateRange,
   getRecentSnapshots,
 } from '@/data/history/mockHistoryData';
+import { mockTasks } from '@/data/tasks/mock-data';
 
 /**
  * 商户历史帮找档案服务类
@@ -79,15 +81,18 @@ class HistoryArchiveService {
     // 获取当前快照（最新的）
     const currentSnapshot = snapshots[snapshots.length - 1];
 
-    // 统计数据
+    // ⭐ 修正统计数据 - 基于真实任务效果计算成功率
     const improvementCount = riskChanges.filter(c => c.changeType === 'upgrade').length;
     const deteriorationCount = riskChanges.filter(c => c.changeType === 'downgrade').length;
-    const taskSnapshots = snapshots.filter(s =>
-      s.trigger.type === 'task_created' || s.trigger.type === 'task_completed'
-    );
-    const completedTaskSnapshots = snapshots.filter(s => s.trigger.type === 'task_completed');
-    const successRate = completedTaskSnapshots.length > 0
-      ? Math.round((improvementCount / completedTaskSnapshots.length) * 100)
+
+    // 获取该商户的所有任务
+    const merchantTasks = mockTasks.filter(t => t.merchantId === merchantId);
+    const completedTasks = merchantTasks.filter(t => t.status === 'completed');
+
+    // ⭐ 基于任务实际效果计算成功任务数
+    const successfulTasks = completedTasks.filter(task => this.isTaskSuccessful(task));
+    const successRate = completedTasks.length > 0
+      ? Math.round((successfulTasks.length / completedTasks.length) * 100)
       : 0;
 
     // 健康度趋势
@@ -123,8 +128,9 @@ class HistoryArchiveService {
       ? inspectionSnapshots[inspectionSnapshots.length - 1].timestamp
       : undefined;
 
-    const lastTaskCompleted = completedTaskSnapshots.length > 0
-      ? completedTaskSnapshots[completedTaskSnapshots.length - 1].timestamp
+    const taskSnapshots = snapshots.filter(s => s.trigger.type === 'task_completed');
+    const lastTaskCompleted = taskSnapshots.length > 0
+      ? taskSnapshots[taskSnapshots.length - 1].timestamp
       : undefined;
 
     const longestHighRiskPeriod = this.calculateLongestHighRiskPeriod(snapshots, riskChanges);
@@ -137,8 +143,8 @@ class HistoryArchiveService {
         riskChangeCount: riskChanges.length,
         improvementCount,
         deteriorationCount,
-        assistanceTaskCount: taskSnapshots.length,
-        completedTaskCount: completedTaskSnapshots.length,
+        assistanceTaskCount: merchantTasks.length,
+        completedTaskCount: completedTasks.length,
         successRate,
       },
       healthTrend: {
@@ -308,6 +314,32 @@ class HistoryArchiveService {
   }
 
   // ==================== 私有辅助方法 ====================
+
+  /**
+   * ⭐ 判断任务是否成功（基于实际效果）
+   * 成功标准：
+   * 1. afterMetrics 存在
+   * 2. 总评分改善 > 5分 OR 至少有1个措施effectiveness为'high'
+   */
+  private isTaskSuccessful(task: Task): boolean {
+    // 必须有 afterMetrics
+    if (!task.afterMetrics) return false;
+
+    const initialMetrics = task.beforeMetrics || task.initialMetrics;
+    if (!initialMetrics) return false;
+
+    // 计算总评分变化
+    const beforeTotal = Object.values(initialMetrics).reduce((a, b) => a + b, 0) / 5;
+    const afterTotal = Object.values(task.afterMetrics).reduce((a, b) => a + b, 0) / 5;
+    const scoreImproved = afterTotal - beforeTotal > 5;
+
+    // 检查是否有高效措施
+    const hasHighEffectMeasure = task.measureEffects?.some(
+      m => m.effectiveness === 'high'
+    ) || false;
+
+    return scoreImproved || hasHighEffectMeasure;
+  }
 
   /**
    * 计算趋势（改善/恶化/稳定）

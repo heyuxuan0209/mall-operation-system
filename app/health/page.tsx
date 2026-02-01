@@ -6,6 +6,7 @@ import knowledgeBase from '@/data/cases/knowledge_base.json';
 import HealthTrendChart from '@/components/HealthTrendChart';
 import IndustryBenchmark from '@/components/IndustryBenchmark';
 import MerchantHistoryArchive from '@/components/merchants/MerchantHistoryArchive';
+import ReturnToArchiveButton from '@/components/ui/ReturnToArchiveButton';
 import { merchantDataManager } from '@/utils/merchantDataManager';
 import Link from 'next/link';
 
@@ -254,6 +255,9 @@ export default function HealthMonitoringPage() {
     <div className="h-full flex flex-col relative space-y-4 lg:space-y-6">
       {/* 工具栏 */}
       <div className="flex gap-2 w-full xl:w-auto flex-wrap items-center">
+        {/* 返回档案按钮 */}
+        <ReturnToArchiveButton merchantId={selectedMerchant?.id} />
+
         {/* 筛选器 */}
         <select
           value={filterRisk}
@@ -425,7 +429,16 @@ export default function HealthMonitoringPage() {
               <div className="border-b border-slate-100 pb-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg xl:text-xl font-bold text-slate-900">{selectedMerchant.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg xl:text-xl font-bold text-slate-900">{selectedMerchant.name}</h3>
+                      <Link
+                        href={`/archives/${selectedMerchant.id}`}
+                        className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1 transition-colors"
+                      >
+                        <i className="fas fa-folder-open text-xs"></i>
+                        档案
+                      </Link>
+                    </div>
                     <p className="text-slate-500 text-xs xl:text-sm">{selectedMerchant.category} • {selectedMerchant.floor}</p>
                   </div>
                   {getRiskBadge(selectedMerchant.riskLevel)}

@@ -7,6 +7,7 @@ import VoiceRecorder from '@/components/inspection/VoiceRecorder';
 import QuickCheckIn from '@/components/inspection/QuickCheckIn';
 import QuickRatingComponent from '@/components/inspection/QuickRating';
 import SaveFeedbackModal from '@/components/inspection/SaveFeedbackModal';
+import ReturnToArchiveButton from '@/components/ui/ReturnToArchiveButton';
 import { PhotoAttachment, CheckInData, QuickRating, Merchant, VoiceNote } from '@/types';
 import { inspectionServiceInstance } from '@/utils/inspectionService';
 import { DEFAULT_MERCHANT_LOCATION } from '@/utils/merchantData';
@@ -102,7 +103,17 @@ export default function InspectionPage() {
 
   const canSave = checkIn !== null;
 
-  // 获取返回链接
+  // 检查是否从档案页跳转过来
+  const [fromArchive, setFromArchive] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setFromArchive(urlParams.get('fromArchive') === 'true');
+    }
+  }, []);
+
+  // 获取返回链接（当不是从档案跳转时使用）
   const getBackLink = () => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -119,14 +130,20 @@ export default function InspectionPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* 返回按钮 */}
-              <a
-                href={getBackLink()}
-                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
-                title="返回"
-              >
-                <i className="fa-solid fa-arrow-left"></i>
-              </a>
+              {/* 返回按钮 - 从档案跳转时显示返回档案按钮，否则显示普通返回 */}
+              {fromArchive ? (
+                <div className="flex items-center gap-2">
+                  <ReturnToArchiveButton merchantId={merchant.id} />
+                </div>
+              ) : (
+                <a
+                  href={getBackLink()}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
+                  title="返回"
+                >
+                  <i className="fa-solid fa-arrow-left"></i>
+                </a>
+              )}
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">现场巡店</h1>
                 <p className="text-sm text-gray-500 mt-1">

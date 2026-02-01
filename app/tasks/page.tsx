@@ -12,6 +12,7 @@ import MilestoneManager from '@/components/MilestoneManager';
 import TaskCalendar from '@/components/TaskCalendar';
 import AssistanceEffect from '@/components/AssistanceEffect';
 import WorkflowTemplate from '@/components/WorkflowTemplate';
+import ReturnToArchiveButton from '@/components/ui/ReturnToArchiveButton';
 
 function TaskCenterContent() {
   const searchParams = useSearchParams();
@@ -581,7 +582,10 @@ function TaskCenterContent() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* 返回档案按钮 */}
+          <ReturnToArchiveButton merchantId={selectedTask?.merchantId} />
+
           <button
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${

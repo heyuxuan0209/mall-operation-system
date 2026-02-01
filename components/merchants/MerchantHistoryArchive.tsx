@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { Merchant, AssistanceArchive, MerchantSnapshot, RiskLevelChange, HistoryTrendPoint } from '@/types';
 import { historyArchiveService } from '@/utils/historyArchiveService';
 import AssistanceArchiveSummary from './AssistanceArchiveSummary';
 import RiskLevelTimeline from './RiskLevelTimeline';
 import HealthScoreTrendChart from './HealthScoreTrendChart';
+import TaskListTab from './TaskListTab';
 
 interface MerchantHistoryArchiveProps {
   merchant: Merchant;
@@ -18,7 +20,7 @@ interface MerchantHistoryArchiveProps {
 export default function MerchantHistoryArchive({
   merchant,
 }: MerchantHistoryArchiveProps) {
-  const [activeTab, setActiveTab] = useState<'summary' | 'timeline' | 'trend'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'timeline' | 'trend' | 'tasks'>('summary');
   const [trendDays, setTrendDays] = useState(90); // 默认显示90天
   const [isExporting, setIsExporting] = useState(false);
 
@@ -73,6 +75,17 @@ export default function MerchantHistoryArchive({
 
   return (
     <div className="space-y-6">
+      {/* 查看完整档案按钮 */}
+      <div className="flex justify-end">
+        <Link
+          href={`/archives/${merchant.id}`}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+        >
+          <i className="fas fa-expand-alt"></i>
+          查看完整档案
+        </Link>
+      </div>
+
       {/* Tab导航 */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="flex border-b border-slate-200">
@@ -114,6 +127,22 @@ export default function MerchantHistoryArchive({
             <i className="fa-solid fa-chart-line mr-2"></i>
             健康度趋势
           </button>
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className={`flex-1 px-6 py-4 text-sm font-medium transition ${
+              activeTab === 'tasks'
+                ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
+                : 'bg-slate-50 text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <i className="fa-solid fa-list-check mr-2"></i>
+            帮扶任务清单
+            {archive && archive.stats.assistanceTaskCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full text-xs">
+                {archive.stats.assistanceTaskCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Tab内容 */}
@@ -122,6 +151,7 @@ export default function MerchantHistoryArchive({
           {activeTab === 'summary' && (
             <AssistanceArchiveSummary
               archive={archive}
+              merchantId={merchant.id}
               onExport={handleExport}
             />
           )}
@@ -201,6 +231,14 @@ export default function MerchantHistoryArchive({
                 )}
               </div>
             </div>
+          )}
+
+          {/* 帮扶任务清单 */}
+          {activeTab === 'tasks' && (
+            <TaskListTab
+              merchantId={merchant.id}
+              merchantName={merchant.name}
+            />
           )}
         </div>
       </div>

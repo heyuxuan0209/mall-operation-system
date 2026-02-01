@@ -9,6 +9,7 @@ const menuItems = [
   { id: 'health', label: '监控', fullLabel: '健康度监控', icon: 'fa-heart-pulse', path: '/health' },
   { id: 'risk', label: '派单', fullLabel: '风险与派单', icon: 'fa-triangle-exclamation', path: '/risk' },
   { id: 'tasks', label: '帮扶', fullLabel: '帮扶任务中心', icon: 'fa-hands-holding-circle', path: '/tasks' },
+  { id: 'archives', label: '档案', fullLabel: '帮扶档案库', icon: 'fa-folder-open', path: '/archives' },
   { id: 'inspection', label: '巡店', fullLabel: '现场巡店', icon: 'fa-clipboard-check', path: '/inspection' },
   { id: 'knowledge', label: '知识库', fullLabel: '知识库沉淀', icon: 'fa-book-open', path: '/knowledge' },
 ];
@@ -31,7 +32,8 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 py-6 space-y-1">
           {menuItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = pathname === item.path ||
+              (item.path === '/archives' && pathname.startsWith('/archives/'));
             return (
               <Link
                 key={item.id}
@@ -54,7 +56,8 @@ export default function Sidebar() {
       */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 z-30 flex justify-around items-center py-2 pb-safe-area shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         {menuItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname === item.path ||
+            (item.path === '/archives' && pathname.startsWith('/archives/'));
           return (
             <Link
               key={item.id}

@@ -1,5 +1,6 @@
 import { MerchantSnapshot, RiskLevelChange } from '@/types';
 import { mockMerchants } from '../merchants/mock-data';
+import { mockTasks } from '../tasks/mock-data';
 
 // ==================== 辅助函数 ====================
 
@@ -45,65 +46,172 @@ function generateMerchantSnapshots(merchantId: string, monthsBack: number = 6): 
   if (!merchant) return [];
 
   const snapshots: MerchantSnapshot[] = [];
-  const snapshotsCount = Math.floor(Math.random() * 15) + 20; // 20-35个快照
-  const currentScore = merchant.totalScore;
 
-  // 生成从过去到现在的快照（评分逐渐改善或恶化）
-  for (let i = snapshotsCount - 1; i >= 0; i--) {
-    const daysAgo = Math.floor((i / snapshotsCount) * (monthsBack * 30));
+  // ⭐ 获取该商户的真实帮扶任务
+  const merchantTasks = mockTasks.filter(t => t.merchantId === merchantId);
 
-    // 生成评分趋势（基于当前评分和历史位置）
-    let baseScore: number;
-    if (merchant.riskLevel === 'high' || merchant.riskLevel === 'critical') {
-      // 高风险商户：从更低的分数逐渐改善
-      baseScore = currentScore - (i / snapshotsCount) * 20;
-    } else if (merchant.riskLevel === 'none' || merchant.riskLevel === 'low') {
-      // 低风险商户：从稍低的分数逐渐改善
-      baseScore = currentScore - (i / snapshotsCount) * 10;
-    } else {
-      // 中风险商户：波动较大
-      baseScore = currentScore + (Math.random() - 0.5) * 15;
+  // ⭐ 为每个任务创建快照（任务创建时和完成时）
+  merchantTasks.forEach(task => {
+    // 任务创建时的快照
+    const initialMetrics = task.beforeMetrics || task.initialMetrics;
+    if (initialMetrics) {
+      const initialTotalScore = Math.round(
+        (initialMetrics.collection + initialMetrics.operational + initialMetrics.siteQuality +
+         initialMetrics.customerReview + initialMetrics.riskResistance) / 5
+      );
+
+      snapshots.push({
+        id: `SNAP-${task.id}-START`,
+        merchantId: merchant.id,
+        merchantName: merchant.name,
+        timestamp: task.createdAt,
+        totalScore: initialTotalScore,
+        riskLevel: calculateRiskLevel(initialTotalScore),
+        metrics: { ...initialMetrics },
+        revenue: merchant.lastMonthRevenue * 0.9, // 帮扶前营收较低
+        rentToSalesRatio: merchant.rentToSalesRatio * 1.1, // 帮扶前租售比较高
+        trigger: {
+          type: 'task_created',
+          sourceId: task.id,
+          description: `创建帮扶任务：${task.title}`,
+        },
+        taskId: task.id,
+        createdAt: task.createdAt,
+      });
     }
 
-    const totalScore = Math.max(0, Math.min(100, baseScore + (Math.random() - 0.5) * 8));
-    const riskLevel = calculateRiskLevel(totalScore);
+    // 任务完成时的快照（仅已完成的任务）
+    if (task.status === 'completed' && task.afterMetrics) {
+      const afterTotalScore = Math.round(
+        (task.afterMetrics.collection + task.afterMetrics.operational + task.afterMetrics.siteQuality +
+         task.afterMetrics.customerReview + task.afterMetrics.riskResistance) / 5
+      );
 
-    // 确定触发类型
-    let triggerType: MerchantSnapshot['trigger']['type'] = 'manual';
-    let sourceId: string | undefined;
-
-    if (i % 4 === 0) {
-      triggerType = 'inspection';
-      sourceId = `INSP-${merchantId}-${i}`;
-    } else if (i % 7 === 0) {
-      triggerType = 'task_completed';
-      sourceId = `TASK-${merchantId}-${Math.floor(i / 7)}`;
-    } else if (i % 10 === 0) {
-      triggerType = 'task_created';
-      sourceId = `TASK-${merchantId}-${Math.floor(i / 10)}`;
+      snapshots.push({
+        id: `SNAP-${task.id}-END`,
+        merchantId: merchant.id,
+        merchantName: merchant.name,
+        timestamp: task.updatedAt,
+        totalScore: afterTotalScore,
+        riskLevel: calculateRiskLevel(afterTotalScore),
+        metrics: { ...task.afterMetrics },
+        revenue: merchant.lastMonthRevenue * 0.95, // 帮扶后营收改善
+        rentToSalesRatio: merchant.rentToSalesRatio * 1.05, // 帮扶后租售比改善
+        trigger: {
+          type: 'task_completed',
+          sourceId: task.id,
+          description: `完成帮扶任务：${task.title}`,
+        },
+        taskId: task.id,
+        createdAt: task.updatedAt,
+      });
     }
 
-    snapshots.push({
-      id: `SNAP-${merchantId}-${String(i).padStart(3, '0')}`,
-      merchantId: merchant.id,
-      merchantName: merchant.name,
-      timestamp: getRandomDate(daysAgo),
-      totalScore: Math.round(totalScore),
-      riskLevel,
-      metrics: generateMetrics(totalScore),
-      revenue: merchant.lastMonthRevenue * (0.8 + Math.random() * 0.4),
-      rentToSalesRatio: merchant.rentToSalesRatio * (0.9 + Math.random() * 0.2),
-      trigger: {
-        type: triggerType,
-        sourceId,
-        description: getTriggerDescription(triggerType),
-      },
-      inspectionId: triggerType === 'inspection' ? sourceId : undefined,
-      taskId: triggerType.includes('task') ? sourceId : undefined,
-      createdAt: getRandomDate(daysAgo),
+    // 任务执行中的快照（基于 executionTimeline）
+    if (task.executionTimeline) {
+      task.executionTimeline
+        .filter(item => item.status === 'completed')
+        .forEach((item, index) => {
+          // 计算中间状态的指标（在 before 和 after 之间插值）
+          const initialMetrics = task.beforeMetrics || task.initialMetrics;
+          const afterMetrics = task.afterMetrics;
+
+          if (initialMetrics && afterMetrics) {
+            const progress = (index + 1) / (task.executionTimeline?.length || 1);
+            const interpolatedMetrics = {
+              collection: Math.round(initialMetrics.collection + (afterMetrics.collection - initialMetrics.collection) * progress),
+              operational: Math.round(initialMetrics.operational + (afterMetrics.operational - initialMetrics.operational) * progress),
+              siteQuality: Math.round(initialMetrics.siteQuality + (afterMetrics.siteQuality - initialMetrics.siteQuality) * progress),
+              customerReview: Math.round(initialMetrics.customerReview + (afterMetrics.customerReview - initialMetrics.customerReview) * progress),
+              riskResistance: Math.round(initialMetrics.riskResistance + (afterMetrics.riskResistance - initialMetrics.riskResistance) * progress),
+            };
+
+            const interpolatedScore = Math.round(
+              (interpolatedMetrics.collection + interpolatedMetrics.operational + interpolatedMetrics.siteQuality +
+               interpolatedMetrics.customerReview + interpolatedMetrics.riskResistance) / 5
+            );
+
+            snapshots.push({
+              id: `SNAP-${task.id}-EXEC-${index}`,
+              merchantId: merchant.id,
+              merchantName: merchant.name,
+              timestamp: item.date,
+              totalScore: interpolatedScore,
+              riskLevel: calculateRiskLevel(interpolatedScore),
+              metrics: interpolatedMetrics,
+              revenue: merchant.lastMonthRevenue * (0.9 + progress * 0.05),
+              rentToSalesRatio: merchant.rentToSalesRatio * (1.1 - progress * 0.05),
+              trigger: {
+                type: 'manual',
+                description: `里程碑完成：${item.milestone}`,
+              },
+              taskId: task.id,
+              createdAt: item.date,
+            });
+          }
+        });
+    }
+  });
+
+  // ⭐ 生成巡检快照（填充时间间隙）
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - monthsBack);
+
+  for (let i = 0; i < 10; i++) {
+    const daysAgo = Math.floor(Math.random() * (monthsBack * 30));
+    const inspectionDate = new Date();
+    inspectionDate.setDate(inspectionDate.getDate() - daysAgo);
+
+    // 避免与任务快照时间冲突
+    const hasConflict = snapshots.some(s => {
+      const diff = Math.abs(new Date(s.timestamp).getTime() - inspectionDate.getTime());
+      return diff < 24 * 60 * 60 * 1000; // 1天内
     });
+
+    if (!hasConflict) {
+      const baseScore = merchant.totalScore + (Math.random() - 0.5) * 10;
+      const totalScore = Math.max(0, Math.min(100, baseScore));
+
+      snapshots.push({
+        id: `SNAP-${merchantId}-INSP-${i}`,
+        merchantId: merchant.id,
+        merchantName: merchant.name,
+        timestamp: inspectionDate.toISOString(),
+        totalScore: Math.round(totalScore),
+        riskLevel: calculateRiskLevel(totalScore),
+        metrics: generateMetrics(totalScore, 8),
+        revenue: merchant.lastMonthRevenue * (0.85 + Math.random() * 0.3),
+        rentToSalesRatio: merchant.rentToSalesRatio * (0.9 + Math.random() * 0.2),
+        trigger: {
+          type: 'inspection',
+          sourceId: `INSP-${merchantId}-${i}`,
+          description: '现场巡检完成',
+        },
+        inspectionId: `INSP-${merchantId}-${i}`,
+        createdAt: inspectionDate.toISOString(),
+      });
+    }
   }
 
+  // ⭐ 确保最后一个快照与商户当前状态完全一致
+  snapshots.push({
+    id: `SNAP-${merchantId}-CURRENT`,
+    merchantId: merchant.id,
+    merchantName: merchant.name,
+    timestamp: merchant.updatedAt,
+    totalScore: merchant.totalScore,
+    riskLevel: merchant.riskLevel,
+    metrics: { ...merchant.metrics },
+    revenue: merchant.lastMonthRevenue,
+    rentToSalesRatio: merchant.rentToSalesRatio,
+    trigger: {
+      type: 'manual',
+      description: '当前状态快照',
+    },
+    createdAt: merchant.updatedAt,
+  });
+
+  // 按时间排序
   return snapshots.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 }
 

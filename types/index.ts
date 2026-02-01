@@ -96,6 +96,31 @@ export interface Task {
   logs?: TaskLog[]; // 执行记录
   evaluationResult?: 'met' | 'not_met'; // 评估结果
   collectionStatus?: 'normal' | 'owed'; // 收缴状态
+  measureEffects?: MeasureEffect[]; // 措施效果详情
+  executionTimeline?: ExecutionTimelineItem[]; // 执行时间线
+}
+
+// 措施效果类型
+export interface MeasureEffect {
+  measure: string;                    // 措施描述
+  targetDimension: keyof Merchant['metrics'];  // 目标维度
+  beforeScore: number;                // 措施前评分
+  afterScore: number;                 // 措施后评分
+  improvement: number;                // 改善值
+  effectiveness: 'high' | 'medium' | 'low';  // 有效性等级
+  evidence?: string;                  // 证据/说明
+  implementationDate?: string;        // 实施日期
+  evaluationDate?: string;            // 评估日期
+}
+
+// 执行时间线项类型
+export interface ExecutionTimelineItem {
+  date: string;
+  milestone: string;                  // 里程碑名称
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  notes?: string;                     // 备注
+  attachments?: string[];             // 附件（文件名或URL）
+  relatedDimension?: keyof Merchant['metrics'];  // 关联维度
 }
 
 // 风险预警类型
