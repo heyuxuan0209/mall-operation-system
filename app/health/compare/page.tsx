@@ -13,6 +13,7 @@ import {
   getColorClass,
 } from '@/utils/merchantComparison';
 import MerchantSelector from '@/components/compare/MerchantSelector';
+import QuickTemplates from '@/components/compare/QuickTemplates';
 import {
   RadarChart,
   Radar,
@@ -38,6 +39,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default function ComparePage() {
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [selectedMerchants, setSelectedMerchants] = useState<Merchant[]>([]);
@@ -48,6 +51,19 @@ export default function ComparePage() {
     const loadMerchants = () => {
       const allMerchants = merchantDataManager.getAllMerchants();
       setMerchants(allMerchants);
+
+      // 从URL参数加载预选商户（仅在客户端）
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const idsParam = urlParams.get('ids');
+        if (idsParam && allMerchants.length > 0) {
+          const ids = idsParam.split(',');
+          const preselected = allMerchants.filter(m => ids.includes(m.id));
+          if (preselected.length >= 2) {
+            setSelectedMerchants(preselected);
+          }
+        }
+      }
     };
 
     loadMerchants();
@@ -183,6 +199,14 @@ export default function ComparePage() {
             <Building2 size={20} className="text-brand-600" />
             选择对比商户
           </h2>
+
+          {/* 快捷方案 */}
+          <QuickTemplates
+            merchants={merchants}
+            onSelectTemplate={setSelectedMerchants}
+          />
+
+          {/* 商户选择器 */}
           <MerchantSelector
             merchants={merchants}
             selectedMerchants={selectedMerchants}
@@ -502,6 +526,30 @@ export default function ComparePage() {
                             >
                               {insight.description}
                             </p>
+
+                            {/* 操作按钮 */}
+                            {insight.actions && insight.actions.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-3 print:hidden">
+                                {insight.actions.map((action, actionIndex) => (
+                                  <Link
+                                    key={actionIndex}
+                                    href={action.href}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                      insight.severity === 'critical'
+                                        ? 'bg-red-600 text-white hover:bg-red-700'
+                                        : insight.severity === 'warning'
+                                        ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    }`}
+                                  >
+                                    {action.icon && (
+                                      <i className={`fa-solid ${action.icon}`}></i>
+                                    )}
+                                    {action.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

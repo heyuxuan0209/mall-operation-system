@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { mockTasks } from '@/data/tasks/mock-data';
+import { mockMerchants } from '@/data/merchants/mock-data';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 import { Task } from '@/types';
 import WorkflowStepper from '@/components/WorkflowStepper';
@@ -34,22 +35,29 @@ function TaskCenterContent() {
       setViewMode('calendar');
     }
 
-    // 检查URL参数，自动打开指定任务
-    const taskId = searchParams.get('taskId');
-    if (taskId) {
-      const taskToOpen = allTasks.find((t: any) => t.id === taskId);
-      if (taskToOpen) {
-        setSelectedTask(taskToOpen as any);
+    // 检查URL参数，自动筛选指定商户的任务
+    const merchantIdParam = searchParams.get('merchantId');
+    const merchantIdsParam = searchParams.get('merchantIds');
+
+    if (merchantIdParam) {
+      // 单个商户：查找该商户的任务并自动打开第一个
+      const merchantTasks = allTasks.filter((t: any) => t.merchantId === merchantIdParam);
+      if (merchantTasks.length > 0) {
+        setSelectedTask(merchantTasks[0] as any);
+
+        // 设置搜索词为商户名称，筛选显示该商户的所有任务
+        const merchant = merchantTasks[0] as any;
+        setSearchTerm(merchant.merchantName);
 
         // 如果任务有参考案例，自动显示为AI推荐
-        if ((taskToOpen as any).referenceCase) {
-          const refCase = (taskToOpen as any).referenceCase;
+        if ((merchantTasks[0] as any).referenceCase) {
+          const refCase = (merchantTasks[0] as any).referenceCase;
           setMatchedCases([{
             id: refCase.id,
             merchantName: refCase.merchantName,
             action: refCase.action,
             strategy: refCase.strategy,
-            matchScore: 95 // 参考案例给高匹配度
+            matchScore: 95
           }]);
           setAiSuggestions([refCase.action]);
         }
@@ -60,6 +68,48 @@ function TaskCenterContent() {
             document.getElementById('task-detail-view')?.scrollIntoView({ behavior: 'smooth' });
           }
         }, 100);
+      } else {
+        // 如果该商户没有任务，只设置搜索词
+        const merchant = mockMerchants.find((m: any) => m.id === merchantIdParam);
+        if (merchant) {
+          setSearchTerm((merchant as any).name);
+        }
+      }
+    } else if (merchantIdsParam) {
+      // 多个商户：筛选显示这些商户的任务
+      const ids = merchantIdsParam.split(',');
+      const merchantTasks = allTasks.filter((t: any) => ids.includes(t.merchantId));
+      if (merchantTasks.length > 0) {
+        setSelectedTask(merchantTasks[0] as any);
+      }
+    } else {
+      // 检查URL参数，自动打开指定任务
+      const taskId = searchParams.get('taskId');
+      if (taskId) {
+        const taskToOpen = allTasks.find((t: any) => t.id === taskId);
+        if (taskToOpen) {
+          setSelectedTask(taskToOpen as any);
+
+          // 如果任务有参考案例，自动显示为AI推荐
+          if ((taskToOpen as any).referenceCase) {
+            const refCase = (taskToOpen as any).referenceCase;
+            setMatchedCases([{
+              id: refCase.id,
+              merchantName: refCase.merchantName,
+              action: refCase.action,
+              strategy: refCase.strategy,
+              matchScore: 95
+            }]);
+            setAiSuggestions([refCase.action]);
+          }
+
+          // 滚动到任务详情（移动端）
+          setTimeout(() => {
+            if (window.innerWidth < 1024) {
+              document.getElementById('task-detail-view')?.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+        }
       }
     }
   }, [searchParams]);
@@ -98,6 +148,16 @@ function TaskCenterContent() {
     const matchesStage = stageFilter === 'ALL' || (t as any).stage === stageFilter;
     return matchesSearch && matchesRisk && matchesStage;
   });
+
+  // 获取返回链接
+  const getBackLink = () => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const from = urlParams.get('from');
+      return from || '/health';
+    }
+    return '/health';
+  };
 
   // 辅助函数：获取风险等级样式和文本
   const getRiskBadge = (level: string) => {
@@ -505,11 +565,21 @@ function TaskCenterContent() {
   return (
     <div className="h-full flex flex-col pb-10">
       <div className="mb-4 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-2">
-        <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-slate-900">帮扶任务中心</h2>
-          <p className="text-sm text-slate-500">
-            风险识别 → 帮扶派单 → 评估闭环
-          </p>
+        <div className="flex items-center gap-3">
+          {/* 返回按钮 */}
+          <a
+            href={getBackLink()}
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
+            title="返回"
+          >
+            <i className="fa-solid fa-arrow-left"></i>
+          </a>
+          <div>
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900">帮扶任务中心</h2>
+            <p className="text-sm text-slate-500">
+              风险识别 → 帮扶派单 → 评估闭环
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <button

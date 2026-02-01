@@ -352,3 +352,156 @@ export interface InspectionTrendData {
   completedCount: number;
   completionRate: number;
 }
+
+// ==================== 商户历史帮扶档案相关类型 ====================
+
+// 商户历史快照 - 记录特定时间点商户的完整状态
+export interface MerchantSnapshot {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  timestamp: string;                // 快照时间
+
+  // 商户状态数据
+  totalScore: number;               // 健康度总评分 0-100
+  riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  metrics: {
+    collection: number;             // 租金缴纳进度 0-100
+    operational: number;            // 经营表现 0-100
+    siteQuality: number;            // 店铺现场品质 0-100
+    customerReview: number;         // 顾客满意度 0-100
+    riskResistance: number;         // 财务抗风险能力 0-100
+  };
+
+  // 财务数据
+  revenue: number;                  // 营收
+  rentToSalesRatio: number;         // 租售比
+
+  // 触发原因
+  trigger: {
+    type: 'inspection' | 'task_created' | 'task_completed' | 'manual' | 'risk_change';
+    sourceId?: string;              // 关联的巡检ID或任务ID
+    description?: string;           // 触发描述
+  };
+
+  // 关联数据
+  inspectionId?: string;            // 关联的巡检记录ID
+  taskId?: string;                  // 关联的帮扶任务ID
+
+  createdAt: string;
+}
+
+// 风险等级变更记录 - 追踪风险等级变化轨迹
+export interface RiskLevelChange {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  timestamp: string;
+
+  // 风险等级变化
+  fromLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  toLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  changeType: 'upgrade' | 'downgrade' | 'stable'; // 升级/降级/稳定
+
+  // 评分变化
+  fromScore: number;
+  toScore: number;
+  scoreDelta: number;               // 评分变化量
+
+  // 触发原因
+  trigger: {
+    type: 'inspection' | 'task_created' | 'task_completed' | 'manual' | 'risk_change' | 'auto_detect';
+    sourceId?: string;
+    description?: string;
+  };
+
+  // 关联数据
+  snapshotId: string;               // 关联的快照ID
+  taskId?: string;
+  inspectionId?: string;
+
+  createdAt: string;
+}
+
+// 帮扶档案摘要 - 商户历史帮扶的统计和分析
+export interface AssistanceArchive {
+  merchantId: string;
+  merchantName: string;
+
+  // 统计数据
+  stats: {
+    totalSnapshots: number;         // 总快照数
+    riskChangeCount: number;        // 风险等级变更次数
+    improvementCount: number;       // 改善次数（风险等级下降）
+    deteriorationCount: number;     // 恶化次数（风险等级上升）
+    assistanceTaskCount: number;    // 帮扶任务总数
+    completedTaskCount: number;     // 已完成任务数
+    successRate: number;            // 帮扶成功率 (改善次数/完成任务数)
+  };
+
+  // 健康度趋势
+  healthTrend: {
+    highest: { score: number; date: string };     // 最高分
+    lowest: { score: number; date: string };      // 最低分
+    average: number;                              // 平均分
+    current: number;                              // 当前分
+    recent30DaysTrend: 'improving' | 'declining' | 'stable'; // 近30天趋势
+  };
+
+  // 风险等级分布
+  riskDistribution: {
+    critical: { count: number; totalDays: number }; // 停留次数和天数
+    high: { count: number; totalDays: number };
+    medium: { count: number; totalDays: number };
+    low: { count: number; totalDays: number };
+    none: { count: number; totalDays: number };
+  };
+
+  // 当前状态
+  currentStatus: {
+    riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+    totalScore: number;
+    daysInCurrentLevel: number;     // 在当前风险等级停留天数
+    lastChangeDate?: string;        // 上次风险等级变化日期
+  };
+
+  // 关键时间节点
+  keyDates: {
+    firstRecordDate: string;        // 首次记录日期
+    lastInspectionDate?: string;    // 最后巡检日期
+    lastTaskCompletedDate?: string; // 最后任务完成日期
+    longestHighRiskPeriod?: {       // 最长高风险期
+      startDate: string;
+      endDate: string;
+      days: number;
+    };
+  };
+
+  generatedAt: string;              // 生成时间
+}
+
+// 历史趋势数据点 - 用于图表展示
+export interface HistoryTrendPoint {
+  date: string;                     // 日期
+  totalScore: number;               // 健康度总分
+  riskLevel: 'critical' | 'high' | 'medium' | 'low' | 'none';
+
+  // 5维度得分
+  metrics: {
+    collection: number;
+    operational: number;
+    siteQuality: number;
+    customerReview: number;
+    riskResistance: number;
+  };
+
+  // 标记特殊事件
+  events?: Array<{
+    type: 'inspection' | 'task_start' | 'task_complete' | 'risk_change';
+    label: string;
+    id?: string;                    // 关联的巡检/任务ID
+  }>;
+
+  // 数据来源
+  snapshotId?: string;              // 关联的快照ID
+}

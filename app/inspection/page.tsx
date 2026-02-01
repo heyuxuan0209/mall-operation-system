@@ -37,13 +37,23 @@ export default function InspectionPage() {
 
   // 初始化商户数据并监听变化
   useEffect(() => {
-    // 加载海底捞数据 (M001)
-    const merchantData = merchantDataManager.getMerchant('M001');
+    // 从URL参数获取商户ID，默认为M001（海底捞）
+    let merchantId = 'M001';
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramMerchantId = urlParams.get('merchantId');
+      if (paramMerchantId) {
+        merchantId = paramMerchantId;
+      }
+    }
+
+    // 加载商户数据
+    const merchantData = merchantDataManager.getMerchant(merchantId);
     setMerchant(merchantData);
 
     // 监听数据变化
     const unsubscribe = merchantDataManager.onMerchantsChange(() => {
-      const updatedMerchant = merchantDataManager.getMerchant('M001');
+      const updatedMerchant = merchantDataManager.getMerchant(merchantId);
       setMerchant(updatedMerchant);
     });
 
@@ -92,17 +102,37 @@ export default function InspectionPage() {
 
   const canSave = checkIn !== null;
 
+  // 获取返回链接
+  const getBackLink = () => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const from = urlParams.get('from');
+      return from || '/health';
+    }
+    return '/health';
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20 lg:pb-8">
       {/* 页面头部 */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">现场巡店</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {merchant.name} · 快速记录现场情况
-              </p>
+            <div className="flex items-center gap-3">
+              {/* 返回按钮 */}
+              <a
+                href={getBackLink()}
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
+                title="返回"
+              >
+                <i className="fa-solid fa-arrow-left"></i>
+              </a>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">现场巡店</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  {merchant.name} · 快速记录现场情况
+                </p>
+              </div>
             </div>
             <a
               href="/inspection/batch"

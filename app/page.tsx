@@ -240,8 +240,10 @@ export default function DashboardPage() {
     existingTasks.push(newTask);
     localStorage.setItem('tasks', JSON.stringify(existingTasks));
 
-    // 跳转到任务中心并自动打开该任务
-    window.location.href = `/tasks?taskId=${newTaskId}`;
+    // 添加延迟确保localStorage写入完成，然后跳转
+    setTimeout(() => {
+      window.location.href = `/tasks?taskId=${newTaskId}&from=${encodeURIComponent('/')}`;
+    }, 100);
   }, [selectedMerchant, aiDiagnosis]);
 
   return (

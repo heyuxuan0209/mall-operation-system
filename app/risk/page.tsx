@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Clock, CheckCircle, XCircle, Filter, Search, Plus, Eye, X, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { mockRiskAlerts, getRiskStatistics } from '@/data/tasks/mock-data';
@@ -27,6 +27,63 @@ export default function RiskManagementPage() {
 
   // 计算欠缴预警数量
   const overdueCount = mockMerchants.filter(m => m.metrics.collection < 80).length;
+
+  // 从URL参数自动选择商户并打开创建任务弹窗
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const merchantIdsParam = urlParams.get('merchantIds');
+      const merchantIdParam = urlParams.get('merchantId');
+
+      if (merchantIdsParam) {
+        // 批量创建模式
+        const ids = merchantIdsParam.split(',');
+
+        // 尝试查找对应的风险预警
+        const alerts = mockRiskAlerts.filter(alert =>
+          ids.some(id => alert.merchantId === id) && !alert.resolved
+        );
+
+        if (alerts.length > 0) {
+          // 如果有风险预警，选中它们
+          setSelectedAlerts(new Set(alerts.map(a => a.id)));
+          setShowBatchCreate(true);
+        } else {
+          // 如果没有风险预警，直接打开批量创建弹窗
+          // 通过设置搜索词来筛选显示这些商户
+          const merchants = mockMerchants.filter(m => ids.includes(m.id));
+          if (merchants.length > 0) {
+            // 为这些商户创建临时的风险预警选择
+            const tempAlertIds = merchants.map(m => `temp-${m.id}`);
+            setSelectedAlerts(new Set(tempAlertIds));
+            setShowBatchCreate(true);
+          }
+        }
+      } else if (merchantIdParam) {
+        // 单个商户创建模式
+        const merchant = mockMerchants.find(m => m.id === merchantIdParam);
+        if (merchant) {
+          setSelectedMerchant(merchant);
+          setShowCreateTask(true);
+
+          // 根据商户风险等级自动选择风险类型
+          if (merchant.rentToSalesRatio > 0.25) {
+            setSelectedRiskType('high_rent_ratio');
+            const strategies = getSuggestedStrategies('high_rent_ratio', merchant);
+            setSuggestedStrategies(strategies);
+          } else if (merchant.metrics.collection < 80) {
+            setSelectedRiskType('rent_overdue');
+            const strategies = getSuggestedStrategies('rent_overdue', merchant);
+            setSuggestedStrategies(strategies);
+          } else if (merchant.metrics.operational < 60) {
+            setSelectedRiskType('low_revenue');
+            const strategies = getSuggestedStrategies('low_revenue', merchant);
+            setSuggestedStrategies(strategies);
+          }
+        }
+      }
+    }
+  }, []);
 
   // 卡片点击处理 - 联动列表筛选
   const handleCardClick = (type: 'unresolved' | 'high' | 'resolved' | 'rent_ratio' | 'overdue') => {
@@ -113,6 +170,16 @@ export default function RiskManagementPage() {
       case 'customer_complaint': return 'text-blue-600';
       default: return 'text-gray-600';
     }
+  };
+
+  // 获取返回链接
+  const getBackLink = () => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const from = urlParams.get('from');
+      return from || '/health';
+    }
+    return '/health';
   };
 
   // 切换选择
@@ -349,9 +416,19 @@ export default function RiskManagementPage() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">风险与派单</h1>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">实时监控风险预警，快速创建帮扶任务</p>
+        <div className="flex items-center gap-3">
+          {/* 返回按钮 */}
+          <a
+            href={getBackLink()}
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-600"
+            title="返回"
+          >
+            <i className="fa-solid fa-arrow-left"></i>
+          </a>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">风险与派单</h1>
+            <p className="text-gray-500 mt-1 text-sm md:text-base">实时监控风险预警，快速创建帮扶任务</p>
+          </div>
         </div>
         <div className="flex gap-2">
           {selectedAlerts.size > 0 && (

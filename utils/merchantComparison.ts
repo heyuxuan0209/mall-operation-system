@@ -41,6 +41,16 @@ export interface MetricsComparison {
 }
 
 /**
+ * 洞察操作按钮
+ */
+export interface InsightAction {
+  label: string;
+  type: 'create_task' | 'schedule_inspection' | 'compare_category' | 'view_detail';
+  href: string;
+  icon?: string;
+}
+
+/**
  * 对比洞察
  */
 export interface ComparisonInsight {
@@ -50,6 +60,7 @@ export interface ComparisonInsight {
   merchantIds: string[];
   severity?: 'info' | 'warning' | 'critical';
   icon?: string;
+  actions?: InsightAction[];
 }
 
 /**
@@ -165,6 +176,10 @@ export function generateInsights(
 ): ComparisonInsight[] {
   const insights: ComparisonInsight[] = [];
 
+  // 生成返回链接（包含当前选择的商户ID）
+  const merchantIds = merchants.map(m => m.id).join(',');
+  const backUrl = `/health/compare?ids=${merchantIds}`;
+
   // 1. 最佳表现者
   const bestPerformer = metrics.healthScores[0];
   if (bestPerformer) {
@@ -188,6 +203,20 @@ export function generateInsights(
       merchantIds: [worstPerformer.merchantId],
       severity: 'warning',
       icon: '⚠️',
+      actions: [
+        {
+          label: '创建帮扶任务',
+          type: 'create_task',
+          href: `/risk?merchantId=${worstPerformer.merchantId}&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-hands-holding-circle',
+        },
+        {
+          label: '安排巡店',
+          type: 'schedule_inspection',
+          href: `/inspection?merchantId=${worstPerformer.merchantId}&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-clipboard-check',
+        },
+      ],
     });
   }
 
@@ -221,6 +250,14 @@ export function generateInsights(
         merchantIds: weakMerchants.map(m => m.id),
         severity: 'warning',
         icon: '📊',
+        actions: [
+          {
+            label: '批量创建任务',
+            type: 'create_task',
+            href: `/risk?merchantIds=${weakMerchants.map(m => m.id).join(',')}&from=${encodeURIComponent(backUrl)}`,
+            icon: 'fa-list-check',
+          },
+        ],
       });
     }
   }
@@ -237,6 +274,20 @@ export function generateInsights(
       merchantIds: highRiskMerchants.map(m => m.id),
       severity: 'critical',
       icon: '🚨',
+      actions: [
+        {
+          label: '创建风险派单',
+          type: 'create_task',
+          href: `/risk?merchantIds=${highRiskMerchants.map(m => m.id).join(',')}&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-triangle-exclamation',
+        },
+        {
+          label: '立即巡店',
+          type: 'schedule_inspection',
+          href: `/inspection?merchantId=${highRiskMerchants[0].id}&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-clipboard-check',
+        },
+      ],
     });
   }
 
@@ -254,6 +305,14 @@ export function generateInsights(
         merchantIds: lowRevenueMerchants.map(m => m.id),
         severity: 'warning',
         icon: '💰',
+        actions: [
+          {
+            label: '创建帮扶计划',
+            type: 'create_task',
+            href: `/risk?merchantIds=${lowRevenueMerchants.map(m => m.id).join(',')}&from=${encodeURIComponent(backUrl)}`,
+            icon: 'fa-hands-holding-circle',
+          },
+        ],
       });
     }
   }
@@ -271,6 +330,32 @@ export function generateInsights(
     const weakMerchants = scores.filter(s => s.value < 60);
     if (weakMerchants.length > 0) {
       const dimensionLabel = dimensionNames[dimension as keyof typeof dimensionNames];
+      const actions: InsightAction[] = [];
+
+      // 根据不同维度提供不同的操作建议
+      if (dimension === 'collection') {
+        actions.push({
+          label: '创建催缴任务',
+          type: 'create_task',
+          href: `/risk?merchantIds=${weakMerchants.map(s => s.merchantId).join(',')}&type=collection&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-money-bill-wave',
+        });
+      } else if (dimension === 'siteQuality') {
+        actions.push({
+          label: '安排现场巡店',
+          type: 'schedule_inspection',
+          href: `/inspection?merchantId=${weakMerchants[0].merchantId}&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-clipboard-check',
+        });
+      } else {
+        actions.push({
+          label: '创建改进任务',
+          type: 'create_task',
+          href: `/risk?merchantIds=${weakMerchants.map(s => s.merchantId).join(',')}&dimension=${dimension}&from=${encodeURIComponent(backUrl)}`,
+          icon: 'fa-list-check',
+        });
+      }
+
       insights.push({
         type: 'improvement_needed',
         title: `${dimensionLabel}待提升`,
@@ -278,6 +363,7 @@ export function generateInsights(
         merchantIds: weakMerchants.map(s => s.merchantId),
         severity: 'warning',
         icon: '📈',
+        actions,
       });
     }
   });

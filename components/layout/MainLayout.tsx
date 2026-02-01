@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Sidebar from './Sidebar';
+import TopBar from './TopBar';
 import DeadlineAlert from '../DeadlineAlert';
 import CommandPalette from '../CommandPalette';
 import QuickDispatch from '../QuickDispatch';
@@ -14,12 +15,14 @@ export default function MainLayout({
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col lg:flex-row relative">
       <Sidebar />
+      <TopBar />
 
       {/*
          lg:pl-64 -> 只有在电脑上才预留左侧 64 宽度
+         pt-14 -> 顶部预留TopBar空间（56px）
          pb-[120px] lg:pb-8 -> 手机上底部留白 120px，电脑上 32px
       */}
-      <main className="flex-1 w-full lg:pl-64 relative z-0">
+      <main className="flex-1 w-full lg:pl-64 pt-14 relative z-0">
         {/* 逾期预警横幅 */}
         <DeadlineAlert />
 

@@ -3,13 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import NotificationBell from '@/components/NotificationBell';
 
 const menuItems = [
   { id: 'dashboard', label: '总览', fullLabel: '运营总览', icon: 'fa-chart-pie', path: '/' },
-  { id: 'inspection-dashboard', label: '驾驶舱', fullLabel: '管理驾驶舱', icon: 'fa-gauge-high', path: '/dashboard' },
   { id: 'health', label: '监控', fullLabel: '健康度监控', icon: 'fa-heart-pulse', path: '/health' },
-  { id: 'compare', label: '对比', fullLabel: '商户对比分析', icon: 'fa-chart-column', path: '/compare' },
   { id: 'risk', label: '派单', fullLabel: '风险与派单', icon: 'fa-triangle-exclamation', path: '/risk' },
   { id: 'tasks', label: '帮扶', fullLabel: '帮扶任务中心', icon: 'fa-hands-holding-circle', path: '/tasks' },
   { id: 'inspection', label: '巡店', fullLabel: '现场巡店', icon: 'fa-clipboard-check', path: '/inspection' },
@@ -23,7 +20,7 @@ export default function Sidebar() {
     <>
       {/* Desktop Sidebar: Only visible on LG (1024px) and up */}
       <div className="hidden lg:flex w-64 bg-slate-900 text-white h-screen flex-col fixed left-0 top-0 z-50 shadow-xl transition-all">
-        <div className="p-6 flex items-center justify-between border-b border-slate-800">
+        <div className="p-6 flex items-center border-b border-slate-800">
           <div className="flex items-center">
             <i className="fa-solid fa-building-user text-brand-500 text-2xl mr-3"></i>
             <div>
@@ -31,7 +28,6 @@ export default function Sidebar() {
               <p className="text-xs text-slate-400">Mall Operation Agent</p>
             </div>
           </div>
-          <NotificationBell />
         </div>
         <nav className="flex-1 py-6 space-y-1">
           {menuItems.map((item) => {
@@ -51,11 +47,6 @@ export default function Sidebar() {
             );
           })}
         </nav>
-      </div>
-
-      {/* Mobile Notification Bell: Fixed top-right button */}
-      <div className="lg:hidden fixed top-4 right-4 z-40">
-        <NotificationBell />
       </div>
 
       {/* Mobile Bottom Navigation:
