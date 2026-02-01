@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { mockTasks } from '@/data/tasks/mock-data';
 import { mockMerchants } from '@/data/merchants/mock-data';
@@ -647,37 +648,106 @@ function TaskCenterContent() {
           </div>
 
           <div className="overflow-y-auto pr-2 space-y-4 flex-1">
-            {filteredTasks.map(task => (
-              <div
-                key={task.id}
-                onClick={() => {
-                  setSelectedTask(task);
-                  setAiSuggestions([]);
-                  setShowNotMetOptions(false);
-                  if (isMobileView) {
-                    setTimeout(() => document.getElementById('task-detail-view')?.scrollIntoView({ behavior: 'smooth' }), 100);
-                  }
-                }}
-                className={'p-4 rounded-xl border cursor-pointer transition hover:shadow-md bg-white ' + (selectedTask?.id === task.id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-slate-200')}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-slate-800">{task.merchantName}</h4>
-                  <span className={'px-2 py-0.5 text-[10px] rounded-full font-bold uppercase ' + getRiskBadge((task as any).riskLevel || 'medium').className}>
-                    {getRiskBadge((task as any).riskLevel || 'medium').text}
-                  </span>
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map(task => (
+                <div
+                  key={task.id}
+                  onClick={() => {
+                    setSelectedTask(task);
+                    setAiSuggestions([]);
+                    setShowNotMetOptions(false);
+                    if (isMobileView) {
+                      setTimeout(() => document.getElementById('task-detail-view')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                    }
+                  }}
+                  className={'p-4 rounded-xl border cursor-pointer transition hover:shadow-md bg-white ' + (selectedTask?.id === task.id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-slate-200')}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-slate-800">{task.merchantName}</h4>
+                    <span className={'px-2 py-0.5 text-[10px] rounded-full font-bold uppercase ' + getRiskBadge((task as any).riskLevel || 'medium').className}>
+                      {getRiskBadge((task as any).riskLevel || 'medium').text}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs text-slate-500 mb-2">
+                    <span className="w-2 h-2 rounded-full mr-2 bg-blue-400"></span>
+                    {task.assignee}
+                  </div>
+                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-50">
+                    <span className={'text-xs px-2 py-1 rounded ' + ((task as any).stage === 'completed' ? 'bg-green-100 text-green-700' : (task as any).stage === 'exit' ? 'bg-red-100 text-red-700' : (task as any).stage === 'escalated' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600')}>
+                      {getStageLabel((task as any).stage || 'planning')}
+                    </span>
+                    <span className="text-xs text-slate-400">{task.createdAt.substring(5)}</span>
+                  </div>
                 </div>
-                <div className="flex items-center text-xs text-slate-500 mb-2">
-                  <span className="w-2 h-2 rounded-full mr-2 bg-blue-400"></span>
-                  {task.assignee}
-                </div>
-                <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-50">
-                  <span className={'text-xs px-2 py-1 rounded ' + ((task as any).stage === 'completed' ? 'bg-green-100 text-green-700' : (task as any).stage === 'exit' ? 'bg-red-100 text-red-700' : (task as any).stage === 'escalated' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600')}>
-                    {getStageLabel((task as any).stage || 'planning')}
-                  </span>
-                  <span className="text-xs text-slate-400">{task.createdAt.substring(5)}</span>
-                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 px-4">
+                <i className="fas fa-inbox text-5xl text-gray-300 mb-4"></i>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                  {searchTerm ? `暂无"${searchTerm}"的帮扶任务` : '暂无帮扶任务'}
+                </h3>
+                <p className="text-sm text-gray-500 mb-6 text-center">
+                  {searchTerm
+                    ? '该商户还没有创建帮扶任务，点击下方按钮开始创建'
+                    : '还没有任何帮扶任务，搜索商户后可以创建任务'}
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      // 查找商户
+                      const merchantIdParam = searchParams.get('merchantId');
+                      const merchant = merchantIdParam
+                        ? mockMerchants.find(m => m.id === merchantIdParam)
+                        : mockMerchants.find(m => m.name.includes(searchTerm));
+
+                      if (merchant) {
+                        // 创建新任务
+                        const newTask = {
+                          id: `T${Date.now()}`,
+                          merchantId: merchant.id,
+                          merchantName: merchant.name,
+                          assignee: '系统分配',
+                          createdAt: new Date().toISOString().split('T')[0],
+                          status: 'in_progress',
+                          priority: 'high',
+                          description: `${merchant.name}经营改善帮扶`,
+                          measures: [],
+                          logs: [{
+                            id: `LOG-${Date.now()}`,
+                            date: new Date().toISOString().split('T')[0],
+                            action: '任务创建',
+                            type: 'manual',
+                            user: '当前用户'
+                          }],
+                          stage: 'planning',
+                          riskLevel: merchant.riskLevel
+                        };
+
+                        // 添加到任务列表
+                        const newTasks = [...tasks, newTask as any];
+                        setTasks(newTasks);
+                        setSelectedTask(newTask as any);
+
+                        // 保存到localStorage
+                        const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+                        localStorage.setItem('tasks', JSON.stringify([...storedTasks, newTask]));
+
+                        // 移动端滚动到详情
+                        setTimeout(() => {
+                          if (window.innerWidth < 1024) {
+                            document.getElementById('task-detail-view')?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }, 100);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium"
+                  >
+                    <i className="fas fa-plus"></i>
+                    创建帮扶任务
+                  </button>
+                )}
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -693,6 +763,16 @@ function TaskCenterContent() {
                       <span className="mx-2">|</span>
                       责任人: {selectedTask.assignee}
                     </p>
+                  </div>
+                  {/* 快速操作按钮 */}
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/inspection?merchantId=${(selectedTask as any).merchantId}&from=/tasks`}
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    >
+                      <i className="fas fa-clipboard-check"></i>
+                      <span className="hidden sm:inline">现场巡店</span>
+                    </Link>
                   </div>
                 </div>
                 <WorkflowStepper currentStage={(selectedTask as any).stage || 'planning'} />

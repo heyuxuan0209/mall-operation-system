@@ -277,6 +277,17 @@ function HealthMonitoringContent() {
         {/* 返回档案按钮 */}
         <ReturnToArchiveButton merchantId={selectedMerchant?.id} />
 
+        {/* 快速巡店按钮 */}
+        {selectedMerchant && (
+          <Link
+            href={`/inspection?merchantId=${selectedMerchant.id}&from=/health`}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            <i className="fas fa-clipboard-check"></i>
+            <span className="hidden sm:inline">快速巡店</span>
+          </Link>
+        )}
+
         {/* 筛选器 */}
         <select
           value={filterRisk}

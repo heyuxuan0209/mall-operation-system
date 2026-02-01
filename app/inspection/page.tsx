@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Camera, Mic, MapPin, Star, Save, List } from 'lucide-react';
 import ImageUploader from '@/components/inspection/ImageUploader';
 import VoiceRecorder from '@/components/inspection/VoiceRecorder';
@@ -95,11 +96,26 @@ export default function InspectionPage() {
 
   // 检查是否从档案页跳转过来
   const [fromArchive, setFromArchive] = useState(false);
+  const [returnPath, setReturnPath] = useState('');
+  const [returnLabel, setReturnLabel] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       setFromArchive(urlParams.get('fromArchive') === 'true');
+
+      const from = urlParams.get('from');
+      if (from) {
+        setReturnPath(from);
+        // 根据来源路径设置返回按钮文字
+        if (from === '/health') {
+          setReturnLabel('返回健康度监控');
+        } else if (from === '/tasks') {
+          setReturnLabel('返回任务中心');
+        } else {
+          setReturnLabel('返回');
+        }
+      }
     }
   }, []);
 
@@ -120,11 +136,17 @@ export default function InspectionPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* 返回按钮 - 从档案跳转时显示返回档案按钮，否则显示普通返回 */}
+              {/* 返回按钮 - 根据来源显示不同的返回选项 */}
               {fromArchive ? (
-                <div className="flex items-center gap-2">
-                  <ReturnToArchiveButton merchantId={merchant.id} />
-                </div>
+                <ReturnToArchiveButton merchantId={merchant.id} />
+              ) : returnPath ? (
+                <Link
+                  href={`${returnPath}?merchantId=${merchant.id}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm"
+                >
+                  <i className="fas fa-arrow-left"></i>
+                  {returnLabel}
+                </Link>
               ) : (
                 <a
                   href={getBackLink()}
