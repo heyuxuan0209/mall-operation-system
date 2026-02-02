@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>风险等级验证工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #6366f1;
+      padding-bottom: 10px;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-section h2 {
+      color: #6366f1;
+      margin-top: 0;
+    }
+    button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px 10px 0;
+    }
+    button:hover {
+      background: #4f46e5;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .result.success {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+    }
+    .result.warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+    }
+    .result.error {
+      background: #fee2e2;
+      border-left: 4px solid #ef4444;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin: 4px;
+    }
+    .badge-critical { background: #e9d5ff; color: #7c3aed; }
+    .badge-high { background: #fee2e2; color: #dc2626; }
+    .badge-medium { background: #fed7aa; color: #ea580c; }
+    .badge-low { background: #fef3c7; color: #d97706; }
+    .badge-none { background: #d1fae5; color: #059669; }
+    .test-case {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      margin: 8px 0;
+      background: #f9fafb;
+      border-radius: 4px;
+    }
+    .test-case .score {
+      font-weight: bold;
+      width: 60px;
+    }
+    .test-case .arrow {
+      margin: 0 10px;
+      color: #9ca3af;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 V2.0 风险等级验证工具</h1>
+
+  <div class="test-section">
+    <h2>📋 测试1：风险等级计算逻辑</h2>
+    <p>验证新的5等级标准计算是否正确</p>
+    <button onclick="testCalculation()">运行计算测试</button>
+    <div id="calc-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>💾 测试2：LocalStorage数据验证</h2>
+    <p>检查本地存储中商户数据的风险等级是否匹配分数</p>
+    <button onclick="testLocalStorage()">验证LocalStorage</button>
+    <button onclick="clearLocalStorage()" style="background: #ef4444;">清除数据</button>
+    <div id="storage-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>🎨 测试3：UI颜色显示</h2>
+    <p>预览所有风险等级的颜色标签</p>
+    <div style="margin-top: 15px;">
+      <span class="badge badge-critical">极高风险 (Critical)</span>
+      <span class="badge badge-high">高风险 (High)</span>
+      <span class="badge badge-medium">中风险 (Medium)</span>
+      <span class="badge badge-low">低风险 (Low)</span>
+      <span class="badge badge-none">无风险 (None)</span>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>📊 测试4：边界值测试</h2>
+    <p>测试分数切换临界点</p>
+    <button onclick="testBoundary()">运行边界测试</button>
+    <div id="boundary-result"></div>
+  </div>
+
+  <script>
+    // 风险等级计算函数（与health-calculator.ts保持一致）
+    function calculateRiskLevel(totalScore) {
+      if (totalScore >= 90) return 'none';      // 无风险：90-100分
+      if (totalScore >= 80) return 'low';       // 低风险：80-89分
+      if (totalScore >= 60) return 'medium';    // 中风险：60-79分
+      if (totalScore >= 40) return 'high';      // 高风险：40-59分
+      return 'critical';                        // 极高风险：0-39分
+    }
+
+    function getRiskText(level) {
+      const map = {
+        'critical': '极高风险',
+        'high': '高风险',
+        'medium': '中风险',
+        'low': '低风险',
+        'none': '无风险'
+      };
+      return map[level] || '未知';
+    }
+
+    function testCalculation() {
+      const testCases = [
+        { score: 0, expected: 'critical' },
+        { score: 35, expected: 'critical' },
+        { score: 39, expected: 'critical' },
+        { score: 40, expected: 'high' },
+        { score: 45, expected: 'high' },
+        { score: 59, expected: 'high' },
+        { score: 60, expected: 'medium' },
+        { score: 65, expected: 'medium' },
+        { score: 79, expected: 'medium' },
+        { score: 80, expected: 'low' },
+        { score: 85, expected: 'low' },
+        { score: 89, expected: 'low' },
+        { score: 90, expected: 'none' },
+        { score: 95, expected: 'none' },
+        { score: 100, expected: 'none' }
+      ];
+
+      let results = '=== 风险等级计算测试结果 ===\n\n';
+      let passCount = 0;
+      let failCount = 0;
+
+      testCases.forEach(test => {
+        const actual = calculateRiskLevel(test.score);
+        const pass = actual === test.expected;
+        const icon = pass ? '✅' : '❌';
+
+        if (pass) passCount++;
+        else failCount++;
+
+        results += `${icon} ${test.score}分 → ${getRiskText(actual)} (${actual})`;
+        if (!pass) {
+          results += ` [期望: ${getRiskText(test.expected)} (${test.expected})]`;
+        }
+        results += '\n';
+      });
+
+      results += `\n通过: ${passCount}/${testCases.length}  失败: ${failCount}/${testCases.length}`;
+
+      const resultDiv = document.getElementById('calc-result');
+      resultDiv.className = 'result ' + (failCount === 0 ? 'success' : 'error');
+      resultDiv.textContent = results;
+    }
+
+    function testLocalStorage() {
+      const merchants = JSON.parse(localStorage.getItem('merchants') || '[]');
+
+      if (merchants.length === 0) {
+        const resultDiv = document.getElementById('storage-result');
+        resultDiv.className = 'result warning';
+        resultDiv.textContent = '⚠️ LocalStorage中没有商户数据\n\n请先访问应用主页初始化数据，或刷新页面。';
+        return;
+      }
+
+      let results = '=== 商户数据验证结果 ===\n\n';
+      let matchCount = 0;
+      let mismatchCount = 0;
+
+      merchants.forEach(m => {
+        const expected = calculateRiskLevel(m.totalScore);
+        const match = m.riskLevel === expected;
+        const icon = match ? '✅' : '❌';
+
+        if (match) matchCount++;
+        else mismatchCount++;
+
+        results += `${icon} ${m.name}: ${m.totalScore}分 → ${getRiskText(m.riskLevel)} (${m.riskLevel})`;
+        if (!match) {
+          results += `\n   期望: ${getRiskText(expected)} (${expected})`;
+        }
+        results += '\n';
+      });
+
+      // 统计各风险等级数量
+      const stats = {
+        critical: merchants.filter(m => m.riskLevel === 'critical').length,
+        high: merchants.filter(m => m.riskLevel === 'high').length,
+        medium: merchants.filter(m => m.riskLevel === 'medium').length,
+        low: merchants.filter(m => m.riskLevel === 'low').length,
+        none: merchants.filter(m => m.riskLevel === 'none').length
+      };
+
+      results += '\n=== 风险等级分布 ===\n';
+      results += `极高风险: ${stats.critical}户\n`;
+      results += `高风险: ${stats.high}户\n`;
+      results += `中风险: ${stats.medium}户\n`;
+      results += `低风险: ${stats.low}户\n`;
+      results += `无风险: ${stats.none}户\n`;
+
+      results += `\n匹配: ${matchCount}/${merchants.length}  不匹配: ${mismatchCount}/${merchants.length}`;
+
+      const resultDiv = document.getElementById('storage-result');
+      resultDiv.className = 'result ' + (mismatchCount === 0 ? 'success' : 'error');
+      resultDiv.textContent = results;
+    }
+
+    function testBoundary() {
+      const boundaries = [
+        { score: 39, level: 'critical', nextScore: 40, nextLevel: 'high' },
+        { score: 59, level: 'high', nextScore: 60, nextLevel: 'medium' },
+        { score: 79, level: 'medium', nextScore: 80, nextLevel: 'low' },
+        { score: 89, level: 'low', nextScore: 90, nextLevel: 'none' }
+      ];
+
+      let results = '=== 边界值测试结果 ===\n\n';
+      let passCount = 0;
+
+      boundaries.forEach(b => {
+        const actual1 = calculateRiskLevel(b.score);
+        const actual2 = calculateRiskLevel(b.nextScore);
+        const pass1 = actual1 === b.level;
+        const pass2 = actual2 === b.nextLevel;
+        const icon = (pass1 && pass2) ? '✅' : '❌';
+
+        if (pass1 && pass2) passCount++;
+
+        results += `${icon} 边界 ${b.score}/${b.nextScore}:\n`;
+        results += `   ${b.score}分 → ${getRiskText(actual1)} (${actual1}) ${pass1 ? '✓' : '✗'}\n`;
+        results += `   ${b.nextScore}分 → ${getRiskText(actual2)} (${actual2}) ${pass2 ? '✓' : '✗'}\n\n`;
+      });
+
+      results += `通过: ${passCount}/${boundaries.length}`;
+
+      const resultDiv = document.getElementById('boundary-result');
+      resultDiv.className = 'result ' + (passCount === boundaries.length ? 'success' : 'error');
+      resultDiv.textContent = results;
+    }
+
+    function clearLocalStorage() {
+      if (confirm('确定要清除LocalStorage中的所有数据吗？\n\n这将删除所有商户、任务和巡检记录。\n刷新页面后会重新加载初始数据。')) {
+        localStorage.clear();
+        alert('✅ LocalStorage已清除！\n\n请刷新页面重新加载初始数据。');
+        document.getElementById('storage-result').textContent = '';
+      }
+    }
+
+    // 页面加载时自动运行计算测试
+    window.onload = () => {
+      testCalculation();
+    };
+  </script>
+</body>
+</html>
