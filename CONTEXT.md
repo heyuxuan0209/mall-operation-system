@@ -1,18 +1,19 @@
-# 项目上下文索引 v2.0
+# 项目上下文索引 v2.4
 
 ## 🎯 当前版本状态
 - **版本**: v2.4-stable ✅ 演示就绪
-- **最后更新**: 2026-02-01
-- **Git Commit**: 0de88b6
-- **工作阶段**: 产品测试完成，演示文档已准备
+- **最后更新**: 2026-02-02
+- **Git Commit**: 14c0cb8
+- **工作阶段**: 产品测试完成，演示文档已准备，项目优化完成
 - **最新变更**:
+  - ✅ 创建v2.4版本快照
+  - ✅ 项目文档优化（归档17个历史快照，删除5个临时文件）
   - ✅ 完整产品测试（18个商户100%验证）
   - ✅ 修复rentToSalesRatio显示bug
   - ✅ 创建演示视频用户旅程脚本
-  - ✅ 所有核心功能正常，无阻塞性bug
 
 ## 📋 快速链接
-- [完整上下文] → docs/snapshots/v2.0-SNAPSHOT.md
+- [完整上下文] → docs/snapshots/v2.4-SNAPSHOT.md ⭐最新
 - [**开发工作流程**] → docs/guides/DEVELOPMENT-WORKFLOW.md ⭐必读
 - [历史档案功能] → 见下方"最新功能"部分 ⭐最新
 - [任务创建修复] → docs/snapshots/TASK-CREATION-FIX-COMPLETE.md
@@ -280,5 +281,5 @@ npm run dev  # 访问 http://localhost:3000
 
 ---
 
-**📖 需要更多上下文？** 读取 `docs/snapshots/v2.0-SNAPSHOT.md` (<1000 tokens)
+**📖 需要更多上下文？** 读取 `docs/snapshots/v2.4-SNAPSHOT.md` (完整版本快照)
 **🔍 查找特定功能？** 查看 `docs/INDEX.md` 获取完整文档索引
