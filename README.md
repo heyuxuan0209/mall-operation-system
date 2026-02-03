@@ -1,12 +1,14 @@
-# 商户智运Agent V1.1
-# Merchant SmartOps AI Agent V1.1
+# 商户智运Agent v2.4-stable
+# Merchant SmartOps AI Agent v2.4-stable
 
-> 基于AI的商场商户健康度监控与帮扶管理系统
+> AI驱动的商业地产商户运营管理系统 | 个人作品集项目
 
-[![Version](https://img.shields.io/badge/version-1.1-blue.svg)](VERSION.md)
-[![Status](https://img.shields.io/badge/status-stable-green.svg)](VERSION.md)
+[![Version](https://img.shields.io/badge/version-2.4--stable-blue.svg)](VERSION.md)
+[![Status](https://img.shields.io/badge/status-production-green.svg)](VERSION.md)
 [![Framework](https://img.shields.io/badge/framework-Next.js%2016.1.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+
+**🌐 在线体验**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app) *(即将上线)*
 
 ---
 
@@ -25,7 +27,12 @@
 
 ## 🎯 项目简介
 
-商户智运Agent 是一个智能化的商场运营管理系统，专注于商户健康度监控和精准帮扶。系统通过AI诊断、趋势预测、AI帮扶知识库等功能,帮助运营团队提升工作效率，实现数据驱动的精细化管理。
+**商户智运Agent** 是一个AI驱动的商业地产商户运营管理系统，专注于商户健康度监控、智能诊断和精准帮扶。本项目为**个人作品集项目**，展示AI产品设计与全栈开发能力。
+
+### 项目定位
+- 📱 **在线Demo**: 用于求职面试展示
+- 🎓 **作品集项目**: 展示技术能力和产品思维
+- 🚀 **生产就绪**: 代码质量达到生产级别标准
 
 ### 核心价值
 
@@ -89,7 +96,14 @@
 
 ## 🚀 快速开始
 
-### 环境要求
+### 在线体验（推荐）
+访问在线Demo，无需本地安装：
+- **Demo地址**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app) *(即将上线)*
+- **说明**: Demo版本，数据每24小时重置
+
+### 本地开发
+
+#### 环境要求
 - Node.js 18.x 或更高版本
 - npm 或 yarn 或 pnpm
 
@@ -117,6 +131,17 @@ pnpm dev
 ```bash
 npm run build
 npm run start
+```
+
+### 部署到Vercel
+本项目已配置好Vercel自动部署，详见 [Vercel部署指南](VERCEL-DEPLOYMENT-GUIDE.md)。
+
+```bash
+# 简要步骤：
+# 1. 推送代码到GitHub
+# 2. 在Vercel中导入项目
+# 3. 自动检测Next.js配置
+# 4. 一键部署完成
 ```
 
 ---
@@ -184,7 +209,14 @@ mall-operation-system/
 
 ## 📝 版本历史
 
-### V1.1 (2026-01-24) - Current ✅
+### v2.4-stable (2026-02-03) - Current 🚀
+- ✅ 生产环境配置优化
+- ✅ Demo组件集成（欢迎横幅、页脚、水印）
+- ✅ Vercel部署配置完成
+- ✅ 代码保护措施（禁用Source Maps、移除console.log）
+- ✅ 专有许可协议添加
+
+### V1.1 (2026-01-24)
 - ✅ UI/UX优化（知识库、AI诊断、趋势预测）
 - ✅ 关键bug修复（工作流模板应用失败）
 - ✅ 技能模块提取（7个可复用模块）
@@ -306,29 +338,43 @@ const predictions = predictHealthTrend(historicalData);
 
 ## 📄 许可证
 
-本项目仅供学习和研究使用。
+本软件为专有软件，受版权保护。详见 [LICENSE.md](LICENSE.md)。
+
+**Demo版本说明**:
+- ✅ 允许在线体验和评估
+- ✅ 允许用于技术面试展示
+- ❌ 禁止商业使用
+- ❌ 禁止复制、修改、分发
 
 ---
 
 ## 🤝 贡献者
 
-- **Claude Sonnet 4.5** - AI Assistant & Developer
-- **User** - Product Owner & QA
+- **Heyuxuan** - Product Designer & Developer
+- **Claude Sonnet 4.5** - AI Assistant & Code Reviewer
 
 ---
 
 ## 📞 联系方式
 
-如有问题或建议，请通过以下方式联系：
-- 提交 Issue
-- 发送邮件
+**作品集项目 | 求职展示用**
+
+如果您是面试官，欢迎：
+- 🌐 体验在线Demo
+- 💬 询问技术细节
+- 📧 联系讨论项目
+
+如有问题或建议：
+- 查看 [部署指南](VERCEL-DEPLOYMENT-GUIDE.md)
+- 查看 [许可协议](LICENSE.md)
 
 ---
 
-**Last Updated**: 2026-01-24
-**Version**: V1.1
-**Status**: Stable ✅
+**Last Updated**: 2026-02-03
+**Version**: v2.4-stable
+**Status**: Production Ready 🚀
 
 ---
 
-Made with ❤️ by Claude Sonnet 4.5
+Made with ❤️ for career portfolio
+Powered by Next.js + AI

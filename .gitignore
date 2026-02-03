@@ -24,6 +24,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# Note: .env.production is NOT ignored - it should be committed for Vercel deployment
 
 # IDE
 .vscode/
