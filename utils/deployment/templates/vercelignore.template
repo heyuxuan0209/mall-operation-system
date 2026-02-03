@@ -1,0 +1,16 @@
+# Vercel Ignore File
+# Files and directories to exclude from Vercel deployment
+
+# Documentation (not needed in production)
+docs/
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store
+
+# 注意：
+# - 不要排除package-lock.json（Vercel需要它）
+# - 不要排除.git（Vercel自动处理）
+# - 不要排除node_modules（Vercel自动处理）
+# - 只排除真正不需要的文件
