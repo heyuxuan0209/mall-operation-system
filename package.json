@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "init:production": "tsx utils/deployment/initProductionConfig.ts",
-    "check:deploy": "tsx utils/deployment/checkDeploymentReady.ts"
+    "check:deploy": "tsx utils/deployment/checkDeploymentReady.ts",
+    "pdf": "node scripts/md-to-pdf/index.js"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
@@ -32,6 +33,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
+    "md-to-pdf": "^5.2.5",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
     "typescript": "^5"

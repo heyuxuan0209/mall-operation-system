@@ -2,19 +2,20 @@
 
 ## 🎯 当前版本状态
 - **版本**: v2.4-stable ✅ 演示就绪
-- **最后更新**: 2026-02-02
-- **Git Commit**: 14c0cb8
+- **最后更新**: 2026-02-03
+- **Git Commit**: 待提交
 - **工作阶段**: 产品测试完成，演示文档已准备，项目优化完成
 - **最新变更**:
+  - ✅ 新增 md-to-pdf 工具（Markdown转PDF，支持中文优化）
+  - ✅ 更新简历文档（标准简历、精简简历）
   - ✅ 创建v2.4版本快照
   - ✅ 项目文档优化（归档17个历史快照，删除5个临时文件）
   - ✅ 完整产品测试（18个商户100%验证）
-  - ✅ 修复rentToSalesRatio显示bug
-  - ✅ 创建演示视频用户旅程脚本
 
 ## 📋 快速链接
 - [完整上下文] → docs/snapshots/v2.4-SNAPSHOT.md ⭐最新
 - [**开发工作流程**] → docs/guides/DEVELOPMENT-WORKFLOW.md ⭐必读
+- [md-to-pdf工具] → docs/skills/MD-TO-PDF-QUICKSTART.md ⭐新增
 - [历史档案功能] → 见下方"最新功能"部分 ⭐最新
 - [任务创建修复] → docs/snapshots/TASK-CREATION-FIX-COMPLETE.md
 - [批量巡检快速开始] → docs/features/BATCH-INSPECTION-QUICKSTART.md
@@ -138,6 +139,7 @@ npm run dev  # 访问 http://localhost:3000
 ```
 
 ## 📅 最近7天活动
+- **2026-02-03**: 🛠️ 新增 md-to-pdf 工具 - Markdown转PDF（中文优化 + npm scripts集成）
 - **2026-02-01**: 🎉 商户历史帮扶档案 Phase 1+2 完成 - 数据关联 + 任务清单 + 措施分析 (+1635行)
 - **2026-02-01**: ✅ Phase 1 - 数据模型完善（真实任务ID关联 + 成功率修正）(+630行)
 - **2026-01-30**: ✅ 任务创建按钮修复 - 统一入口 + 自动填充 + localStorage延迟 (a3eaa37)
@@ -178,6 +180,7 @@ npm run dev  # 访问 http://localhost:3000
 - **app/inspection/batch/** - 批量巡检 ⭐v2.1新增 (快速切换 + 草稿保存)
 - **app/dashboard/** - 管理驾驶舱 ⭐v2.1新增 (完成率统计 + 超期预警 + 排行榜)
 - **skills/** - 业务技能模块 (AI诊断、趋势预测等)
+- **scripts/** - 工具脚本 ⭐新增 (md-to-pdf、测试工具、部署脚本等)
 
 ## 🎯 版本演进
 - **v1.0** (2026-01-23) - 基础功能实现 (15 features)

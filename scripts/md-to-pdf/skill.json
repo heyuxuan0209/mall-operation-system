@@ -1,0 +1,23 @@
+{
+  "name": "md-to-pdf",
+  "description": "将Markdown文件转换为PDF格式",
+  "version": "1.0.0",
+  "author": "heyuxuan",
+  "usage": "md-to-pdf <input.md> [output.pdf]",
+  "examples": [
+    "md-to-pdf resume.md",
+    "md-to-pdf docs/resume.md output/resume.pdf"
+  ],
+  "parameters": {
+    "input": {
+      "type": "string",
+      "required": true,
+      "description": "输入的Markdown文件路径"
+    },
+    "output": {
+      "type": "string",
+      "required": false,
+      "description": "输出的PDF文件路径（可选，默认与输入文件同名）"
+    }
+  }
+}

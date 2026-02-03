@@ -4,6 +4,52 @@
 
 ---
 
+## [v2.4-stable] - 2026-02-03
+
+### 🛠️ 工具新增 - md-to-pdf 转换工具
+
+**功能概述**：
+- Markdown文件一键转换为PDF格式
+- 中文字体优化（PingFang SC、Microsoft YaHei）
+- 支持简历、文档等场景，A4格式适合打印
+- 所有链接可点击，样式美观
+
+**文件清单**：
+```
+scripts/md-to-pdf/
+├── index.js              - 主程序（4KB）
+├── skill.json            - 配置文件
+└── README.md             - 使用文档
+
+docs/skills/
+├── MD-TO-PDF-QUICKSTART.md        - 快速参考 ⭐
+└── md-to-pdf-skill-summary.md     - 创建总结
+
+package.json
+└── scripts.pdf           - npm快捷命令
+```
+
+**三种使用方式**：
+1. `npm run pdf input.md` - npm命令（推荐）
+2. `node scripts/md-to-pdf/index.js input.md` - Node命令
+3. 通过Claude Code - 直接告诉AI使用工具
+
+**技术栈**：
+- md-to-pdf - 核心转换库
+- Puppeteer + Chrome - PDF渲染引擎
+- 自定义CSS - 中文简历优化
+
+**应用场景**：
+- ✅ 简历转换（已测试：STANDARD-RESUME.md → 2页PDF）
+- ✅ 文档导出（Markdown项目文档 → PDF）
+- ✅ 演示材料准备
+
+**文档更新**：
+- ✅ `CONTEXT.md` - 添加工具说明和快速链接
+- ✅ `package.json` - 添加pdf命令到scripts
+
+---
+
 ## [v2.4-stable] - 2026-02-02
 
 ### 📝 文档 - PRD & BRD 编写完成 ⭐
