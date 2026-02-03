@@ -357,9 +357,9 @@ const predictions = predictHealthTrend(historicalData);
 
 ## 📞 联系方式
 
-**作品集项目 | 求职展示用**
+**作品集项目 | 个人作品展示用**
 
-如果您是面试官，欢迎：
+如果您感兴趣，欢迎：
 - 🌐 体验在线Demo
 - 💬 询问技术细节
 - 📧 联系讨论项目
