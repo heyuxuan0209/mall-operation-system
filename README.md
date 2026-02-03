@@ -1,7 +1,7 @@
 # 商户智运Agent v2.4-stable
 # Merchant SmartOps AI Agent v2.4-stable
 
-> AI驱动的商业地产商户运营管理系统 | 个人作品集项目
+> AI驱动的商业地产商户运营管理系统 | 何雨轩作品集项目
 
 [![Version](https://img.shields.io/badge/version-2.4--stable-blue.svg)](VERSION.md)
 [![Status](https://img.shields.io/badge/status-production-green.svg)](VERSION.md)
@@ -27,7 +27,7 @@
 
 ## 🎯 项目简介
 
-**商户智运Agent** 是一个AI驱动的商业地产商户运营管理系统，专注于商户健康度监控、智能诊断和精准帮扶。本项目为**个人作品集项目**，展示AI产品设计与全栈开发能力。
+**商户智运Agent** 是一个AI驱动的商业地产商户运营管理系统，专注于商户健康度监控、智能诊断和精准帮扶。本项目为**何雨轩作品集**，展示AI产品设计与全栈开发能力。
 
 ### 项目定位
 - 📱 **在线Demo**: 用于求职面试展示
@@ -357,7 +357,7 @@ const predictions = predictHealthTrend(historicalData);
 
 ## 📞 联系方式
 
-**作品集项目 | 个人作品展示用**
+**何雨轩项目集 | 个人作品展示用**
 
 如果您感兴趣，欢迎：
 - 🌐 体验在线Demo
