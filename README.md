@@ -8,7 +8,8 @@
 [![Framework](https://img.shields.io/badge/framework-Next.js%2016.1.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
-**🌐 在线体验**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app) *(即将上线)*
+**🌐 在线体验**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app)
+**🔑 访问说明**: 如需访问，请联系何雨轩 **182 1020 9768**
 
 ---
 
@@ -98,7 +99,8 @@
 
 ### 在线体验（推荐）
 访问在线Demo，无需本地安装：
-- **Demo地址**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app) *(即将上线)*
+- **Demo地址**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app)
+- **访问方式**: 需要访问码，请联系何雨轩 **182 1020 9768**
 - **说明**: Demo版本，数据每24小时重置
 
 ### 本地开发
@@ -134,15 +136,29 @@ npm run start
 ```
 
 ### 部署到Vercel
-本项目已配置好Vercel自动部署，详见 [Vercel部署指南](VERCEL-DEPLOYMENT-GUIDE.md)。
 
+本项目已配置好Vercel自动部署和访问码保护。
+
+**环境变量配置**（在 Vercel Dashboard 中设置）：
+
+| Key | Value | 说明 |
+|-----|-------|------|
+| `ACCESS_CODE` | 你的访问码 | 必须设置，用于保护网站访问 |
+
+**部署步骤**：
 ```bash
-# 简要步骤：
 # 1. 推送代码到GitHub
+git push origin main
+
 # 2. 在Vercel中导入项目
-# 3. 自动检测Next.js配置
-# 4. 一键部署完成
+# 3. 设置环境变量 ACCESS_CODE
+# 4. 自动部署完成
 ```
+
+**访问保护说明**：
+- 访问者首次访问会看到联系信息页面
+- 输入正确访问码后可进入系统
+- Cookie 有效期 30 天
 
 ---
 
