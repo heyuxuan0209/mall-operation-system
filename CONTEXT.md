@@ -2,16 +2,29 @@
 
 ## 🎯 当前版本状态
 - **版本**: v2.5-stable ✅ 已部署上线
-- **最后更新**: 2026-02-04
-- **在线地址**: https://merchant-smartops.vercel.app
+- **最后更新**: 2026-02-06
+- **在线地址**: https://merchant-smartops.zeabur.app
+- **部署平台**: Zeabur (Jakarta 节点)
+- **访问码**: hyx2026（用于简历展示）
 - **Git Commit**: 29758a7
 - **工作阶段**: 生产环境运行，访问码保护已启用
 - **最新变更**:
   - ✅ 添加访问码保护功能（全站访问控制）
-  - ✅ 部署到 Vercel 生产环境
+  - ✅ 从 Vercel 迁移到 Zeabur（解决中国大陆访问问题）
+  - ✅ 部署到 Zeabur 生产环境（Jakarta 节点）
   - ✅ 文档结构优化（合并冗余文档）
 
 ## 最新更新
+
+### 2026-02-06: 迁移到 Zeabur 部署平台
+- **变更原因**: Vercel 在中国大陆访问不稳定（*.vercel.app 域名被限制）
+- **新部署平台**: Zeabur
+- **部署节点**: Jakarta（雅加达）- 对中国大陆访问友好
+- **在线地址**: https://merchant-smartops.zeabur.app
+- **访问码**: hyx2026
+- **环境变量配置**:
+  - 在 Zeabur 项目中设置 `ACCESS_CODE = hyx2026`
+  - 覆盖 `.env.production` 中的默认值
 
 ### 2026-02-04: 访问码保护功能上线
 - **新增功能**: 全站访问码保护，用于简历展示
@@ -25,7 +38,7 @@
   - `proxy.ts` - 访问控制中间件（拦截所有请求）
   - `app/access-verify/page.tsx` - 访问验证页面
   - `app/api/verify-access/route.ts` - 验证API
-- **配置**: Vercel 环境变量 `ACCESS_CODE`（Key必须是这个名字，Value可自定义）
+- **配置**: 环境变量 `ACCESS_CODE`（在 Zeabur/Vercel 中设置）
 
 ### 2026-02-03: Vercel部署准备
 - [完整上下文] → docs/snapshots/v2.4-SNAPSHOT.md ⭐最新

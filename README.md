@@ -8,8 +8,8 @@
 [![Framework](https://img.shields.io/badge/framework-Next.js%2016.1.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
-**🌐 在线体验**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app)
-**🔑 访问说明**: 如需访问，请联系何雨轩 **182 1020 9768**
+**🌐 在线体验**: [https://merchant-smartops.zeabur.app](https://merchant-smartops.zeabur.app)
+**🔑 访问码**: `hyx2026` | 如有疑问请联系何雨轩 **182 1020 9768**
 
 ---
 
@@ -99,8 +99,9 @@
 
 ### 在线体验（推荐）
 访问在线Demo，无需本地安装：
-- **Demo地址**: [https://merchant-smartops.vercel.app](https://merchant-smartops.vercel.app)
-- **访问方式**: 需要访问码，请联系何雨轩 **182 1020 9768**
+- **Demo地址**: [https://merchant-smartops.zeabur.app](https://merchant-smartops.zeabur.app)
+- **部署平台**: Zeabur (Jakarta 节点)
+- **访问码**: `hyx2026`
 - **说明**: Demo版本，数据每24小时重置
 
 ### 本地开发
@@ -135,30 +136,48 @@ npm run build
 npm run start
 ```
 
-### 部署到Vercel
+### 部署到 Zeabur（推荐）
 
-本项目已配置好Vercel自动部署和访问码保护。
+本项目已部署到 Zeabur，选择 Jakarta 节点以优化中国大陆访问。
 
-**环境变量配置**（在 Vercel Dashboard 中设置）：
+**环境变量配置**（在 Zeabur Dashboard 中设置）：
 
 | Key | Value | 说明 |
 |-----|-------|------|
-| `ACCESS_CODE` | 你的访问码 | 必须设置，用于保护网站访问 |
+| `ACCESS_CODE` | hyx2026 | 必须设置，用于保护网站访问 |
 
 **部署步骤**：
 ```bash
 # 1. 推送代码到GitHub
 git push origin main
 
-# 2. 在Vercel中导入项目
-# 3. 设置环境变量 ACCESS_CODE
-# 4. 自动部署完成
+# 2. 在 Zeabur 中导入项目
+#    - 访问 https://zeabur.com
+#    - 用 GitHub 账号登录
+#    - Create Project → Deploy from GitHub
+#    - 选择仓库并导入
+
+# 3. 配置环境变量
+#    - 进入项目 → Variables
+#    - 添加 ACCESS_CODE = hyx2026
+
+# 4. 生成域名
+#    - Networking → Generate Domain
+#    - 获取 .zeabur.app 域名
+
+# 5. 部署完成
 ```
 
 **访问保护说明**：
 - 访问者首次访问会看到联系信息页面
-- 输入正确访问码后可进入系统
+- 输入正确访问码 `hyx2026` 后可进入系统
 - Cookie 有效期 30 天
+
+**为什么选择 Zeabur？**
+- ✅ 针对中国大陆优化，访问稳定
+- ✅ Jakarta 节点延迟低
+- ✅ 免费额度充足（适合 Demo 项目）
+- ✅ 部署简单，中文支持
 
 ---
 
@@ -386,9 +405,10 @@ const predictions = predictHealthTrend(historicalData);
 
 ---
 
-**Last Updated**: 2026-02-03
-**Version**: v2.4-stable
+**Last Updated**: 2026-02-06
+**Version**: v2.5-stable
 **Status**: Production Ready 🚀
+**Deployed on**: Zeabur (Jakarta)
 
 ---
 
