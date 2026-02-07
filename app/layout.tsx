@@ -5,6 +5,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import WelcomeBanner from "@/components/demo/WelcomeBanner";
 import DemoFooter from "@/components/demo/DemoFooter";
 import DemoWatermark from "@/components/demo/DemoWatermark";
+import FloatingAssistant from "@/components/ai-assistant/FloatingAssistant";
 import Script from "next/script";
 
 const inter = Inter({
@@ -47,6 +48,9 @@ export default function RootLayout({
 
         {/* Demo版本右下角水印 */}
         <DemoWatermark />
+
+        {/* AI助手浮动按钮 */}
+        <FloatingAssistant />
 
         {/* 主要内容区域 */}
         <div className="flex flex-col min-h-screen">

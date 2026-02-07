@@ -1,5 +1,5 @@
 /**
- * AI智能推荐引擎 v2.1 - 增强版（带缓存）
+ * AI智能推荐引擎 v2.2 - 增强版（带反馈权重）
  *
  * 新增功能：
  * - 成功率权重：优先推荐成功案例
@@ -9,7 +9,22 @@
  * - 多策略融合：结合多种推荐策略
  * - 缓存机制：避免重复计算（v2.1新增）
  * - 批量匹配：支持批量处理（v2.1新增）
+ * - 用户反馈权重：基于AI助手用户反馈优化推荐（v2.2新增）
  */
+
+import { feedbackCollector } from '@/utils/ai-assistant/feedbackCollector';
+
+/**
+ * 获取案例的用户反馈权重
+ */
+function getFeedbackWeight(caseId: string): number {
+  try {
+    const weights = feedbackCollector.getCaseWeights();
+    return weights[caseId] || 0;
+  } catch (error) {
+    return 0;
+  }
+}
 
 /**
  * 缓存管理器
@@ -246,6 +261,13 @@ function performMatching(input: EnhancedAIMatcherInput): EnhancedAIMatcherOutput
     score += recencyBonus;
     if (recencyBonus > 5) {
       reasons.push('近期成功案例');
+    }
+
+    // 8. 用户反馈权重（新增，AI助手反馈优化）
+    const feedbackBonus = getFeedbackWeight(c.id);
+    score += feedbackBonus;
+    if (Math.abs(feedbackBonus) > 10) {
+      reasons.push(feedbackBonus > 0 ? '用户反馈良好' : '用户反馈一般');
     }
 
     // 8. 历史反馈调整（新增，±15分）

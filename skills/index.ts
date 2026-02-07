@@ -53,6 +53,14 @@ import * as ImageProcessor from './image-processor';
 // ==================== 通知系统 ====================
 import * as NotificationBuilder from './notification-builder';
 
+// ==================== AI Assistant ====================
+import * as IntentClassifier from './ai-assistant/intent-classifier';
+import * as EntityExtractor from './ai-assistant/entity-extractor';
+import * as ResponseGenerator from './ai-assistant/response-generator';
+import * as ConversationContext from './ai-assistant/conversation-context';
+import * as LLMIntegration from './ai-assistant/llm-integration';
+import * as AgentRouter from './ai-assistant/agent-router';
+
 // ==================== 工作流自动化 ====================
 import * as TokenMonitor from './token-monitor';
 import * as SaveLocationDetector from './save-location-detector';
@@ -87,6 +95,14 @@ export {
 
   // 通知系统
   NotificationBuilder,
+
+  // AI Assistant
+  IntentClassifier,
+  EntityExtractor,
+  ResponseGenerator,
+  ConversationContext,
+  LLMIntegration,
+  AgentRouter,
 
   // 工作流自动化
   TokenMonitor,

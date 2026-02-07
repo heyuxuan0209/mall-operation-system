@@ -530,3 +530,6 @@ export interface HistoryTrendPoint {
   // 数据来源
   snapshotId?: string;              // 关联的快照ID
 }
+
+// ==================== AI Assistant 相关类型 ====================
+export * from './ai-assistant';
