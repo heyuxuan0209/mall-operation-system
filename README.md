@@ -1,12 +1,13 @@
-# 商户智运Agent v2.4-stable
-# Merchant SmartOps AI Agent v2.4-stable
+# 商户智运Agent v3.0
+# Merchant SmartOps AI Agent v3.0
 
-> AI驱动的商业地产商户运营管理系统 | 何雨轩作品集项目
+> AI Agent驱动的商业地产商户运营管理系统 | 何雨轩作品集项目
 
-[![Version](https://img.shields.io/badge/version-2.4--stable-blue.svg)](VERSION.md)
-[![Status](https://img.shields.io/badge/status-production-green.svg)](VERSION.md)
+[![Version](https://img.shields.io/badge/version-3.0--dev-orange.svg)](VERSION.md)
+[![Status](https://img.shields.io/badge/status-development-yellow.svg)](VERSION.md)
 [![Framework](https://img.shields.io/badge/framework-Next.js%2016.1.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![AI](https://img.shields.io/badge/AI-LLM%20Powered-purple.svg)](https://anthropic.com)
 
 **🌐 在线体验**: [https://merchant-smartops.zeabur.app](https://merchant-smartops.zeabur.app)
 **🔑 访问码**: `hyx2026` | 如有疑问请联系何雨轩 **182 1020 9768**
@@ -37,7 +38,10 @@
 
 ### 核心价值
 
-- 🤖 **AI智能诊断**: 自动分析商户问题，推荐帮扶策略
+- 🤖 **AI Agent问答助手** ⭐v3.0: 从规则Chatbot升级为推理Agent
+  - LLM驱动的查询理解（支持聚合统计、对比分析）
+  - 因果推理诊断（根因分析而非症状检测）
+  - 动态响应生成（个性化而非模板化）
 - 📊 **趋势预测**: 基于线性回归的健康度趋势预测
 - 📚 **AI帮扶知识库**: 成功案例自动沉淀，经验可复用
 - 🔄 **标准化流程**: 工作流模板快速应用
@@ -47,29 +51,54 @@
 
 ## ✨ 核心功能
 
-### 1. 商户健康度监控
+### 1. AI问答助手 ⭐v3.0重构
+**从规则匹配Chatbot → 推理驱动AI Agent**
+
+**支持查询类型**:
+- 单商户查询："海底捞最近怎么样？"
+- 聚合统计："这个月多少高风险商户？"
+- 对比分析："和上个月比怎么样？"
+- 趋势分析："营收走势如何？"
+
+**核心能力**:
+- **查询理解** - LLM结构化解析（时间、实体、意图）
+- **意图识别** - 语义分类，支持复合意图
+- **智能诊断** - 因果推理，根因分析（位置差 vs 管理差 vs 产品差）
+- **案例匹配** - 根因相似度 + 语义匹配
+- **动态生成** - 个性化响应，而非固定模板
+
+**技术架构**:
+```
+Query → LLM结构化 → Intent分类 →
+诊断推理/数据聚合/对比分析 → LLM动态生成响应
+```
+
+### 2. 商户健康度监控
 - 五维度健康度评估（租金缴纳、经营表现、现场品质、顾客满意度、抗风险能力）
 - 实时健康度趋势图表
 - 线性回归预测未来3个月趋势
 - 风险预警与建议措施
 
-### 2. 帮扶任务管理
+### 3. 帮扶任务管理
 - 任务全生命周期管理（措施制定 → 执行 → 评估 → 结案）
 - 工作流模板快速应用
 - AI智能推荐帮扶措施
 - 执行记录与日志追踪
 
-### 3. AI帮扶知识库
+### 4. AI帮扶知识库
 - 成功案例自动沉淀
 - 智能搜索与案例匹配
 - 按业态分类管理
 - 案例导入导出
 
-### 4. AI诊断与推荐
-- 商户问题智能诊断
-- 知识库案例智能匹配（业态40% + 标签60% + 症状加分）
-- 帮扶策略自动推荐
-- 风险等级评估
+### 5. 现场巡店工具包
+- 快速评分、照片标注、语音记录
+- 批量巡检模式（效率提升47%）
+- 清单生成、即时分析
+
+### 6. 管理驾驶舱
+- 统计可视化（完成率、超期预警）
+- 巡检员排行榜、策略管理
 
 ---
 
@@ -244,22 +273,33 @@ mall-operation-system/
 
 ## 📝 版本历史
 
-### v2.4-stable (2026-02-03) - Current 🚀
-- ✅ 生产环境配置优化
-- ✅ Demo组件集成（欢迎横幅、页脚、水印）
-- ✅ Vercel部署配置完成
-- ✅ 代码保护措施（禁用Source Maps、移除console.log）
-- ✅ 专有许可协议添加
+### v3.0-dev (2026-02-07) - Current 🚧
+**AI问答助手系统性重构**
+- 🚀 从"规则匹配Chatbot"升级为"推理驱动AI Agent"
+- ✅ 支持聚合统计、对比分析、趋势分析查询
+- ✅ LLM因果推理诊断（根因分析）
+- ✅ 语义案例匹配（替代标签匹配）
+- ✅ 动态响应生成（替代固定模板）
+- 📋 实施中：3个迭代（核心能力/智能诊断/上下文记忆）
 
-### V1.1 (2026-01-24)
-- ✅ UI/UX优化（知识库、AI诊断、趋势预测）
-- ✅ 关键bug修复（工作流模板应用失败）
-- ✅ 技能模块提取（7个可复用模块）
-- ✅ 文档完善
+### v2.5-stable (2026-02-06)
+- ✅ 迁移到Zeabur部署（Jakarta节点）
+- ✅ 访问码保护功能
+- ✅ 历史帮扶档案增强
 
-### V1.0 (Previous)
-- ✅ 基础功能实现
-- ✅ Sprint 1-3 完成（15/15 features）
+### v2.0-v2.4 (2026-01-28~02-03)
+- ✅ 现场巡店工具包
+- ✅ 批量巡检模式
+- ✅ 管理驾驶舱
+- ✅ 5等级风险标准
+
+### v1.1 (2026-01-24)
+- ✅ UI/UX优化
+- ✅ 关键bug修复
+- ✅ Skills提取
+
+### v1.0 (2026-01-23)
+- ✅ 基础功能实现（15 features）
 
 详见 [VERSION.md](VERSION.md)
 
@@ -405,9 +445,9 @@ const predictions = predictHealthTrend(historicalData);
 
 ---
 
-**Last Updated**: 2026-02-06
-**Version**: v2.5-stable
-**Status**: Production Ready 🚀
+**Last Updated**: 2026-02-07
+**Version**: v3.0-dev
+**Status**: Development 🚧 (AI问答助手重构中)
 **Deployed on**: Zeabur (Jakarta)
 
 ---

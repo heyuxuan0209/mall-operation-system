@@ -4,6 +4,145 @@
 
 ---
 
+## [v3.0-dev] - 2026-02-07 🚧
+
+### 🎯 版本主题
+**AI问答助手系统性重构: 从"规则匹配Chatbot"升级为"推理驱动AI Agent"**
+
+### 📋 重构背景
+
+**用户反馈**: "答非所问、僵化"
+
+具体问题:
+- "海底捞最近如何" → 返回健康度报告（用户可能想要对比）
+- "小龙坎呢" → 返回通用回复（应该理解上下文）
+- "这个月商户风险如何？多少高风险，和上个月比怎么样？" → 只返回单商户风险（应该返回统计+对比）
+- "怎么帮扶海底捞" → 只返回"海底捞火锅 帮扶方案"（应该个性化）
+
+**根本原因**:
+1. ❌ 硬编码的单商户假设 - 无法处理聚合查询
+2. ❌ 规则驱动的诊断引擎 - 无法区分根因
+3. ❌ 关键词匹配的意图识别 - 容易混淆
+4. ❌ 模板化的响应生成 - 千篇一律
+
+### ✨ 新增
+
+#### Phase 1: Query Understanding增强
+- **新增文件**: `skills/ai-assistant/query-analyzer.ts` - LLM驱动的查询结构化解析
+  - 识别查询类型（single_merchant | aggregation | comparison | trend_analysis）
+  - 提取实体（商户名、时间范围、对比目标）
+  - 解析意图和筛选条件
+  - 支持聚合操作（count, sum, avg, max, min）
+
+#### Phase 2: Intent System重构
+- **修改文件**: `types/ai-assistant.ts` - 扩展Intent定义
+  - +6个新Intent类型（aggregation_query, risk_statistics, health_overview, comparison_query, trend_analysis, composite_query）
+- **重构文件**: `skills/ai-assistant/intent-classifier.ts` - LLM语义分类
+  - 从关键词匹配改为LLM语义理解
+  - 支持多意图识别
+  - 动态置信度调整
+
+#### Phase 3: 诊断引擎重构
+- **重构文件**: `skills/ai-diagnosis-engine.ts` - 从规则到推理
+  - LLM因果推理替代固定阈值检测
+  - 症状识别 + 根因推理 + 问题关联分析
+  - 严重程度评估 + 可行性预判
+  - 规则验证防止LLM幻觉
+
+#### Phase 4: 案例匹配升级
+- **重构文件**: `skills/enhanced-ai-matcher.ts` - 从标签到语义
+  - 根因筛选候选案例
+  - LLM评估相似度
+  - 生成适应性建议
+
+#### Phase 5: Response生成重构
+- **重构文件**: `skills/ai-assistant/response-generator.ts` - 废除模板，动态生成
+  - 单商户查询 - 个性化响应
+  - 聚合查询 - 统计报告 + 洞察
+  - 对比查询 - 变化趋势 + 关键差异
+  - 趋势分析 - 走势图 + 预测
+
+#### Phase 6: Agent Router扩展
+- **扩展文件**: `skills/ai-assistant/agent-router.ts` - 支持复杂查询
+- **新增文件**: `skills/ai-assistant/aggregation-executor.ts` - 聚合查询执行
+- **新增文件**: `skills/ai-assistant/comparison-executor.ts` - 对比分析执行
+- **新增文件**: `skills/business-context-provider.ts` - 外部环境数据提供
+
+#### Phase 7: Conversation Context增强
+- **增强文件**: `utils/ai-assistant/conversationManager.ts` - 丰富对话上下文
+  - queryHistory - 结构化查询历史
+  - merchantStack - 讨论过的商户栈
+  - userPreferences - 用户偏好学习
+  - domainContext - 当前workflow状态
+
+### 🔄 变更
+
+**架构变革**:
+
+| 维度 | 旧架构 | 新架构 |
+|------|--------|--------|
+| Query理解 | 关键词匹配 | LLM语义理解 + 结构化解析 |
+| Intent识别 | 固定5种单商户意图 | 动态意图分类 + 复合意图分解 |
+| 诊断方式 | 规则阈值检测 | LLM因果推理 + 知识库验证 |
+| 案例匹配 | 标签相似度 | 语义相似度 + 根因匹配 |
+| Response生成 | 硬编码模板 | 动态生成 + 个性化调整 |
+| 数据范围 | 单商户 | 单商户 + 聚合统计 + 对比分析 |
+
+### 📝 实施策略
+
+#### Iteration 1: 核心能力（1周）
+**目标**: 解决"答非所问"
+- Query Analyzer实现 (2天)
+- Intent扩展 + Agent Router升级 (2天)
+- Response Generator重构 (1天)
+- 集成测试 (2天)
+
+#### Iteration 2: 智能诊断（1周）
+**目标**: 解决"千篇一律"
+- 诊断引擎重构 (3天)
+- 案例匹配升级 (2天)
+- 集成测试 (2天)
+
+#### Iteration 3: 上下文记忆（3天）
+**目标**: 提升多轮对话
+- Context Manager增强 (2天)
+- 测试验证 (1天)
+
+### ⚠️ 重要说明
+- ✅ v3.0仅重构AI问答助手模块
+- ✅ 其他功能（Dashboard、Inspection、Tasks、Knowledge等）保持现有逻辑不变
+
+### 📊 统计
+- 预计新增代码: ~3000行
+- 预计新增文件: 6个
+- 重构文件: 7个
+- 新增Skills: 6个 (QueryAnalyzer, AggregationExecutor, ComparisonExecutor, BusinessContextProvider等)
+- Skills总数: 19个 → 25个
+
+### 🎯 成功标准
+
+#### 功能层面
+- ✅ 支持聚合统计查询
+- ✅ 支持对比分析查询
+- ✅ 支持复合意图识别
+- ✅ 诊断报告包含根因分析
+- ✅ 案例匹配基于根因相似度
+- ✅ Response动态生成
+
+#### 用户体验层面
+- ✅ 不再答非所问
+- ✅ 不再千篇一律
+- ✅ 支持自然对话
+- ✅ 提供可操作洞察
+
+#### 技术指标
+- Query解析准确率 > 90%
+- Intent识别准确率 > 85%
+- 根因诊断有效性 > 80%
+- 响应时间 < 5秒
+
+---
+
 ## [v2.4-stable] - 2026-02-03
 
 ### 🛠️ 工具新增 - md-to-pdf 转换工具
