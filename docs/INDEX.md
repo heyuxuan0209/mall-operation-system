@@ -1,6 +1,6 @@
 # 文档索引
 
-**自动生成时间**: 2026-02-04 18:39:02
+**自动生成时间**: 2026-02-04 19:35:14
 
 ## 📁 目录结构
 
@@ -35,6 +35,7 @@ docs/
 - README.md
 
 ### 开发指南
+- CLAUDE-CODE-文档自动化管理实战.md
 - DATA-CONSISTENCY-GUIDE.md
 - DEVELOPMENT-WORKFLOW.md
 - GIT-COMMIT-GUIDE.md
