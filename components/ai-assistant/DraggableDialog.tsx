@@ -23,17 +23,35 @@ interface DialogPosition {
 }
 
 const STORAGE_KEY = 'ai_dialog_position';
-const DEFAULT_POSITION: DialogPosition = {
-  x: window.innerWidth - 500,
-  y: window.innerHeight - 720,
-  width: 480,
-  height: 700,
+
+// 获取默认位置（考虑SSR）
+const getDefaultPosition = (): DialogPosition => {
+  if (typeof window === 'undefined') {
+    return { x: 100, y: 100, width: 480, height: 700 };
+  }
+  return {
+    x: window.innerWidth - 500,
+    y: window.innerHeight - 720,
+    width: 480,
+    height: 700,
+  };
 };
 
 export default function DraggableDialog({ children, onClose }: DraggableDialogProps) {
-  const [position, setPosition] = useState<DialogPosition>(DEFAULT_POSITION);
+  const [position, setPosition] = useState<DialogPosition>(getDefaultPosition());
   const [isMaximized, setIsMaximized] = useState(false);
-  const [savedPosition, setSavedPosition] = useState<DialogPosition>(DEFAULT_POSITION);
+  const [savedPosition, setSavedPosition] = useState<DialogPosition>(getDefaultPosition());
+  const [maxBounds, setMaxBounds] = useState({ width: 1920, height: 1080 });
+
+  // 初始化最大边界
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setMaxBounds({
+        width: window.innerWidth - 40,
+        height: window.innerHeight - 40,
+      });
+    }
+  }, []);
 
   // 从localStorage恢复上次的位置和大小
   useEffect(() => {
@@ -91,6 +109,8 @@ export default function DraggableDialog({ children, onClose }: DraggableDialogPr
 
   // 切换最大化/恢复
   const toggleMaximize = () => {
+    if (typeof window === 'undefined') return;
+
     if (isMaximized) {
       // 恢复到保存的位置
       setPosition(savedPosition);
@@ -114,8 +134,8 @@ export default function DraggableDialog({ children, onClose }: DraggableDialogPr
       size={{ width: position.width, height: position.height }}
       minWidth={320}
       minHeight={400}
-      maxWidth={window.innerWidth - 40}
-      maxHeight={window.innerHeight - 40}
+      maxWidth={maxBounds.width}
+      maxHeight={maxBounds.height}
       bounds="window"
       dragHandleClassName="drag-handle"
       onDragStop={handleDragStop}

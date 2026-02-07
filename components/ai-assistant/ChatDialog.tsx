@@ -80,12 +80,8 @@ export default function ChatDialog({ onClose }: ChatDialogProps) {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // 如果有建议的操作，自动执行
-      if (result.suggestedAction) {
-        setTimeout(() => {
-          handleExecuteAction(result.suggestedAction!);
-        }, 1000);
-      }
+      // 注意：不再自动执行 suggestedAction
+      // 用户可以通过点击 ActionCard 来主动触发操作
     } catch (error) {
       console.error('Failed to process message:', error);
       const errorMessage = conversationManager.addMessage(

@@ -276,8 +276,9 @@ export class AgentRouter {
         knowledgeBase
       );
 
-      // 添加诊断结果到内容
-      content += `\n\n---\n\n⚠️ 检测到健康度异常，已自动触发诊断分析...\n\n`;
+      // 添加诊断结果到内容（优化显示）
+      content += `\n\n---\n\n## 🔍 深度诊断分析\n\n`;
+      content += `> ⚠️ 检测到健康度异常，以下是详细诊断报告：\n\n`;
 
       const diagnosisResponse = responseGenerator.generateRiskDiagnosisResponse(
         merchant,
@@ -297,6 +298,17 @@ export class AgentRouter {
       // 合并建议操作
       if (diagnosisResponse.suggestedActions) {
         suggestedActions = diagnosisResponse.suggestedActions;
+      }
+    } else {
+      // 健康度正常，只给出温和的建议（减少行动卡片）
+      if (merchant.totalScore < 85) {
+        // 健康度偏低但不触发自动诊断，只给查看详情的选项
+        suggestedActions = [
+          { type: 'view_health', merchantId: merchant.id, merchantName: merchant.name },
+        ];
+      } else {
+        // 健康度良好，不显示行动卡片（让用户自由对话）
+        suggestedActions = undefined;
       }
     }
 
@@ -416,6 +428,7 @@ export class AgentRouter {
 
   /**
    * 检查是否需要触发诊断
+   * 只在健康度严重偏低或高风险时才自动诊断
    */
   private checkDiagnosisTrigger(merchant: Merchant): boolean {
     const riskLevelMap: Record<string, number> = {
@@ -426,7 +439,12 @@ export class AgentRouter {
       critical: 4,
     };
 
-    return merchant.totalScore < 80 || riskLevelMap[merchant.riskLevel] >= 2;
+    // 严格条件：健康度 < 70 且风险等级 >= high
+    // 或者健康度 < 60
+    const isCriticalHealth = merchant.totalScore < 60;
+    const isHighRisk = merchant.totalScore < 70 && riskLevelMap[merchant.riskLevel] >= 3;
+
+    return isCriticalHealth || isHighRisk;
   }
 
   /**
