@@ -251,10 +251,15 @@ export class AgentRouter {
 
     // 对比查询
     if (query.type === 'comparison') {
+      console.log('[AgentRouter] Resolving comparison entities:', query.entities);
+
       // 如果是商户vs商户
       if (entities.merchants && entities.merchants.length === 2) {
+        console.log('[AgentRouter] Merchant names:', entities.merchants);
         const merchant1 = merchantDataManager.findMerchantByName(entities.merchants[0]);
         const merchant2 = merchantDataManager.findMerchantByName(entities.merchants[1]);
+
+        console.log('[AgentRouter] Found merchants:', { merchant1: merchant1?.name, merchant2: merchant2?.name });
 
         return {
           type: 'comparison',

@@ -491,21 +491,35 @@ export class QueryAnalyzer {
   private extractMerchantsFromComparison(userInput: string): string[] {
     const merchants: string[] = [];
 
-    // 模式1："A对比B" / "A vs B" / "A和B比较"
-    const pattern1 = /([一-龥\w]+)(?:对比|vs|和)([一-龥\w]+)(?:比较)?/;
+    // 🔥 优先匹配更精确的模式（避免贪婪匹配）
+
+    // 模式1："对比海底捞和小龙坎" / "比较A和B"
+    const pattern1 = /(?:对比|比较)([一-龥\w]+)和([一-龥\w]+)/;
     const match1 = userInput.match(pattern1);
 
     if (match1) {
       merchants.push(match1[1].trim(), match1[2].trim());
+      console.log('[QueryAnalyzer] Pattern1 matched:', merchants);
       return merchants;
     }
 
-    // 模式2："对比海底捞和小龙坎"
-    const pattern2 = /(?:对比|比较)([一-龥\w]+)和([一-龥\w]+)/;
+    // 模式2："海底捞vs小龙坎" / "A对比B"（不含"和"）
+    const pattern2 = /([一-龥]{2,10})(?:vs|对比)([一-龥]{2,10})/;
     const match2 = userInput.match(pattern2);
 
     if (match2) {
       merchants.push(match2[1].trim(), match2[2].trim());
+      console.log('[QueryAnalyzer] Pattern2 matched:', merchants);
+      return merchants;
+    }
+
+    // 模式3："海底捞和小龙坎比较"
+    const pattern3 = /([一-龥]{2,10})和([一-龥]{2,10})(?:比较|对比)/;
+    const match3 = userInput.match(pattern3);
+
+    if (match3) {
+      merchants.push(match3[1].trim(), match3[2].trim());
+      console.log('[QueryAnalyzer] Pattern3 matched:', merchants);
       return merchants;
     }
 
