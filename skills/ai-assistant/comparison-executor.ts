@@ -202,22 +202,27 @@ export class ComparisonExecutor {
     plan: ExtendedExecutionPlan,
     merchants: Merchant[]
   ): ComparisonResult {
-    // 🔥 修复：从entities.merchants获取两个商户名
-    const merchantNames = plan.entities.merchants || [];
+    // 🔥 修复：从entities.merchants获取两个商户对象（类型为Array<{id, name}>）
+    const merchantEntities = plan.entities.merchants || [];
 
-    if (merchantNames.length < 2) {
+    if (merchantEntities.length < 2) {
       throw new Error('需要两个商户名进行对比');
     }
 
-    // 获取两个商户
-    const merchant1 = merchants.find(m => m.name === merchantNames[0] || m.name.includes(merchantNames[0]));
-    const merchant2 = merchants.find(m => m.name === merchantNames[1] || m.name.includes(merchantNames[1]));
+    // 获取两个商户 - 优先用ID匹配，否则用名称匹配
+    const merchant1 = merchantEntities[0].id
+      ? merchants.find(m => m.id === merchantEntities[0].id)
+      : merchants.find(m => m.name === merchantEntities[0].name || m.name.includes(merchantEntities[0].name));
+
+    const merchant2 = merchantEntities[1].id
+      ? merchants.find(m => m.id === merchantEntities[1].id)
+      : merchants.find(m => m.name === merchantEntities[1].name || m.name.includes(merchantEntities[1].name));
 
     if (!merchant1) {
-      throw new Error(`商户不存在: ${merchantNames[0]}`);
+      throw new Error(`商户不存在: ${merchantEntities[0].name}`);
     }
     if (!merchant2) {
-      throw new Error(`商户不存在: ${merchantNames[1]}`);
+      throw new Error(`商户不存在: ${merchantEntities[1].name}`);
     }
 
     // 提取数据
