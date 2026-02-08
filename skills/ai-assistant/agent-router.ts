@@ -1,494 +1,362 @@
 /**
- * Agent 路由器
- * 核心编排引擎：路由意图 → 执行Skills/LLM/Hybrid → 返回响应
+ * Agent Router - 智能路由器 ⭐v3.0完全重构
+ *
+ * 核心改进：
+ * - 集成 Query Analyzer（LLM驱动的查询理解）
+ * - 支持聚合查询、对比分析、趋势分析
+ * - 集成重构后的 Intent Classifier、Response Generator
+ * - Plan-Execute-Respond 架构
+ *
+ * 处理流程：
+ * Phase 1: Query Analysis → 查询结构化解析
+ * Phase 2: Intent Classification → 多意图识别
+ * Phase 3: Entity Resolution → 实体解析
+ * Phase 4: Execution → 执行（聚合/对比/单商户）
+ * Phase 5: Response Generation → LLM动态生成响应
  */
 
-import { Merchant } from '@/types';
 import {
-  UserIntent,
   AgentExecutionResult,
-  DataSource,
-  AgentRouteConfig,
+  UserIntent,
+  StructuredQuery,
+  ResolvedEntity,
+  ExtendedExecutionPlan,
+  AggregationResult,
+  ComparisonResult,
 } from '@/types/ai-assistant';
+import { Merchant } from '@/types';
+import { conversationManager } from '@/utils/ai-assistant/conversationManager';
 import { merchantDataManager } from '@/utils/merchantDataManager';
-import { intentClassifier } from './intent-classifier';
-import { entityExtractor } from './entity-extractor';
-import { responseGenerator } from './response-generator';
-import { conversationContextManager } from './conversation-context';
-import { llmIntegration } from './llm-integration';
-import { cacheManager } from '@/utils/ai-assistant/cacheManager';
 
-// Import existing skills
+// ⭐v3.0核心模块
+import { queryAnalyzer } from './query-analyzer';
+import { intentClassifier } from './intent-classifier';
+import { aggregationExecutor } from './aggregation-executor';
+import { comparisonExecutor } from './comparison-executor';
+import { responseGenerator } from './response-generator';
+import { entityExtractor } from './entity-extractor';
+
+// 现有Skills
 import { analyzeHealth } from '@/skills/health-calculator';
 import { generateDiagnosisReport } from '@/skills/ai-diagnosis-engine';
-import { predictHealthTrend } from '@/skills/trend-predictor';
 import { detectRisks } from '@/skills/risk-detector';
 import { enhancedMatchCases } from '@/skills/enhanced-ai-matcher';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 
 export class AgentRouter {
   /**
-   * 处理用户输入的主入口
+   * ⭐v3.0核心方法：处理用户输入
+   * Plan-Execute-Respond 架构
    */
   async process(
     userInput: string,
-    conversationId: string,
-    config?: Partial<AgentRouteConfig>
+    conversationId: string
   ): Promise<AgentExecutionResult> {
     const startTime = Date.now();
 
     try {
-      // 步骤1: 意图识别
-      const intentResult = intentClassifier.classify(userInput);
-      const intent = intentResult.intent;
+      // ============ Phase 1: Query Analysis ============
+      const context = conversationManager.getContext(conversationId) || {
+        conversationId,
+        recentMessages: [],
+        sessionStartTime: new Date().toISOString(),
+      };
 
-      // 步骤2: 实体提取
-      const contextMerchant = conversationContextManager.getMerchantFromContext(conversationId);
-      const entityResult = entityExtractor.extractMerchant(
-        userInput,
-        contextMerchant?.id
-      );
+      const structuredQuery = await queryAnalyzer.analyze(userInput, context);
+      console.log('[AgentRouter] Structured query:', structuredQuery);
 
-      // 步骤3: 商户验证
-      if (this.needsMerchant(intent) && !entityResult.matched) {
+      // ============ Phase 2: Intent Classification ============
+      const intents = await intentClassifier.classifyWithLLM(structuredQuery, context);
+      console.log('[AgentRouter] Intents:', intents);
+
+      // 更新结构化查询的意图列表
+      structuredQuery.intents = intentClassifier.extractMultipleIntents(intents);
+
+      // ============ Phase 3: Entity Resolution ============
+      const entities = await this.resolveEntities(structuredQuery, context);
+      console.log('[AgentRouter] Resolved entities:', entities);
+
+      // 验证：如果需要商户但未找到，返回错误
+      if (structuredQuery.type === 'single_merchant' && !entities.merchantId) {
         return this.createMerchantNotFoundResult(userInput);
       }
 
-      const merchant = entityResult.merchantId
-        ? merchantDataManager.getMerchant(entityResult.merchantId) || undefined
-        : undefined;
+      // ============ Phase 4: Build Execution Plan ============
+      const executionPlan: ExtendedExecutionPlan = {
+        tasks: [],
+        strategy: 'hybrid',
+        parallelizable: false,
+        confidence: structuredQuery.confidence,
+        queryType: structuredQuery.type,
+        entities,
+        aggregations: structuredQuery.aggregations,
+      };
 
-      // 步骤4: 决策执行策略
-      const strategy = this.decideStrategy(intent, merchant, config);
+      // ============ Phase 5: Execute ============
+      let executionResult: any;
+      let merchant: Merchant | undefined;
 
-      // 步骤5: 执行
-      let result: AgentExecutionResult;
+      switch (structuredQuery.type) {
+        case 'single_merchant':
+          executionResult = await this.executeSingleMerchantPlan(executionPlan, entities);
+          merchant = entities.merchantId
+            ? merchantDataManager.getMerchant(entities.merchantId) || undefined
+            : undefined;
+          break;
 
-      if (strategy === 'skills') {
-        result = await this.executeWithSkills(intent, merchant!, conversationId);
-      } else if (strategy === 'llm') {
-        result = await this.executeWithLLM(intent, userInput, merchant, conversationId);
-      } else {
-        result = await this.executeHybrid(intent, merchant!, conversationId);
+        case 'aggregation':
+          executionResult = await this.executeAggregationPlan(executionPlan);
+          break;
+
+        case 'comparison':
+          executionResult = await this.executeComparisonPlan(executionPlan);
+          break;
+
+        case 'trend_analysis':
+          // TODO: 实现趋势分析执行
+          executionResult = { message: 'Trend analysis not yet implemented' };
+          break;
+
+        default:
+          throw new Error(`Unsupported query type: ${structuredQuery.type}`);
       }
 
-      // 添加执行时间
-      result.metadata.executionTime = Date.now() - startTime;
-      result.metadata.intent = intent;
-      if (merchant) {
-        result.metadata.merchantId = merchant.id;
-        result.metadata.merchantName = merchant.name;
-      }
+      // ============ Phase 6: Generate Response ============
+      const content = await responseGenerator.generate(
+        structuredQuery,
+        executionResult,
+        merchant
+      );
 
-      return result;
-    } catch (error) {
-      console.error('[AgentRouter] Process error:', error);
-      return this.createErrorResult(error);
-    }
-  }
-
-  /**
-   * 使用Skills执行（快速、免费）
-   */
-  private async executeWithSkills(
-    intent: UserIntent,
-    merchant: Merchant,
-    conversationId: string
-  ): Promise<AgentExecutionResult> {
-    const cacheKey = `skills:${intent}:${merchant.id}`;
-
-    // 检查缓存
-    const cached = cacheManager.get<AgentExecutionResult>(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    let content = '';
-    let suggestedAction;
-    let suggestedActions;
-
-    switch (intent) {
-      case 'health_query':
-        const healthResult = await this.executeHealthQuery(merchant);
-        content = healthResult.content;
-        suggestedAction = healthResult.suggestedAction;
-        suggestedActions = healthResult.suggestedActions;
-        break;
-
-      case 'risk_diagnosis':
-        const diagResult = await this.executeRiskDiagnosis(merchant);
-        content = diagResult.content;
-        suggestedAction = diagResult.suggestedAction;
-        suggestedActions = diagResult.suggestedActions;
-        break;
-
-      case 'data_query':
-        content = await this.executeDataQuery(merchant);
-        break;
-
-      default:
-        content = responseGenerator.generateGeneralChatResponse('');
-    }
-
-    const result: AgentExecutionResult = {
-      success: true,
-      content,
-      metadata: {
-        dataSource: 'skills',
-        executionTime: 0,
-        suggestedActions,
-      },
-      suggestedAction,
-    };
-
-    // 缓存结果
-    cacheManager.set(cacheKey, result, 10 * 60 * 1000); // 10分钟
-
-    return result;
-  }
-
-  /**
-   * 使用LLM执行（深度、个性化）
-   */
-  private async executeWithLLM(
-    intent: UserIntent,
-    userInput: string,
-    merchant: Merchant | undefined,
-    conversationId: string
-  ): Promise<AgentExecutionResult> {
-    if (!llmIntegration.isAvailable()) {
-      // 降级到Skills
-      if (merchant) {
-        return await this.executeWithSkills(intent, merchant, conversationId);
-      } else {
-        return {
-          success: true,
-          content: responseGenerator.generateGeneralChatResponse(userInput),
-          metadata: { dataSource: 'skills' },
-        };
-      }
-    }
-
-    try {
-      const context = conversationContextManager.generateContextSummary(conversationId);
-      const response = await llmIntegration.chat(userInput, context);
+      const executionTime = Date.now() - startTime;
 
       return {
         success: true,
-        content: response,
+        content,
         metadata: {
-          dataSource: 'llm',
-          llmModel: process.env.NEXT_PUBLIC_LLM_MODEL || 'unknown',
+          dataSource: 'hybrid',
+          executionTime,
+          intent: structuredQuery.intents[0] || 'unknown',
+          merchantId: merchant?.id,
+          merchantName: merchant?.name,
         },
       };
     } catch (error) {
-      console.error('[AgentRouter] LLM execution failed:', error);
-      // 降级到Skills
-      if (merchant) {
-        return await this.executeWithSkills(intent, merchant, conversationId);
-      } else {
-        return this.createErrorResult(error);
-      }
+      console.error('[AgentRouter] Process failed:', error);
+      return this.createErrorResult(userInput, error);
     }
   }
 
   /**
-   * 混合模式执行（Skills + LLM）
+   * 解析实体
    */
-  private async executeHybrid(
-    intent: UserIntent,
-    merchant: Merchant,
-    conversationId: string
-  ): Promise<AgentExecutionResult> {
-    // 步骤1: Skills获取基础数据
-    const skillsResult = await this.executeWithSkills(intent, merchant, conversationId);
+  private async resolveEntities(
+    query: StructuredQuery,
+    context: any
+  ): Promise<ResolvedEntity> {
+    const entities = query.entities;
 
-    // 步骤2: 如果LLM可用，用LLM增强
-    if (llmIntegration.isAvailable() && intent === 'solution_recommend') {
-      try {
-        // 获取诊断数据和案例
-        const diagnosis = await this.getDiagnosisData(merchant);
-        const cases = await this.getMatchedCases(merchant);
+    // 单商户查询
+    if (query.type === 'single_merchant') {
+      const merchantName = entities.merchants?.[0];
 
-        // LLM生成个性化方案
-        const llmResponse = await llmIntegration.generateSolutionPlan(
-          merchant,
-          diagnosis,
-          cases
+      if (!merchantName) {
+        // 🔥 新增：尝试entity-extractor作为fallback
+        const extractedEntity = entityExtractor.extractMerchant(
+          query.originalInput,
+          context.merchantId
         );
 
-        // 融合Skills和LLM的结果
-        let hybridContent = `${llmResponse}\n\n---\n\n`;
-        hybridContent += `## 📊 基础分析（系统检测）\n\n`;
-        hybridContent += skillsResult.content;
+        if (extractedEntity.matched && extractedEntity.merchantId) {
+          return {
+            type: 'single_merchant',
+            merchantId: extractedEntity.merchantId,
+            merchantName: extractedEntity.merchantName,
+          };
+        }
+
+        // 尝试从上下文获取
+        const contextMerchant = conversationManager.getCurrentMerchant(context.conversationId);
+        if (contextMerchant) {
+          return {
+            type: 'single_merchant',
+            merchantId: contextMerchant.id,
+            merchantName: contextMerchant.name,
+          };
+        }
+        return { type: 'single_merchant' };
+      }
+
+      // 查找商户
+      const merchant = merchantDataManager.findMerchantByName(merchantName);
+      if (merchant) {
+        return {
+          type: 'single_merchant',
+          merchantId: merchant.id,
+          merchantName: merchant.name,
+        };
+      }
+
+      return { type: 'single_merchant' };
+    }
+
+    // 聚合查询
+    if (query.type === 'aggregation') {
+      return {
+        type: 'aggregation',
+        filters: query.filters,
+        timeRange: entities.timeRange,
+      };
+    }
+
+    // 对比查询
+    if (query.type === 'comparison') {
+      // 如果是商户vs商户
+      if (entities.merchants && entities.merchants.length === 2) {
+        const merchant1 = merchantDataManager.findMerchantByName(entities.merchants[0]);
+        const merchant2 = merchantDataManager.findMerchantByName(entities.merchants[1]);
 
         return {
-          success: true,
-          content: hybridContent,
-          metadata: {
-            dataSource: 'hybrid',
-            llmModel: process.env.NEXT_PUBLIC_LLM_MODEL || 'unknown',
-          },
-          suggestedAction: skillsResult.suggestedAction,
+          type: 'comparison',
+          merchants: [
+            { id: merchant1?.id || '', name: merchant1?.name || entities.merchants[0] },
+            { id: merchant2?.id || '', name: merchant2?.name || entities.merchants[1] },
+          ],
         };
-      } catch (error) {
-        console.error('[AgentRouter] Hybrid LLM failed, falling back to skills:', error);
-        return skillsResult;
       }
-    }
 
-    return skillsResult;
-  }
+      // 如果是单商户时间对比
+      const merchantName = entities.merchants?.[0] ||
+                           conversationManager.getCurrentMerchant(context.conversationId)?.name;
 
-  /**
-   * 执行健康度查询
-   */
-  private async executeHealthQuery(merchant: Merchant): Promise<{
-    content: string;
-    suggestedAction?: any;
-    suggestedActions?: Array<{ type: string; merchantId?: string; merchantName?: string }>;
-  }> {
-    const healthData = analyzeHealth(merchant.metrics);
+      const merchant = merchantName
+        ? merchantDataManager.findMerchantByName(merchantName)
+        : undefined;
 
-    // 检查是否需要触发诊断
-    const shouldDiagnose = this.checkDiagnosisTrigger(merchant);
-
-    // 生成基础健康度报告（带建议操作）
-    const healthResponse = responseGenerator.generateHealthQueryResponse(
-      merchant,
-      healthData,
-      false, // 不在健康度报告中显示警告
-      true // 包含建议操作
-    );
-
-    let content = healthResponse.content;
-    let suggestedAction;
-    let suggestedActions = healthResponse.suggestedActions;
-
-    // 如果需要诊断，实际执行诊断
-    if (shouldDiagnose) {
-      // 执行风险检测
-      const risks = detectRisks(merchant);
-
-      // 生成诊断报告
-      const diagnosis = generateDiagnosisReport(
-        merchant,
-        knowledgeBase
-      );
-
-      // 添加诊断结果到内容（优化显示）
-      content += `\n\n---\n\n## 🔍 深度诊断分析\n\n`;
-      content += `> ⚠️ 检测到健康度异常，以下是详细诊断报告：\n\n`;
-
-      const diagnosisResponse = responseGenerator.generateRiskDiagnosisResponse(
-        merchant,
-        { ...diagnosis, risks: risks.risks },
-        true // 包含建议操作
-      );
-
-      content += diagnosisResponse.content;
-
-      // 创建建议操作
-      suggestedAction = {
-        type: 'create_task',
-        data: { merchant, diagnosis },
-        description: '为该商户创建帮扶任务',
-      };
-
-      // 合并建议操作
-      if (diagnosisResponse.suggestedActions) {
-        suggestedActions = diagnosisResponse.suggestedActions;
-      }
-    } else {
-      // 健康度正常，只给出温和的建议（减少行动卡片）
-      if (merchant.totalScore < 85) {
-        // 健康度偏低但不触发自动诊断，只给查看详情的选项
-        suggestedActions = [
-          { type: 'view_health', merchantId: merchant.id, merchantName: merchant.name },
-        ];
-      } else {
-        // 健康度良好，不显示行动卡片（让用户自由对话）
-        suggestedActions = undefined;
-      }
-    }
-
-    return { content, suggestedAction, suggestedActions };
-  }
-
-  /**
-   * 执行风险诊断
-   */
-  private async executeRiskDiagnosis(merchant: Merchant): Promise<{
-    content: string;
-    suggestedAction?: any;
-    suggestedActions?: Array<{ type: string; merchantId?: string; merchantName?: string }>;
-  }> {
-    // 检测风险
-    const risks = detectRisks(merchant);
-
-    // AI诊断
-    const diagnosis = generateDiagnosisReport(
-      merchant,
-      knowledgeBase
-    );
-
-    const diagnosisResponse = responseGenerator.generateRiskDiagnosisResponse(
-      merchant,
-      { ...diagnosis, risks: risks.risks },
-      true // 包含建议操作
-    );
-
-    const content = diagnosisResponse.content;
-    const suggestedActions = diagnosisResponse.suggestedActions;
-
-    // 如果需要创建任务
-    let suggestedAction;
-    if (this.checkDiagnosisTrigger(merchant)) {
-      suggestedAction = {
-        type: 'create_task',
-        data: { merchant, diagnosis },
-        description: '为该商户创建帮扶任务',
+      return {
+        type: 'comparison',
+        merchantId: merchant?.id,
+        merchantName: merchant?.name,
+        timeRange: entities.timeRange,
+        comparisonTarget: entities.comparisonTarget,
       };
     }
 
-    return { content, suggestedAction, suggestedActions };
+    return { type: 'single_merchant' };
   }
 
   /**
-   * 执行数据查询
+   * 执行单商户查询
    */
-  private async executeDataQuery(merchant: Merchant): Promise<string> {
-    return this.executeHealthQuery(merchant);
-  }
+  private async executeSingleMerchantPlan(
+    plan: ExtendedExecutionPlan,
+    entities: ResolvedEntity
+  ): Promise<any> {
+    const merchant = entities.merchantId
+      ? merchantDataManager.getMerchant(entities.merchantId)
+      : undefined;
 
-  /**
-   * 获取诊断数据
-   */
-  private async getDiagnosisData(merchant: Merchant): Promise<any> {
-    return generateDiagnosisReport(merchant, knowledgeBase);
-  }
-
-  /**
-   * 获取匹配的案例
-   */
-  private async getMatchedCases(merchant: Merchant): Promise<any[]> {
-    const diagnosis = await this.getDiagnosisData(merchant);
-
-    // Map critical to high for the matcher
-    const riskLevel = merchant.riskLevel === 'critical' ? 'high' : merchant.riskLevel;
-
-    const result = enhancedMatchCases({
-      merchantName: merchant.name,
-      merchantCategory: merchant.category,
-      problemTags: diagnosis.problemTags || [],
-      knowledgeBase,
-      metrics: merchant.metrics,
-      riskLevel: riskLevel as 'none' | 'low' | 'medium' | 'high',
-    });
-
-    return result.matchedCases || [];
-  }
-
-  /**
-   * 决策执行策略
-   */
-  private decideStrategy(
-    intent: UserIntent,
-    merchant: Merchant | undefined,
-    config?: Partial<AgentRouteConfig>
-  ): DataSource {
-    // 强制指定策略
-    if (config?.forceLLM) return 'llm';
-    if (config?.forceSkills) return 'skills';
-
-    // 没有商户，使用LLM通用对话
-    if (!merchant) return 'llm';
-
-    // 根据意图决策
-    switch (intent) {
-      case 'health_query':
-      case 'data_query':
-        return 'skills';
-
-      case 'risk_diagnosis':
-        // 风险数量多，使用混合模式
-        const risks = detectRisks(merchant);
-        return risks.risks.length > 3 ? 'hybrid' : 'skills';
-
-      case 'solution_recommend':
-        return 'hybrid';
-
-      case 'general_chat':
-        return 'llm';
-
-      default:
-        return 'skills';
+    if (!merchant) {
+      throw new Error('Merchant not found');
     }
-  }
 
-  /**
-   * 检查是否需要触发诊断
-   * 只在健康度严重偏低或高风险时才自动诊断
-   */
-  private checkDiagnosisTrigger(merchant: Merchant): boolean {
-    const riskLevelMap: Record<string, number> = {
-      none: 0,
-      low: 1,
-      medium: 2,
-      high: 3,
-      critical: 4,
+    // 根据意图执行不同的Skills
+    const intents = plan.tasks.map(t => t.action);
+    const results: any = {
+      merchant,
+      health: undefined,
+      risks: undefined,
+      diagnosis: undefined,
+      cases: undefined,
     };
 
-    // 严格条件：健康度 < 70 且风险等级 >= high
-    // 或者健康度 < 60
-    const isCriticalHealth = merchant.totalScore < 60;
-    const isHighRisk = merchant.totalScore < 70 && riskLevelMap[merchant.riskLevel] >= 3;
+    // 健康度分析（总是执行）
+    results.health = analyzeHealth(merchant.metrics);
 
-    return isCriticalHealth || isHighRisk;
+    // 风险检测
+    if (intents.includes('detectRisks')) {
+      results.risks = detectRisks(merchant);
+    }
+
+    // AI诊断
+    if (intents.includes('diagnose')) {
+      results.diagnosis = generateDiagnosisReport(merchant, knowledgeBase as any);
+    }
+
+    // 案例匹配
+    if (intents.includes('matchCases')) {
+      const diagnosis = results.diagnosis || generateDiagnosisReport(merchant, knowledgeBase as any);
+      results.cases = enhancedMatchCases({
+        merchantName: merchant.name,
+        merchantCategory: merchant.category,
+        problemTags: diagnosis.tags || [],
+        metrics: merchant.metrics,
+        riskLevel: merchant.riskLevel,
+        symptoms: diagnosis.symptoms,
+        description: diagnosis.diagnosis,
+        knowledgeBase: knowledgeBase as any,
+      });
+    }
+
+    return results;
   }
 
   /**
-   * 检查意图是否需要商户信息
+   * 执行聚合查询
    */
-  private needsMerchant(intent: UserIntent): boolean {
-    return ['health_query', 'risk_diagnosis', 'solution_recommend', 'data_query'].includes(
-      intent
-    );
+  private async executeAggregationPlan(
+    plan: ExtendedExecutionPlan
+  ): Promise<AggregationResult> {
+    return aggregationExecutor.execute(plan);
   }
 
   /**
-   * 创建商户未找到结果
+   * 执行对比查询
+   */
+  private async executeComparisonPlan(
+    plan: ExtendedExecutionPlan
+  ): Promise<ComparisonResult> {
+    return comparisonExecutor.execute(plan);
+  }
+
+  /**
+   * 创建商户未找到响应
    */
   private createMerchantNotFoundResult(userInput: string): AgentExecutionResult {
-    const suggestions = entityExtractor.suggestMerchants(userInput, 5);
-    const content = responseGenerator.generateMerchantNotFoundResponse(
-      userInput,
-      suggestions.map((m) => m.name)
-    );
-
     return {
       success: false,
-      content,
+      content: `抱歉，我没有找到您提到的商户。\n\n` +
+               `请确认商户名称，或者使用以下方式查询：\n` +
+               `- "海底捞最近怎么样"\n` +
+               `- "查看高风险商户"\n` +
+               `- "这个月多少问题商户"\n\n` +
+               `💡 **提示**：您也可以在健康度监控页面选择商户后再提问。`,
       metadata: {
         dataSource: 'skills',
+        executionTime: 0,
+        intent: 'unknown',
       },
       error: 'Merchant not found',
     };
   }
 
   /**
-   * 创建错误结果
+   * 创建错误响应
    */
-  private createErrorResult(error: any): AgentExecutionResult {
-    const content = responseGenerator.generateErrorResponse(error);
+  private createErrorResult(userInput: string, error: any): AgentExecutionResult {
+    console.error('[AgentRouter] Error:', error);
 
     return {
       success: false,
-      content,
+      content: `抱歉，处理您的请求时遇到错误。\n\n` +
+               `请稍后重试，或重新表述您的问题。\n\n` +
+               `错误信息：${error.message || '未知错误'}`,
       metadata: {
         dataSource: 'skills',
+        executionTime: 0,
+        intent: 'unknown',
       },
-      error: error instanceof Error ? error.message : String(error),
+      error: error.message || 'Unknown error',
     };
   }
 }

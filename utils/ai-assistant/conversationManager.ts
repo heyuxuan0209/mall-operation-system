@@ -128,6 +128,18 @@ export class ConversationManager {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
+    // 🔥 新增：检查1秒内是否有相同消息
+    const recentDuplicates = conversation.messages.filter(msg =>
+      msg.role === role &&
+      msg.content === content &&
+      Date.now() - new Date(msg.timestamp).getTime() < 1000
+    );
+
+    if (recentDuplicates.length > 0) {
+      console.warn('[ConversationManager] Duplicate message detected, returning existing:', recentDuplicates[0].id);
+      return recentDuplicates[0];
+    }
+
     const message: Message = {
       id: this.generateId(),
       conversationId,
@@ -193,13 +205,29 @@ export class ConversationManager {
     }
 
     const recentMessages = conversation.messages.slice(-10); // 最近10条消息
-    const lastMessage = recentMessages[recentMessages.length - 1];
+
+    // 🔥 修复：从最近的消息中查找merchantName（从后往前找第一个有merchantName的消息）
+    let merchantName: string | undefined;
+    let lastIntent: any;
+
+    for (let i = recentMessages.length - 1; i >= 0; i--) {
+      const message = recentMessages[i];
+      if (!merchantName && message.metadata?.merchantName) {
+        merchantName = message.metadata.merchantName;
+      }
+      if (!lastIntent && message.metadata?.intent) {
+        lastIntent = message.metadata.intent;
+      }
+      if (merchantName && lastIntent) {
+        break; // 两个都找到了，不用继续找
+      }
+    }
 
     return {
       conversationId,
       merchantId: conversation.merchantId,
-      merchantName: lastMessage?.metadata?.merchantName,
-      lastIntent: lastMessage?.metadata?.intent,
+      merchantName,
+      lastIntent,
       recentMessages,
       sessionStartTime: conversation.startedAt,
     };

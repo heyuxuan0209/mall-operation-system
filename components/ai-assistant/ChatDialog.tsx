@@ -32,9 +32,8 @@ export default function ChatDialog({ onClose }: ChatDialogProps) {
   useEffect(() => {
     const conversation = conversationManager.getOrCreateCurrentConversation();
     setConversationId(conversation.id);
-    setMessages(conversation.messages);
 
-    // 如果是新对话，显示欢迎消息
+    // 🔥 修复：区分新对话和已有对话
     if (conversation.messages.length === 0) {
       const welcomeMessage = conversationManager.addMessage(
         conversation.id,
@@ -42,7 +41,9 @@ export default function ChatDialog({ onClose }: ChatDialogProps) {
         '您好！我是商户健康管理助手 👋\n\n我可以帮您:\n- 查询商户健康度和经营状况\n- 诊断商户风险和问题\n- 推荐帮扶方案和措施\n- 创建帮扶任务和通知\n\n请告诉我您想了解哪个商户的情况？',
         { dataSource: 'skills' }
       );
-      setMessages([welcomeMessage]);
+      setMessages([welcomeMessage]); // 新对话：仅欢迎消息
+    } else {
+      setMessages(conversation.messages); // 已有对话：加载所有消息
     }
   }, []);
 
@@ -137,11 +138,21 @@ export default function ChatDialog({ onClose }: ChatDialogProps) {
       },
     });
 
-    // 更新消息列表
-    const updatedConversation = conversationManager.getConversation(conversationId);
-    if (updatedConversation) {
-      setMessages(updatedConversation.messages);
-    }
+    // 🔥 修复：仅更新指定消息，不重新加载整个列表
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              feedback: {
+                helpful,
+                rating,
+                collectedAt: new Date().toISOString(),
+              },
+            }
+          : msg
+      )
+    );
   };
 
   return (
