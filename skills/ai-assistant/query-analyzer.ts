@@ -92,14 +92,18 @@ export class QueryAnalyzer {
     const hasComparison = comparisonKeywords.some(kw => input.includes(kw));
 
     if (hasComparison) {
+      // 🔥 新增：提取商户名
+      const merchants = this.extractMerchantsFromComparison(userInput);
+
       return {
         confidence: 0.8,
         result: {
           originalInput: userInput,
           type: 'comparison',
           entities: {
+            merchants, // 关键修复
             timeRange: this.parseTimeRange(input),
-            comparisonTarget: this.parseComparisonTarget(input),
+            comparisonTarget: this.parseComparisonTarget(input, merchants.length),
           },
           intents: ['comparison_query'],
           confidence: 0.8,
@@ -457,11 +461,19 @@ export class QueryAnalyzer {
   /**
    * 解析对比目标
    */
-  private parseComparisonTarget(input: string): string {
+  private parseComparisonTarget(input: string, merchantCount: number = 0): string {
     const lowerInput = input.toLowerCase();
+
+    // 🔥 新增：如果提取到2个商户，认为是商户对比
+    if (merchantCount === 2) {
+      return 'merchant_vs_merchant'; // 新增类型
+    }
 
     if (lowerInput.includes('上月') || lowerInput.includes('上个月')) {
       return 'last_month';
+    }
+    if (lowerInput.includes('上周') || lowerInput.includes('上星期')) {
+      return 'last_week';
     }
     if (lowerInput.includes('同类') || lowerInput.includes('同业态')) {
       return 'same_category';
@@ -471,6 +483,42 @@ export class QueryAnalyzer {
     }
 
     return 'last_month'; // 默认
+  }
+
+  /**
+   * 🔥 新增：从对比查询中提取商户名
+   */
+  private extractMerchantsFromComparison(userInput: string): string[] {
+    const merchants: string[] = [];
+
+    // 模式1："A对比B" / "A vs B" / "A和B比较"
+    const pattern1 = /([一-龥\w]+)(?:对比|vs|和)([一-龥\w]+)(?:比较)?/;
+    const match1 = userInput.match(pattern1);
+
+    if (match1) {
+      merchants.push(match1[1].trim(), match1[2].trim());
+      return merchants;
+    }
+
+    // 模式2："对比海底捞和小龙坎"
+    const pattern2 = /(?:对比|比较)([一-龥\w]+)和([一-龥\w]+)/;
+    const match2 = userInput.match(pattern2);
+
+    if (match2) {
+      merchants.push(match2[1].trim(), match2[2].trim());
+      return merchants;
+    }
+
+    // 模式3：单商户时间对比"和上月对比"
+    const timePattern = /(上月|上周|去年|同期)/;
+    if (timePattern.test(userInput)) {
+      const extractedEntity = entityExtractor.extractMerchant(userInput);
+      if (extractedEntity.matched && extractedEntity.merchantName) {
+        merchants.push(extractedEntity.merchantName);
+      }
+    }
+
+    return merchants;
   }
 
   /**

@@ -87,21 +87,24 @@ export class EntityExtractor {
    * 模糊匹配（去掉常见后缀）
    */
   private fuzzyMatch(input: string, merchants: Merchant[]): EntityResult | null {
-    // 常见的商户类型后缀
+    // 常见的商户类型后缀（🔥 扩展珠宝相关后缀）
     const suffixes = [
-      '火锅', '咖啡', '餐厅', '服装', '超市', '便利店',
-      '书店', '影院', '健身房', '美容院', '理发店',
-      '药店', '花店', '面包店', '甜品店', '奶茶店',
-      '店', '馆', '坊', '阁', '轩', '居'
+      // 餐饮
+      '火锅', '咖啡', '餐厅', '面包店', '甜品店', '奶茶店',
+      // 零售
+      '服装', '超市', '便利店', '书店', '花店',
+      // 珠宝（🔥 新增）
+      '珠宝', '黄金', '钻石', '翡翠', '玉器',
+      // 服务
+      '影院', '健身房', '美容院', '理发店', '药店',
+      // 通用后缀
+      '店', '馆', '坊', '阁', '轩', '居', '廊', '城', '街',
+      '专卖店', '专卖', '工厂', '工坊',
     ];
 
+    // 🔥 正向匹配：去掉商户名后缀，检查是否在输入中
     for (const merchant of merchants) {
-      let merchantCore = this.normalize(merchant.name);
-
-      // 尝试移除后缀
-      for (const suffix of suffixes) {
-        merchantCore = merchantCore.replace(new RegExp(suffix + '$'), '');
-      }
+      let merchantCore = this.removeSuffixes(this.normalize(merchant.name), suffixes);
 
       // 检查输入是否包含核心名称
       if (merchantCore.length >= 2 && input.includes(merchantCore)) {
@@ -114,7 +117,7 @@ export class EntityExtractor {
       }
 
       // 检查核心名称是否在输入中
-      const inputCore = this.removeCommonSuffixes(input, suffixes);
+      const inputCore = this.removeSuffixes(input, suffixes);
       if (inputCore.length >= 2 && merchantCore === inputCore) {
         return {
           merchantId: merchant.id,
@@ -125,7 +128,68 @@ export class EntityExtractor {
       }
     }
 
+    // 🔥 新增：反向匹配 - 从输入中提取关键词，检查商户名是否包含
+    const inputKeywords = this.extractKeywords(input);
+    for (const merchant of merchants) {
+      const merchantCore = this.removeSuffixes(this.normalize(merchant.name), suffixes);
+
+      for (const keyword of inputKeywords) {
+        if (keyword.length >= 2 && merchantCore.includes(keyword)) {
+          return {
+            merchantId: merchant.id,
+            merchantName: merchant.name,
+            confidence: 0.75,
+            matched: true,
+          };
+        }
+      }
+    }
+
     return null;
+  }
+
+  /**
+   * 🔥 新增：从输入中提取关键词（支持汉字分割）
+   */
+  private extractKeywords(text: string): string[] {
+    const excludeWords = [
+      '最近', '一周', '两周', '一个月', '三个月', '半年', '一年',
+      '怎么样', '如何', '怎样', '咋样', '表现', '经营',
+      '的', '了', '吗', '呢', '啊', '吧',
+      '有', '没有', '什么', '哪个', '哪家',
+    ];
+
+    // 方法1：空格/标点分割
+    const words = text.split(/[\s,，、。？！]/);
+    const validWords = words.filter((w) => w.length >= 2 && !excludeWords.includes(w));
+
+    // 方法2：汉字N-gram（针对连续汉字）
+    const chineseText = text.replace(/[^\u4e00-\u9fa5]/g, ''); // 提取纯汉字
+    const ngrams: string[] = [];
+
+    // 2-gram和3-gram
+    for (let len = 2; len <= 3; len++) {
+      for (let i = 0; i <= chineseText.length - len; i++) {
+        const gram = chineseText.substring(i, i + len);
+        if (!excludeWords.includes(gram)) {
+          ngrams.push(gram);
+        }
+      }
+    }
+
+    // 合并去重
+    return [...new Set([...validWords, ...ngrams])];
+  }
+
+  /**
+   * 🔥 新增：移除多个后缀（提取为独立方法）
+   */
+  private removeSuffixes(text: string, suffixes: string[]): string {
+    let result = text;
+    for (const suffix of suffixes) {
+      result = result.replace(new RegExp(suffix + '$'), '');
+    }
+    return result;
   }
 
   /**
@@ -156,7 +220,10 @@ export class EntityExtractor {
         }
       }
 
-      if (score > 0.5) {
+      // 🔥 新增：动态阈值
+      const threshold = this.calculateDynamicThreshold(input, merchantName);
+
+      if (score > threshold) {
         matches.push({ merchant, score });
       }
     }
@@ -169,6 +236,11 @@ export class EntityExtractor {
     matches.sort((a, b) => b.score - a.score);
     const bestMatch = matches[0];
 
+    // 🔥 新增：如果最高分和次高分差距小，返回null（歧义）
+    if (matches.length > 1 && bestMatch.score - matches[1].score < 0.1) {
+      return null; // 歧义情况，不匹配
+    }
+
     return {
       merchantId: bestMatch.merchant.id,
       merchantName: bestMatch.merchant.name,
@@ -178,33 +250,58 @@ export class EntityExtractor {
   }
 
   /**
+   * 🔥 新增：计算动态阈值
+   */
+  private calculateDynamicThreshold(input: string, merchantName: string): number {
+    const inputLen = input.length;
+
+    // 短输入（2-3字符）：阈值提高到0.6，避免误匹配
+    if (inputLen <= 3) return 0.6;
+
+    // 长输入（>6字符）：阈值降低到0.3
+    if (inputLen >= 6) return 0.3;
+
+    // 中等输入：线性插值
+    return 0.6 - (inputLen - 3) * 0.1; // 3字→0.6, 4字→0.5, 5字→0.4, 6字→0.3
+  }
+
+  /**
    * 检查是否使用了代词或省略
    */
   private isPronounOrOmitted(input: string): boolean {
-    const pronouns = ['它', '他', '这个', '那个', '该', '这', '那'];
-    return pronouns.some((p) => input.includes(p));
+    // 代词
+    const pronouns = ['它', '他', '她', '这个', '那个', '该', '这', '那', '这家', '那家'];
+
+    // 🔥 新增：疑问词（暗示省略主语）
+    const questions = ['什么', '哪个', '哪家', '怎样', '怎么', '如何', '有没有', '能不能'];
+
+    // 🔥 新增：短查询检测（<5字符视为可能省略）
+    const isTooShort = input.length < 5;
+
+    return (
+      pronouns.some((p) => input.includes(p)) ||
+      questions.some((q) => input.includes(q)) ||
+      isTooShort
+    );
   }
 
   /**
    * 标准化文本
    */
   private normalize(text: string): string {
-    return text
+    // 🔥 新增：移除语气词
+    const particlesToRemove = ['呢', '吧', '啊', '呀', '哦', '哈', '嘛', '咯'];
+    let normalized = text;
+
+    for (const particle of particlesToRemove) {
+      normalized = normalized.replace(new RegExp(particle, 'g'), '');
+    }
+
+    return normalized
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '')
       .replace(/[，。！？；：""''（）【】《》]/g, '');
-  }
-
-  /**
-   * 移除常见后缀
-   */
-  private removeCommonSuffixes(text: string, suffixes: string[]): string {
-    let result = text;
-    for (const suffix of suffixes) {
-      result = result.replace(new RegExp(suffix + '$'), '');
-    }
-    return result;
   }
 
   /**

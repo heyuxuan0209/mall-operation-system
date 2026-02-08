@@ -7,10 +7,24 @@
  * 用户意图类型
  */
 export type UserIntent =
+  // 单商户查询
   | 'health_query'         // 健康度查询
   | 'risk_diagnosis'       // 风险诊断
   | 'solution_recommend'   // 方案推荐
   | 'data_query'          // 数据查询
+
+  // 聚合统计 ⭐v3.0新增
+  | 'aggregation_query'    // 聚合查询（"多少个高风险商户"）
+  | 'risk_statistics'      // 风险统计
+  | 'health_overview'      // 整体健康度
+
+  // 对比分析 ⭐v3.0新增
+  | 'comparison_query'     // 对比分析（"vs上月"、"vs同类"）
+  | 'trend_analysis'       // 趋势分析
+
+  // 复合查询 ⭐v3.0新增
+  | 'composite_query'      // 复合查询（包含多个子意图）
+
   | 'general_chat'        // 通用对话
   | 'unknown';            // 未知意图
 
@@ -161,6 +175,7 @@ export interface EntityResult {
   merchantName?: string;
   confidence: number;
   matched: boolean;
+  fromContext?: boolean;  // 是否来自上下文回退
 }
 
 /**
@@ -229,6 +244,9 @@ export interface ConversationContext {
   lastIntent?: UserIntent;
   recentMessages: Message[];
   sessionStartTime: string;
+  merchantStack?: Array<{ id: string; name: string; timestamp: string }>;
+  topicStack?: string[];
+  intentHistory?: Array<{ intent: UserIntent; timestamp: string }>;
 }
 
 /**
@@ -367,3 +385,230 @@ export class EntityError extends AssistantError {
     this.name = 'EntityError';
   }
 }
+
+/**
+ * 查询改写操作类型
+ */
+export type RewriteOperation = 'coreference' | 'ellipsis' | 'expansion' | 'normalization';
+
+/**
+ * 查询改写结果
+ */
+export interface RewriteResult {
+  original: string;
+  normalized: string;
+  operations: Array<{
+    type: RewriteOperation;
+    from: string;
+    to: string;
+  }>;
+  confidence: number;
+}
+
+/**
+ * 任务类型
+ */
+export interface Task {
+  id: string;
+  action: 'analyzeHealth' | 'detectRisks' | 'diagnose' | 'matchCases' | 'generateSolution';
+  params: Record<string, any>;
+  dependsOn: string[];
+  priority: number;
+}
+
+/**
+ * 执行计划
+ */
+export interface ExecutionPlan {
+  tasks: Task[];
+  strategy: DataSource;
+  parallelizable: boolean;
+  confidence: number;
+}
+
+/**
+ * 技能执行结果
+ */
+export interface SkillResult {
+  taskId: string;
+  success: boolean;
+  data: any;
+  error?: string;
+  executionTime: number;
+}
+
+/**
+ * 置信度评分
+ */
+export interface ConfidenceScore {
+  overall: number;
+  breakdown: {
+    queryUnderstanding: number;
+    intentClassification: number;
+    entityExtraction: number;
+    taskPlanning: number;
+    execution: number;
+  };
+  needsConfirmation: boolean;
+  ambiguities: string[];
+}
+
+// ============================================
+// v3.0 新增类型定义 - Query Understanding
+// ============================================
+
+/**
+ * 查询类型 ⭐v3.0新增
+ */
+export type QueryType =
+  | 'single_merchant'   // 单商户查询
+  | 'aggregation'       // 聚合统计
+  | 'comparison'        // 对比分析
+  | 'trend_analysis';   // 趋势分析
+
+/**
+ * 时间范围 ⭐v3.0新增
+ */
+export interface TimeRange {
+  period: 'current_day' | 'current_week' | 'current_month' | 'current_year'
+    | 'last_day' | 'last_week' | 'last_month' | 'last_year'
+    | 'custom';
+  startDate?: string;
+  endDate?: string;
+}
+
+/**
+ * 聚合操作 ⭐v3.0新增
+ */
+export type AggregationOperation = 'count' | 'sum' | 'avg' | 'max' | 'min';
+
+/**
+ * 查询筛选条件 ⭐v3.0新增
+ */
+export interface QueryFilters {
+  riskLevel?: Array<'none' | 'low' | 'medium' | 'high' | 'critical'>;
+  category?: string[];      // 业态
+  floor?: string[];         // 楼层
+  metric?: string[];        // 指标
+  healthScoreMin?: number;
+  healthScoreMax?: number;
+}
+
+/**
+ * 聚合配置 ⭐v3.0新增
+ */
+export interface AggregationConfig {
+  operation: AggregationOperation;
+  field?: string;           // 聚合字段（如果是 sum/avg/max/min）
+  groupBy?: string;         // 分组字段（riskLevel, category, floor）
+}
+
+/**
+ * 结构化查询 ⭐v3.0新增
+ */
+export interface StructuredQuery {
+  originalInput: string;
+  type: QueryType;
+  entities: {
+    merchants?: string[];      // 商户名列表，["海底捞"] 或 ["all"]
+    timeRange?: TimeRange;
+    comparisonTarget?: string; // 对比目标："last_month", "same_category", 等
+  };
+  intents: UserIntent[];       // 可能包含多个意图
+  filters?: QueryFilters;
+  aggregations?: AggregationConfig;
+  confidence: number;
+}
+
+/**
+ * 聚合查询结果 ⭐v3.0新增
+ */
+export interface AggregationResult {
+  operation: AggregationOperation;
+  total: number | null;
+  breakdown?: Record<string, number>;  // 分组结果
+
+  // ⭐新增: 商户列表（用于LLM响应生成，防止幻觉）
+  merchantList?: Array<{
+    id: string;
+    name: string;
+    riskLevel: string;
+    totalScore: number;
+    category: string;
+  }>;
+
+  comparison?: {
+    baseline: number;
+    delta: number;
+    percentage: string;
+  };
+  timeRange: TimeRange;
+  filters: QueryFilters;
+}
+
+/**
+ * 对比结果 ⭐v3.0新增
+ */
+export interface ComparisonResult {
+  current: {
+    merchantId?: string;
+    merchantName?: string;
+    data: any;
+    timeRange?: TimeRange;
+  };
+  baseline: {
+    merchantId?: string;
+    merchantName?: string;
+    data: any;
+    timeRange?: TimeRange;
+    label: string;  // "上月", "同类商户平均"
+  };
+  delta: Record<string, number | string>;
+  insights: string[];
+}
+
+/**
+ * 趋势数据点 ⭐v3.0新增
+ */
+export interface TrendDataPoint {
+  timestamp: string;
+  value: number;
+  label?: string;
+}
+
+/**
+ * 趋势分析结果 ⭐v3.0新增
+ */
+export interface TrendAnalysisResult {
+  metric: string;
+  dataPoints: TrendDataPoint[];
+  trend: 'up' | 'down' | 'stable';
+  changeRate: number;        // 变化率
+  prediction?: {
+    nextPeriod: number;
+    confidence: number;
+  };
+}
+
+/**
+ * 解析后的实体 ⭐v3.0新增
+ */
+export interface ResolvedEntity {
+  type: 'single_merchant' | 'aggregation' | 'comparison';
+  merchantId?: string;
+  merchantName?: string;
+  merchants?: Array<{ id: string; name: string }>;
+  filters?: QueryFilters;
+  timeRange?: TimeRange;
+  comparisonTarget?: string;
+}
+
+/**
+ * 扩展的执行计划 ⭐v3.0新增
+ */
+export interface ExtendedExecutionPlan extends ExecutionPlan {
+  queryType: QueryType;
+  entities: ResolvedEntity;
+  aggregations?: AggregationConfig;
+}
+
