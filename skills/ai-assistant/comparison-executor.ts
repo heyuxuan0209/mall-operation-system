@@ -202,18 +202,22 @@ export class ComparisonExecutor {
     plan: ExtendedExecutionPlan,
     merchants: Merchant[]
   ): ComparisonResult {
-    // 从comparisonTarget解析目标商户名
-    const targetName = plan.entities.comparisonTarget!;
+    // 🔥 修复：从entities.merchants获取两个商户名
+    const merchantNames = plan.entities.merchants || [];
+
+    if (merchantNames.length < 2) {
+      throw new Error('需要两个商户名进行对比');
+    }
 
     // 获取两个商户
-    const merchant1 = plan.entities.merchantName
-      ? merchants.find(m => m.name === plan.entities.merchantName)
-      : undefined;
+    const merchant1 = merchants.find(m => m.name === merchantNames[0] || m.name.includes(merchantNames[0]));
+    const merchant2 = merchants.find(m => m.name === merchantNames[1] || m.name.includes(merchantNames[1]));
 
-    const merchant2 = merchants.find(m => m.name === targetName);
-
-    if (!merchant1 || !merchant2) {
-      throw new Error(`Merchants not found for comparison`);
+    if (!merchant1) {
+      throw new Error(`商户不存在: ${merchantNames[0]}`);
+    }
+    if (!merchant2) {
+      throw new Error(`商户不存在: ${merchantNames[1]}`);
     }
 
     // 提取数据

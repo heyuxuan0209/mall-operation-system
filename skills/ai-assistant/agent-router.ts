@@ -300,8 +300,9 @@ export class AgentRouter {
       throw new Error('Merchant not found');
     }
 
-    // 根据意图执行不同的Skills
-    const intents = plan.tasks.map(t => t.action);
+    // 🔥 修复：从entities获取查询信息，并检查intents
+    const queryIntents = (plan as any).queryIntents || [];
+
     const results: any = {
       merchant,
       health: undefined,
@@ -313,18 +314,27 @@ export class AgentRouter {
     // 健康度分析（总是执行）
     results.health = analyzeHealth(merchant.metrics);
 
-    // 风险检测
-    if (intents.includes('detectRisks')) {
-      results.risks = detectRisks(merchant);
-    }
+    // AI诊断（如果健康度低或有风险意图，总是执行）
+    const shouldDiagnose = merchant.totalScore < 70 ||
+                          queryIntents.includes('risk_diagnosis') ||
+                          queryIntents.includes('solution_recommend');
 
-    // AI诊断
-    if (intents.includes('diagnose')) {
+    if (shouldDiagnose) {
       results.diagnosis = generateDiagnosisReport(merchant, knowledgeBase as any);
     }
 
-    // 案例匹配
-    if (intents.includes('matchCases')) {
+    // 风险检测（如果健康度低，总是执行）
+    if (merchant.totalScore < 70 || queryIntents.includes('risk_diagnosis')) {
+      results.risks = detectRisks(merchant);
+    }
+
+    // 🔥 修复：案例匹配（如果有帮扶意图或健康度低，总是执行）
+    const shouldMatchCases = queryIntents.includes('solution_recommend') ||
+                            merchant.totalScore < 70 ||
+                            merchant.riskLevel === 'high' ||
+                            merchant.riskLevel === 'critical';
+
+    if (shouldMatchCases) {
       const diagnosis = results.diagnosis || generateDiagnosisReport(merchant, knowledgeBase as any);
       results.cases = enhancedMatchCases({
         merchantName: merchant.name,
