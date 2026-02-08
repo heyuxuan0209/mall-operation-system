@@ -74,8 +74,15 @@ export class QueryAnalyzer {
     const input = userInput.toLowerCase();
 
     // 规则1: 明确的聚合统计查询
-    const aggregationKeywords = ['多少', '几个', '数量', '统计', '总共', '有哪些'];
-    const hasAggregation = aggregationKeywords.some(kw => input.includes(kw));
+    // 优化：先匹配长短语（"几家"、"几个"），避免单字符"几"误匹配
+    const aggregationPatterns = [
+      '几家', '几个', '几', // 数量词
+      '多少', '多少家', '多少个', // 询问数量
+      '有哪些', '哪些', // 列举
+      '统计', '数量', '总共', '总计', // 统计类
+      '全部', '所有', // 全量
+    ];
+    const hasAggregation = aggregationPatterns.some(kw => input.includes(kw));
 
     if (hasAggregation) {
       return {
