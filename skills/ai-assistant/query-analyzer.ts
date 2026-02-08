@@ -92,22 +92,11 @@ export class QueryAnalyzer {
     const hasComparison = comparisonKeywords.some(kw => input.includes(kw));
 
     if (hasComparison) {
-      // 🔥 新增：提取商户名
-      const merchants = this.extractMerchantsFromComparison(userInput);
-
+      // 🔥 对比查询复杂，降低confidence强制走LLM分支
+      console.log('[QueryAnalyzer] Comparison detected, forcing LLM analysis');
       return {
-        confidence: 0.8,
-        result: {
-          originalInput: userInput,
-          type: 'comparison',
-          entities: {
-            merchants, // 关键修复
-            timeRange: this.parseTimeRange(input),
-            comparisonTarget: this.parseComparisonTarget(input, merchants.length),
-          },
-          intents: ['comparison_query'],
-          confidence: 0.8,
-        },
+        confidence: 0.5, // 降低到0.5，强制走LLM分支
+        result: this.createFallbackQuery(userInput, context),
       };
     }
 
@@ -167,6 +156,8 @@ export class QueryAnalyzer {
       throw new Error('LLM client not available');
     }
 
+    console.log('[QueryAnalyzer] Using LLM analysis for:', userInput);
+
     const prompt = this.buildAnalysisPrompt(userInput, context);
     const messages: LLMMessage[] = [
       {
@@ -180,9 +171,11 @@ export class QueryAnalyzer {
     ];
 
     const response = await llmClient.chat(messages, { useCache: true });
+    console.log('[QueryAnalyzer] LLM raw response:', response.content);
 
     // 解析LLM响应
     const parsed = this.parseLLMResponse(response.content);
+    console.log('[QueryAnalyzer] Parsed result:', parsed);
 
     return {
       originalInput: userInput,
@@ -204,7 +197,7 @@ export class QueryAnalyzer {
   ): string {
     return `
 # 任务
-将用户查询转为结构化JSON格式。
+将用户查询转为结构化JSON格式。你是查询解析专家，需要准确识别查询类型和提取实体。
 
 # 用户输入
 "${userInput}"
@@ -214,18 +207,42 @@ export class QueryAnalyzer {
 - 上一轮意图：${context.lastIntent || '无'}
 - 最近消息：${context.recentMessages.slice(-3).map(m => m.content).join(' / ')}
 
-# 输出格式 (严格JSON)
+# 查询类型识别规则
+
+## 1. comparison (对比查询)
+**触发条件**：包含"对比"、"比较"、"vs"、"和...相比"等词
+**实体提取**：
+- 如果是"对比A和B" / "Avs B" → merchants: ["A", "B"], comparisonTarget: "merchant_vs_merchant"
+- 如果是"A和上月对比" → merchants: ["A"], comparisonTarget: "last_month"
+- 如果是"A和同类对比" → merchants: ["A"], comparisonTarget: "same_category"
+
+**示例**：
+- "对比海底捞和小龙坎" → { type: "comparison", entities: { merchants: ["海底捞", "小龙坎"], comparisonTarget: "merchant_vs_merchant" } }
+- "海底捞vs小龙坎" → { type: "comparison", entities: { merchants: ["海底捞", "小龙坎"], comparisonTarget: "merchant_vs_merchant" } }
+- "海底捞和上月对比" → { type: "comparison", entities: { merchants: ["海底捞"], comparisonTarget: "last_month" } }
+
+## 2. aggregation (聚合统计)
+**触发条件**：包含"多少"、"几个"、"数量"、"统计"、"有哪些"
+**示例**：
+- "有几家高风险商户" → { type: "aggregation", filters: { riskLevel: ["high"] }, aggregations: { operation: "count" } }
+
+## 3. single_merchant (单商户查询)
+**触发条件**：提到具体商户名，问健康度、风险、帮扶等
+**示例**：
+- "海底捞怎么样" → { type: "single_merchant", entities: { merchants: ["海底捞"] } }
+
+# 输出格式 (严格JSON，不要有任何额外文字)
 \`\`\`json
 {
   "type": "single_merchant | aggregation | comparison | trend_analysis",
   "entities": {
-    "merchants": ["商户名"] 或 ["all"],
+    "merchants": ["商户名1", "商户名2"] 或 ["商户名"] 或 ["all"],
     "timeRange": {
-      "period": "current_month | last_month | ..."
+      "period": "current_month | last_month | last_week | ..."
     },
-    "comparisonTarget": "last_month | same_category | ..."
+    "comparisonTarget": "merchant_vs_merchant | last_month | same_category | same_floor | ..."
   },
-  "intents": ["health_query", "risk_diagnosis", ...],
+  "intents": ["health_query", "risk_diagnosis", "comparison_query", ...],
   "filters": {
     "riskLevel": ["high", "critical"],
     "category": ["餐饮"]
@@ -237,6 +254,14 @@ export class QueryAnalyzer {
   "confidence": 0.0-1.0
 }
 \`\`\`
+
+# 关键约束
+1. ⚠️ 对于对比查询，**必须**正确提取merchants数组（商户名称，不要包含"对比"等关键词）
+2. ⚠️ 如果是两个商户对比，comparisonTarget **必须**设为 "merchant_vs_merchant"
+3. ⚠️ 只返回JSON，不要有任何解释文字
+4. ⚠️ merchants字段是字符串数组，不是对象数组
+
+现在请解析上述用户输入，只返回JSON：
 
 # 查询类型判断
 - **single_merchant**: 查询特定商户（"海底捞最近怎么样"）
