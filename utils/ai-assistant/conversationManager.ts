@@ -152,9 +152,10 @@ export class ConversationManager {
     conversation.messages.push(message);
     conversation.lastMessageAt = message.timestamp;
 
-    // 更新 merchantId（如果消息包含）
-    if (metadata?.merchantId && !conversation.merchantId) {
+    // 🔥 修复：始终更新为最新的merchantId/merchantName（支持多商户切换）
+    if (metadata?.merchantId) {
       conversation.merchantId = metadata.merchantId;
+      conversation.merchantName = metadata.merchantName;
     }
 
     // 限制消息数量
@@ -165,6 +166,35 @@ export class ConversationManager {
     this.saveConversation(conversation);
 
     return message;
+  }
+
+  /**
+   * 获取对话上下文（用于query-analyzer）
+   */
+  getContext(conversationId: string): ConversationContext | null {
+    const conversation = this.getConversation(conversationId);
+    if (!conversation) {
+      return null;
+    }
+
+    // 获取最近5条消息（用于上下文理解）
+    const recentMessages = conversation.messages.slice(-5);
+
+    // 提取最近一次提到的意图
+    const lastAssistantMessage = [...conversation.messages]
+      .reverse()
+      .find(m => m.role === 'assistant');
+
+    const lastIntent = lastAssistantMessage?.metadata?.intent;
+
+    return {
+      conversationId: conversation.id,
+      merchantId: conversation.merchantId,
+      merchantName: conversation.merchantName,
+      lastIntent,
+      recentMessages,
+      sessionStartTime: conversation.startedAt,
+    };
   }
 
   /**

@@ -33,7 +33,7 @@
 
 <div style="text-align: center;">
   <h1 style="font-size: 36px; margin-bottom: 8px;">何雨轩</h1>
-  <p style="font-size: 15px;">电话: 18210209768 | 邮箱: <a href="mailto:heyuxuan0209@163.com">heyuxuan0209@163.com</a></p>
+  <p style="font-size: 15px;">电话: <a href="tel:18210209768">18210209768</a> | 邮箱: <a href="mailto:heyuxuan0209@163.com">heyuxuan0209@163.com</a></p>
 </div>
 
 

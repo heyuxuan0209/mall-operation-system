@@ -10,8 +10,77 @@ export class ConversationContextManager {
   /**
    * 获取当前对话上下文
    */
-  getContext(conversationId: string): ConversationContext | null {
-    return conversationManager.getContext(conversationId);
+  getContext(conversationId: string): ConversationContext {
+    const baseContext = conversationManager.getContext(conversationId);
+    if (!baseContext) {
+      // 返回默认上下文
+      return {
+        conversationId,
+        recentMessages: [],
+        sessionStartTime: new Date().toISOString(),
+        merchantStack: [],
+        topicStack: [],
+        intentHistory: [],
+      };
+    }
+
+    // 🔥 修复：确保新字段有默认值
+    return {
+      ...baseContext,
+      merchantStack: baseContext.merchantStack || [],
+      topicStack: baseContext.topicStack || [],
+      intentHistory: baseContext.intentHistory || [],
+    };
+  }
+
+  /**
+   * 🔥 简化：直接使用底层conversationManager的getCurrentMerchant
+   * 它从messages的metadata中获取商户，自动持久化
+   */
+  getCurrentMerchant(conversationId: string): { id: string; name: string } | null {
+    const merchant = conversationManager.getCurrentMerchant(conversationId);
+    // 确保返回的对象有完整的 id 和 name
+    if (merchant && merchant.id && merchant.name) {
+      return { id: merchant.id, name: merchant.name };
+    }
+    return null;
+  }
+
+  /**
+   * 🔥 废弃：不再需要pushMerchant，因为metadata会自动保存
+   * 保留这个方法只是为了兼容性，但不做任何事情
+   */
+  pushMerchant(conversationId: string, merchantId: string, merchantName: string): void {
+    // 不需要做任何事情，metadata会在addMessage时自动保存
+    console.log('[ConversationContextManager] pushMerchant called, but using metadata mechanism');
+  }
+
+  /**
+   * 🔥 废弃：不再需要pushIntent
+   */
+  pushIntent(conversationId: string, intent: UserIntent): void {
+    // 不需要做任何事情，intent会在metadata中保存
+    console.log('[ConversationContextManager] pushIntent called, but using metadata mechanism');
+  }
+
+  /**
+   * 🔥 新增：推入话题到栈中
+   */
+  pushTopic(conversationId: string, topic: string): void {
+    const context = this.getContext(conversationId);
+    if (!context.topicStack) {
+      context.topicStack = [];
+    }
+
+    // 避免重复推入相同话题
+    if (context.topicStack[context.topicStack.length - 1] !== topic) {
+      context.topicStack.push(topic);
+
+      // 保持最近5个话题
+      if (context.topicStack.length > 5) {
+        context.topicStack = context.topicStack.slice(-5);
+      }
+    }
   }
 
   /**
@@ -22,7 +91,7 @@ export class ConversationContextManager {
     merchantId: string,
     merchantName: string
   ): void {
-    // Context is automatically updated when adding messages with metadata
+    this.pushMerchant(conversationId, merchantId, merchantName);
   }
 
   /**
@@ -70,19 +139,32 @@ export class ConversationContextManager {
       return '';
     }
 
-    let summary = '';
+    let summary = '# 对话上下文\n\n';
 
-    if (context.merchantId && context.merchantName) {
-      summary += `当前讨论商户: ${context.merchantName}\n`;
+    // 当前商户
+    const currentMerchant = this.getCurrentMerchant(conversationId);
+    if (currentMerchant) {
+      summary += `**当前讨论商户**: ${currentMerchant.name}\n`;
     }
 
-    if (context.lastIntent) {
-      summary += `上一次操作: ${this.getIntentDescription(context.lastIntent)}\n`;
+    // 意图流程
+    if (context.intentHistory && context.intentHistory.length > 0) {
+      const recentIntents = context.intentHistory
+        .slice(-3)
+        .map((i) => this.getIntentDescription(i.intent))
+        .join(' → ');
+      summary += `**意图流程**: ${recentIntents}\n`;
     }
 
-    const recentTopics = this.extractTopics(context.recentMessages.map(m => m.content));
+    // 讨论话题
+    if (context.topicStack && context.topicStack.length > 0) {
+      summary += `**讨论话题**: ${context.topicStack.join(', ')}\n`;
+    }
+
+    // 最近话题（从消息中提取）
+    const recentTopics = this.extractTopics(context.recentMessages.map((m) => m.content));
     if (recentTopics.length > 0) {
-      summary += `讨论话题: ${recentTopics.join(', ')}\n`;
+      summary += `**涉及关键词**: ${recentTopics.join(', ')}\n`;
     }
 
     return summary;
@@ -117,6 +199,13 @@ export class ConversationContextManager {
       data_query: '数据查询',
       general_chat: '通用对话',
       unknown: '未知',
+      // ⭐v3.0 new intents
+      aggregation_query: '聚合查询',
+      risk_statistics: '风险统计',
+      health_overview: '健康度总览',
+      comparison_query: '对比查询',
+      trend_analysis: '趋势分析',
+      composite_query: '复合查询',
     };
     return descriptions[intent] || intent;
   }

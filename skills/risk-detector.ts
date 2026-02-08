@@ -206,6 +206,20 @@ export function detectRisks(merchant: Merchant): RiskDetectorOutput {
 }
 
 /**
+ * 🔥 新增：获取风险类型的中文名称
+ */
+export function getRiskTypeName(riskType: RiskType): string {
+  const names: Record<RiskType, string> = {
+    rent_overdue: '租金逾期',
+    low_revenue: '营收低迷',
+    high_rent_ratio: '租售比过高',
+    customer_complaint: '顾客投诉',
+    health_declining: '健康度下滑',
+  };
+  return names[riskType] || riskType;
+}
+
+/**
  * 批量检测多个商户的风险
  */
 export function batchDetectRisks(merchants: Merchant[]): {
@@ -250,20 +264,6 @@ export function batchDetectRisks(merchants: Merchant[]): {
       mediumRiskMerchants
     }
   };
-}
-
-/**
- * 获取风险类型的中文名称
- */
-export function getRiskTypeName(type: RiskType): string {
-  const names: Record<RiskType, string> = {
-    rent_overdue: '租金逾期',
-    low_revenue: '营收下滑',
-    high_rent_ratio: '租售比过高',
-    customer_complaint: '顾客投诉',
-    health_declining: '健康度下滑'
-  };
-  return names[type];
 }
 
 /**

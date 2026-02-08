@@ -113,7 +113,7 @@ export interface EnhancedAIMatcherInput {
     customerReview: number;
     riskResistance: number;
   };
-  riskLevel?: 'high' | 'medium' | 'low' | 'none';
+  riskLevel?: 'none' | 'low' | 'medium' | 'high' | 'critical'; // ⭐v3.0: 支持5级风险
   symptoms?: string;
   description?: string;
   knowledgeBase: any[];

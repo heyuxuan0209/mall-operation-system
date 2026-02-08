@@ -71,12 +71,33 @@ export default function ChatDialog({ onClose }: ChatDialogProps) {
       // 调用Agent处理
       const result = await agentRouter.process(userInput, conversationId);
 
+      // 🔥 转换suggestedAction为suggestedActions数组格式（前端兼容）
+      const metadata = { ...result.metadata };
+      if (result.suggestedAction) {
+        // 类型映射：后端navigate_* → 前端view_*
+        const typeMap: Record<string, string> = {
+          'navigate_health': 'view_health',
+          'navigate_archives': 'view_archives',
+          'navigate_knowledge': 'view_knowledge',
+          'navigate_inspection': 'create_inspection',
+          'navigate_task': 'create_task',
+        };
+
+        const mappedType = typeMap[result.suggestedAction.type] || result.suggestedAction.type;
+
+        metadata.suggestedActions = [{
+          type: mappedType,
+          merchantId: result.suggestedAction.data?.merchantId,
+          merchantName: result.suggestedAction.data?.merchantName,
+        }];
+      }
+
       // 添加助手消息
       const assistantMessage = conversationManager.addMessage(
         conversationId,
         'assistant',
         result.content,
-        result.metadata
+        metadata
       );
 
       setMessages((prev) => [...prev, assistantMessage]);

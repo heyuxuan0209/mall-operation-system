@@ -60,6 +60,22 @@ class MerchantDataManager {
   }
 
   /**
+   * ⭐v3.0新增：根据商户名称查找商户
+   */
+  findMerchantByName(merchantName: string): Merchant | null {
+    const merchants = this.getAllMerchants();
+    // 精确匹配
+    let merchant = merchants.find(m => m.name === merchantName);
+    if (merchant) return merchant;
+
+    // 模糊匹配（包含）
+    merchant = merchants.find(m => m.name.includes(merchantName) || merchantName.includes(m.name));
+    if (merchant) return merchant;
+
+    return null;
+  }
+
+  /**
    * 更新商户数据
    */
   updateMerchant(merchantId: string, updates: Partial<Merchant>): Merchant | null {

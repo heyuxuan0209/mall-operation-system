@@ -32,7 +32,7 @@ li {
 
 <div style="text-align: center;">
   <h1 style="font-size: 30px; margin-bottom: 6px; margin-top: 0;">何雨轩</h1>
-  <p style="font-size: 13.5px; margin: 2px 0;">电话: 18210209768 | 邮箱: <a href="mailto:heyuxuan0209@163.com">heyuxuan0209@163.com</a></p>
+  <p style="font-size: 13.5px; margin: 2px 0;">电话: <a href="tel:18210209768">18210209768</a> | 邮箱: <a href="mailto:heyuxuan0209@163.com">heyuxuan0209@163.com</a></p>
 </div>
 
 ## 核心竞争力

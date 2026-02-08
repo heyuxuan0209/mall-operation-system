@@ -12,6 +12,7 @@ export type UserIntent =
   | 'risk_diagnosis'       // 风险诊断
   | 'solution_recommend'   // 方案推荐
   | 'data_query'          // 数据查询
+  | 'archive_query'        // 🔥 新增：历史档案查询（"有历史帮扶档案吗"）
 
   // 聚合统计 ⭐v3.0新增
   | 'aggregation_query'    // 聚合查询（"多少个高风险商户"）
@@ -125,6 +126,7 @@ export interface Conversation {
   startedAt: string;
   lastMessageAt: string;
   merchantId?: string;
+  merchantName?: string;  // 🔥 新增：当前讨论的商户名称
   messages: Message[];
   status: ConversationStatus;
 }

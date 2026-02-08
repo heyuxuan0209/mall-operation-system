@@ -224,6 +224,18 @@ export class QueryAnalyzer {
 - 上一轮意图：${context.lastIntent || '无'}
 - 最近消息：${context.recentMessages.slice(-3).map(m => m.content).join(' / ')}
 
+# 🔥 上下文理解规则（Follow-up问题识别）
+**重要**：如果用户输入**省略了主语**（使用"它"、"这家店"、"有...吗"等），需要从上下文补全。
+
+**省略主语的模式**：
+- "有历史帮扶档案吗？" → 应理解为"${context.merchantName || '[上下文商户]'}有历史帮扶档案吗？"
+- "它的健康度怎么样？" → 应理解为"${context.merchantName || '[上下文商户]'}的健康度怎么样？"
+- "这家店有风险吗？" → 应理解为"${context.merchantName || '[上下文商户]'}有风险吗？"
+
+**操作**：
+- 如果检测到省略主语，将context.merchantName填入entities.merchants数组
+- 如果上下文无商户，返回空merchants数组（后续会提示用户明确商户）
+
 # 查询类型识别规则
 
 ## 1. comparison (对比查询)

@@ -189,6 +189,13 @@ export class AgentRouter {
 
       const executionTime = Date.now() - startTime;
 
+      // ============ Phase 7: Generate Suggested Action ============
+      const suggestedAction = this.generateSuggestedAction(
+        structuredQuery,
+        merchant,
+        executionResult
+      );
+
       return {
         success: true,
         content,
@@ -199,6 +206,7 @@ export class AgentRouter {
           merchantId: merchant?.id,
           merchantName: merchant?.name,
         },
+        suggestedAction,
       };
     } catch (error) {
       console.error('[AgentRouter] Process failed:', error);
@@ -421,6 +429,79 @@ export class AgentRouter {
       },
       error: 'MERCHANT_NOT_FOUND',
     };
+  }
+
+  /**
+   * 生成建议操作（Dashboard联动）
+   */
+  private generateSuggestedAction(
+    query: StructuredQuery,
+    merchant: Merchant | undefined,
+    executionResult: any
+  ): import('@/types/ai-assistant').SuggestedAction | undefined {
+    // 场景1: 单商户查询 - 提供查看详情/档案/创建任务
+    if (query.type === 'single_merchant' && merchant) {
+      // 优先级：高风险商户 → 创建帮扶任务
+      if (merchant.riskLevel === 'high' || merchant.riskLevel === 'critical') {
+        return {
+          type: 'create_task',
+          data: {
+            merchantId: merchant.id,
+            merchantName: merchant.name,
+            riskLevel: merchant.riskLevel,
+          },
+          description: `为 ${merchant.name} 创建帮扶任务`,
+        };
+      }
+
+      // 默认：查看商户健康度详情
+      return {
+        type: 'navigate_health',
+        data: {
+          merchantId: merchant.id,
+          merchantName: merchant.name,
+        },
+        description: `查看 ${merchant.name} 详细信息`,
+      };
+    }
+
+    // 场景2: 聚合查询 - 提供查看健康度监控页面
+    if (query.type === 'aggregation') {
+      const filters = query.filters;
+      return {
+        type: 'navigate_health',
+        data: {
+          filters, // 传递筛选条件给健康度监控页
+        },
+        description: '查看健康度监控（完整列表）',
+      };
+    }
+
+    // 场景3: 帮扶案例相关 - 提供查看案例库
+    if (query.intents.includes('solution_recommend') && executionResult.cases) {
+      return {
+        type: 'navigate_knowledge',
+        data: {
+          caseId: executionResult.cases.matchedCases?.[0]?.case?.id,
+        },
+        description: '查看完整帮扶案例',
+      };
+    }
+
+    // 场景4: 档案查询 - 提供查看历史档案
+    if (query.intents.includes('archive_query') && merchant) {
+      return {
+        type: 'navigate_archives',
+        data: {
+          merchantId: merchant.id,
+          merchantName: merchant.name,
+        },
+        description: `查看 ${merchant.name} 历史帮扶档案`,
+      };
+    }
+
+    // 默认：无建议操作
+    return undefined;
   }
 
   /**
