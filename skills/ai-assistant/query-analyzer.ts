@@ -34,25 +34,11 @@ export class QueryAnalyzer {
   ): Promise<StructuredQuery> {
     console.log('[QueryAnalyzer] ===== Starting analysis for:', userInput);
     try {
-      // Step 1: 快速规则检测（避免简单查询也调用LLM）
-      const quickDetection = this.quickDetect(userInput, context);
-      console.log('[QueryAnalyzer] Quick detection result:', {
-        confidence: quickDetection.confidence,
-        type: quickDetection.result.type,
-        entities: quickDetection.result.entities
-      });
-
-      if (quickDetection.confidence > 0.9) {
-        console.log('[QueryAnalyzer] Using quick detection (confidence > 0.9)');
-        return quickDetection.result;
-      }
-
-      console.log('[QueryAnalyzer] Confidence <= 0.9, using LLM analysis...');
-
-      // Step 2: LLM驱动的深度分析
+      // 🔥 重构：完全依赖LLM，不再使用关键词匹配的quickDetect
+      // Step 1: LLM驱动的深度分析
       const llmResult = await this.analyzeWithLLM(userInput, context);
 
-      // Step 3: 规则验证和修正
+      // Step 2: 规则验证和修正
       const validated = this.validateAndFix(llmResult, context);
       console.log('[QueryAnalyzer] Final validated result:', validated);
 
