@@ -119,9 +119,9 @@ export default function ActionCard({ type, merchantId, merchantName }: ActionCar
       >
         <Icon className="h-5 w-5 text-white" />
       </div>
-      <div className="flex-1 text-left">
-        <h3 className="text-sm font-semibold text-gray-900">{config.title}</h3>
-        <p className="text-xs text-gray-600">{config.description}</p>
+      <div className="flex-1 text-left min-w-0">
+        <h3 className="text-sm font-semibold text-gray-900 truncate">{config.title}</h3>
+        <p className="text-xs text-gray-600 line-clamp-2">{config.description}</p>
       </div>
       <ArrowRight className="h-5 w-5 text-gray-400 transition-all group-hover:translate-x-1 group-hover:text-gray-600" />
     </button>

@@ -24,16 +24,41 @@ interface DialogPosition {
 
 const STORAGE_KEY = 'ai_dialog_position';
 
-// 获取默认位置（考虑SSR）
+// 获取默认位置（考虑SSR + 响应式）
 const getDefaultPosition = (): DialogPosition => {
   if (typeof window === 'undefined') {
     return { x: 100, y: 100, width: 480, height: 700 };
   }
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // 响应式宽度计算
+  let width: number;
+  if (viewportWidth < 640) {
+    // 手机：占满屏幕宽度（留40px边距）
+    width = viewportWidth - 40;
+  } else if (viewportWidth < 768) {
+    // 平板：70%宽度
+    width = viewportWidth * 0.7;
+  } else {
+    // 桌面：固定480px
+    width = 480;
+  }
+
+  // 响应式高度计算
+  let height: number;
+  if (viewportHeight < 700) {
+    height = viewportHeight - 100; // 留100px空间
+  } else {
+    height = 700;
+  }
+
   return {
-    x: window.innerWidth - 500,
-    y: window.innerHeight - 720,
-    width: 480,
-    height: 700,
+    x: viewportWidth - width - 20, // 右侧20px边距
+    y: viewportHeight - height - 20, // 底部20px边距
+    width: Math.max(320, width), // 最小宽度320px
+    height: Math.max(400, height), // 最小高度400px
   };
 };
 
@@ -43,14 +68,22 @@ export default function DraggableDialog({ children, onClose }: DraggableDialogPr
   const [savedPosition, setSavedPosition] = useState<DialogPosition>(getDefaultPosition());
   const [maxBounds, setMaxBounds] = useState({ width: 1920, height: 1080 });
 
-  // 初始化最大边界
+  // 初始化最大边界 + 监听窗口resize
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return;
+
+    const updateBounds = () => {
       setMaxBounds({
         width: window.innerWidth - 40,
         height: window.innerHeight - 40,
       });
-    }
+    };
+
+    updateBounds();
+
+    // 监听窗口resize事件
+    window.addEventListener('resize', updateBounds);
+    return () => window.removeEventListener('resize', updateBounds);
   }, []);
 
   // 从localStorage恢复上次的位置和大小

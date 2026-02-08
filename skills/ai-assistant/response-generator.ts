@@ -23,6 +23,7 @@ import {
   TrendAnalysisResult,
 } from '@/types/ai-assistant';
 import { Merchant } from '@/types';
+import { replaceEnglishTerms } from '@/utils/formatters/termReplacer';
 
 export class ResponseGenerator {
   /**
@@ -153,7 +154,13 @@ ${result.cases?.matchedCases?.slice(0, 3).map((c: any, idx: number) => `
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: '你是商户运营AI助手，擅长用简洁友好的方式解答商户问题。',
+        content: `你是商户运营AI助手，擅长用简洁友好的方式解答商户问题。
+
+⚠️ **术语规范（严格遵守）**：
+- 风险等级必须用中文：极高风险、高风险、中风险、低风险、无风险
+- 健康度等级必须用中文：优秀、良好、中等、较差、很差
+- 指标名称必须用中文：营收、租金、租金缴纳、经营表现、现场品质、顾客评价、抗风险能力
+- **禁止使用任何英文术语**（如critical、high、medium、low、none、excellent、good、fair、poor）`,
       },
       {
         role: 'user',
@@ -162,7 +169,10 @@ ${result.cases?.matchedCases?.slice(0, 3).map((c: any, idx: number) => `
     ];
 
     const response = await llmClient.chat(messages, { useCache: true });
-    return response.content;
+
+    // 后处理：替换残留的英文术语
+    const cleanedContent = replaceEnglishTerms(response.content);
+    return cleanedContent;
   }
 
   /**
@@ -237,7 +247,12 @@ ${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `- ${k}：
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: '你是商户运营AI助手，擅长数据分析和洞察提炼。你必须基于系统提供的真实数据，禁止编造商户名称。',
+        content: `你是商户运营AI助手，擅长数据分析和洞察提炼。你必须基于系统提供的真实数据，禁止编造商户名称。
+
+⚠️ **术语规范（严格遵守）**：
+- 风险等级必须用中文：极高风险、高风险、中风险、低风险、无风险
+- 健康度等级必须用中文：优秀、良好、中等、较差、很差
+- **禁止使用任何英文术语**（如critical、high、medium、low、none）`,
       },
       {
         role: 'user',
@@ -246,7 +261,10 @@ ${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `- ${k}：
     ];
 
     const response = await llmClient.chat(messages, { useCache: true });
-    return response.content;
+
+    // 后处理：替换残留的英文术语
+    const cleanedContent = replaceEnglishTerms(response.content);
+    return cleanedContent;
   }
 
   /**
@@ -308,7 +326,13 @@ ${result.insights.map(i => `- ${i}`).join('\n')}
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: '你是商户运营AI助手，擅长对比分析和趋势解读。',
+        content: `你是商户运营AI助手，擅长对比分析和趋势解读。
+
+⚠️ **术语规范（严格遵守）**：
+- 风险等级必须用中文：极高风险、高风险、中风险、低风险、无风险
+- 健康度等级必须用中文：优秀、良好、中等、较差、很差
+- 指标名称必须用中文：营收、租金、经营表现等
+- **禁止使用任何英文术语**`,
       },
       {
         role: 'user',
@@ -317,7 +341,10 @@ ${result.insights.map(i => `- ${i}`).join('\n')}
     ];
 
     const response = await llmClient.chat(messages, { useCache: true });
-    return response.content;
+
+    // 后处理：替换残留的英文术语
+    const cleanedContent = replaceEnglishTerms(response.content);
+    return cleanedContent;
   }
 
   /**
@@ -360,7 +387,12 @@ ${result.dataPoints.map(p => `${p.label || p.timestamp}: ${p.value}`).join('\n')
     const messages: LLMMessage[] = [
       {
         role: 'system',
-        content: '你是商户运营AI助手，擅长趋势分析和预测。',
+        content: `你是商户运营AI助手，擅长趋势分析和预测。
+
+⚠️ **术语规范（严格遵守）**：
+- 风险等级必须用中文：极高风险、高风险、中风险、低风险、无风险
+- 指标名称必须用中文：营收、租金、经营表现等
+- **禁止使用任何英文术语**`,
       },
       {
         role: 'user',
@@ -369,7 +401,10 @@ ${result.dataPoints.map(p => `${p.label || p.timestamp}: ${p.value}`).join('\n')
     ];
 
     const response = await llmClient.chat(messages, { useCache: true });
-    return response.content;
+
+    // 后处理：替换残留的英文术语
+    const cleanedContent = replaceEnglishTerms(response.content);
+    return cleanedContent;
   }
 
   // ===== Fallback模板（LLM不可用时使用） =====
