@@ -32,18 +32,29 @@ export class QueryAnalyzer {
     userInput: string,
     context: ConversationContext
   ): Promise<StructuredQuery> {
+    console.log('[QueryAnalyzer] ===== Starting analysis for:', userInput);
     try {
       // Step 1: 快速规则检测（避免简单查询也调用LLM）
       const quickDetection = this.quickDetect(userInput, context);
+      console.log('[QueryAnalyzer] Quick detection result:', {
+        confidence: quickDetection.confidence,
+        type: quickDetection.result.type,
+        entities: quickDetection.result.entities
+      });
+
       if (quickDetection.confidence > 0.9) {
+        console.log('[QueryAnalyzer] Using quick detection (confidence > 0.9)');
         return quickDetection.result;
       }
+
+      console.log('[QueryAnalyzer] Confidence <= 0.9, using LLM analysis...');
 
       // Step 2: LLM驱动的深度分析
       const llmResult = await this.analyzeWithLLM(userInput, context);
 
       // Step 3: 规则验证和修正
       const validated = this.validateAndFix(llmResult, context);
+      console.log('[QueryAnalyzer] Final validated result:', validated);
 
       return validated;
     } catch (error) {
@@ -87,16 +98,22 @@ export class QueryAnalyzer {
       };
     }
 
-    // 规则2: 明确的对比查询
+    // 规则2: 明确的对比查询（暂时禁用，返回友好提示）
     const comparisonKeywords = ['对比', '比较', 'vs', '和...比', '相比'];
     const hasComparison = comparisonKeywords.some(kw => input.includes(kw));
 
     if (hasComparison) {
-      // 🔥 对比查询复杂，降低confidence强制走LLM分支
-      console.log('[QueryAnalyzer] Comparison detected, forcing LLM analysis');
+      // 🚧 临时禁用对比查询功能，避免报错
+      console.log('[QueryAnalyzer] Comparison query temporarily disabled');
       return {
-        confidence: 0.5, // 降低到0.5，强制走LLM分支
-        result: this.createFallbackQuery(userInput, context),
+        confidence: 1.0,
+        result: {
+          originalInput: userInput,
+          type: 'single_merchant', // 临时返回为single_merchant避免报错
+          entities: {},
+          intents: ['comparison_query'],
+          confidence: 1.0,
+        },
       };
     }
 

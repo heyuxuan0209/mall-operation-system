@@ -66,6 +66,25 @@ export class AgentRouter {
       const structuredQuery = await queryAnalyzer.analyze(userInput, context);
       console.log('[AgentRouter] Structured query:', structuredQuery);
 
+      // 🚧 临时：对比查询功能暂未完善，返回友好提示
+      if (structuredQuery.intents.includes('comparison_query')) {
+        return {
+          success: false,
+          content: `🚧 **对比分析功能正在优化中**\n\n` +
+                   `目前您可以：\n` +
+                   `- 查询单个商户："海底捞怎么样"\n` +
+                   `- 聚合统计："有几家高风险商户"\n` +
+                   `- 帮扶建议："绿茶餐厅怎么帮扶"\n\n` +
+                   `对比分析功能将在下个版本推出，敬请期待！`,
+          metadata: {
+            intent: 'comparison_query',
+            dataSource: 'hybrid',
+            executionTime: Date.now() - startTime,
+          },
+          error: 'FEATURE_NOT_READY'
+        };
+      }
+
       // ============ Phase 1.5: Boundary Check ============
       // 🔥 新增：边界检查
       const boundaryCheck = boundaryChecker.checkBoundary(
