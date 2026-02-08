@@ -35,6 +35,7 @@ import { aggregationExecutor } from './aggregation-executor';
 import { comparisonExecutor } from './comparison-executor';
 import { responseGenerator } from './response-generator';
 import { entityExtractor } from './entity-extractor';
+import { boundaryChecker } from './boundary-checker';
 
 // 现有Skills
 import { analyzeHealth } from '@/skills/health-calculator';
@@ -64,6 +65,45 @@ export class AgentRouter {
 
       const structuredQuery = await queryAnalyzer.analyze(userInput, context);
       console.log('[AgentRouter] Structured query:', structuredQuery);
+
+      // ============ Phase 1.5: Boundary Check ============
+      // 🔥 新增：边界检查
+      const boundaryCheck = boundaryChecker.checkBoundary(
+        userInput,
+        structuredQuery.intents[0]
+      );
+
+      if (!boundaryCheck.allowed) {
+        return {
+          success: false,
+          content: `😅 ${boundaryCheck.reason}\n\n💡 **建议**：${boundaryCheck.suggestedAction}`,
+          metadata: {
+            intent: 'boundary_violation',
+            dataSource: 'hybrid',
+            executionTime: Date.now() - startTime,
+          },
+          error: 'BOUNDARY_VIOLATION'
+        };
+      }
+
+      // 检查不确定性
+      const uncertaintyCheck = boundaryChecker.checkUncertainty(
+        userInput,
+        structuredQuery.confidence
+      );
+
+      if (uncertaintyCheck.needsHumanIntervention) {
+        return {
+          success: false,
+          content: `⚠️ ${uncertaintyCheck.reason}\n\n如有疑问，请联系运营团队获取专业支持。`,
+          metadata: {
+            intent: 'uncertain',
+            dataSource: 'hybrid',
+            executionTime: Date.now() - startTime,
+          },
+          error: 'UNCERTAIN_REQUEST'
+        };
+      }
 
       // ============ Phase 2: Intent Classification ============
       const intents = await intentClassifier.classifyWithLLM(structuredQuery, context);
@@ -323,20 +363,29 @@ export class AgentRouter {
    * 创建商户未找到响应
    */
   private createMerchantNotFoundResult(userInput: string): AgentExecutionResult {
+    // 🔥 新增：尝试提取用户输入的商户名关键词，给出建议
+    const keywords = userInput.split(/[\s,，、。？！]/);
+    const suggestedMerchants = keywords
+      .flatMap(kw => entityExtractor.suggestMerchants(kw, 3))
+      .slice(0, 5);
+
+    const suggestions = suggestedMerchants.length > 0
+      ? `\n\n您是否在找：\n${suggestedMerchants.map(m => `- ${m.name} (${m.category})`).join('\n')}`
+      : '';
+
     return {
       success: false,
-      content: `抱歉，我没有找到您提到的商户。\n\n` +
-               `请确认商户名称，或者使用以下方式查询：\n` +
-               `- "海底捞最近怎么样"\n` +
-               `- "查看高风险商户"\n` +
-               `- "这个月多少问题商户"\n\n` +
-               `💡 **提示**：您也可以在健康度监控页面选择商户后再提问。`,
+      content: `😅 抱歉，我没有找到您提到的商户。${suggestions}\n\n` +
+               `💡 **提示**：\n` +
+               `- 请使用商户全名或简称\n` +
+               `- 也可以说"查看商户列表"浏览所有商户\n` +
+               `- 或在健康度监控页面选择商户后提问`,
       metadata: {
         dataSource: 'skills',
         executionTime: 0,
         intent: 'unknown',
       },
-      error: 'Merchant not found',
+      error: 'MERCHANT_NOT_FOUND',
     };
   }
 
