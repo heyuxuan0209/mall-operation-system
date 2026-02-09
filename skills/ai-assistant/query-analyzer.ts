@@ -23,30 +23,52 @@ import {
   LLMMessage,
 } from '@/types/ai-assistant';
 import { entityExtractor } from './entity-extractor';
+import { enhancedContextManager } from './conversation-context'; // ⭐v3.0新增
 
 export class QueryAnalyzer {
   /**
-   * 分析用户查询，转为结构化格式
+   * 分析用户查询，转为结构化格式 ⭐v3.0增强
    */
   async analyze(
     userInput: string,
     context: ConversationContext
   ): Promise<StructuredQuery> {
     console.log('[QueryAnalyzer] ===== Starting analysis for:', userInput);
+
+    // ⭐v3.0 Step 0: 应用增强上下文理解（指代消解 + 省略补全）
+    const { enhanced, applied } = enhancedContextManager.enhanceUserInput(
+      context.conversationId,
+      userInput
+    );
+
+    if (applied.length > 0) {
+      console.log('[QueryAnalyzer] Context enhancements applied:', applied);
+      console.log('[QueryAnalyzer] Enhanced input:', enhanced);
+    }
+
+    // 使用增强后的输入进行后续分析
+    const inputToAnalyze = enhanced;
+
     try {
       // 🔥 重构：完全依赖LLM，不再使用关键词匹配的quickDetect
       // Step 1: LLM驱动的深度分析
-      const llmResult = await this.analyzeWithLLM(userInput, context);
+      const llmResult = await this.analyzeWithLLM(inputToAnalyze, context);
 
       // Step 2: 规则验证和修正
       const validated = this.validateAndFix(llmResult, context);
+
+      // ⭐v3.0: 在结果中保留原始输入和增强后的输入
+      validated.originalInput = userInput; // 原始输入
+      validated.enhancedInput = inputToAnalyze; // 增强后的输入
+      validated.contextEnhancements = applied; // 应用的增强
+
       console.log('[QueryAnalyzer] Final validated result:', validated);
 
       return validated;
     } catch (error) {
       console.error('[QueryAnalyzer] Analysis failed:', error);
       // 降级：返回保守的single_merchant查询
-      return this.createFallbackQuery(userInput, context);
+      return this.createFallbackQuery(inputToAnalyze, context);
     }
   }
 

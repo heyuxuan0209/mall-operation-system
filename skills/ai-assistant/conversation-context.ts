@@ -212,5 +212,227 @@ export class ConversationContextManager {
   }
 }
 
-// 导出单例实例
-export const conversationContextManager = new ConversationContextManager();
+// ============================================
+// ⭐ v3.0 增强上下文理解 (Iteration 3)
+// ============================================
+
+/**
+ * 用户偏好
+ */
+export interface UserPreference {
+  responseStyle: 'detailed' | 'concise' | 'auto'; // 响应风格
+  feedbackCount: number;                          // 反馈次数
+  lastUpdated: string;                            // 最后更新时间
+}
+
+/**
+ * v3.0 增强的上下文管理器
+ *
+ * 新增功能：
+ * - 指代消解（"它" → "海底捞"）
+ * - 省略补全（"最近怎么样" → "海底捞最近怎么样"）
+ * - 用户偏好学习
+ */
+export class EnhancedContextManager extends ConversationContextManager {
+  private userPreferences: Map<string, UserPreference> = new Map();
+
+  /**
+   * ⭐ 指代消解：将指代词替换为具体实体
+   *
+   * 支持的指代词：
+   * - 它、这家店、那家店、这个、那个
+   * - 他们、这些商户
+   */
+  resolveReferences(
+    conversationId: string,
+    userInput: string
+  ): string {
+    const references = ['它', '这家店', '那家店', '这个', '那个', '该店', '此店'];
+
+    // 检查是否包含指代词
+    const hasReference = references.some(ref => userInput.includes(ref));
+    if (!hasReference) {
+      return userInput; // 无需处理
+    }
+
+    // 获取当前上下文商户
+    const currentMerchant = this.getCurrentMerchant(conversationId);
+    if (!currentMerchant) {
+      return userInput; // 无法解析
+    }
+
+    // 替换指代词
+    let resolved = userInput;
+    references.forEach(ref => {
+      resolved = resolved.replace(new RegExp(ref, 'g'), currentMerchant.name);
+    });
+
+    console.log('[EnhancedContext] Reference resolved:', userInput, '→', resolved);
+    return resolved;
+  }
+
+  /**
+   * ⭐ 省略补全：检测并补全省略的主语
+   *
+   * 检测模式：
+   * - "最近怎么样" → "海底捞最近怎么样"
+   * - "有风险吗" → "海底捞有风险吗"
+   * - "怎么帮扶" → "怎么帮扶海底捞"
+   */
+  completeOmission(
+    conversationId: string,
+    userInput: string
+  ): { completed: string; wasOmitted: boolean } {
+    // 省略主语的常见模式
+    const omissionPatterns = [
+      /^(最近|近期|现在)?(怎么样|如何|怎样)/,           // "最近怎么样"
+      /^有.*吗\??\s*$/,                                 // "有风险吗"
+      /^(是否|是不是|有没有)/,                          // "是否有问题"
+      /^(需要|应该|可以|能否)/,                         // "需要帮扶吗"
+      /^(怎么|如何)(帮扶|解决|处理|改善)/,             // "怎么帮扶"
+      /^(查看|查询|看看|了解)/,                         // "查看档案"
+      /^(营收|健康度|风险|客流|满意度)/,               // "营收怎么样"
+    ];
+
+    const hasOmission = omissionPatterns.some(pattern => pattern.test(userInput));
+
+    if (!hasOmission) {
+      return { completed: userInput, wasOmitted: false };
+    }
+
+    // 获取当前上下文商户
+    const currentMerchant = this.getCurrentMerchant(conversationId);
+    if (!currentMerchant) {
+      return { completed: userInput, wasOmitted: false }; // 无法补全
+    }
+
+    // 智能补全
+    let completed: string;
+
+    if (/^(怎么|如何)(帮扶|解决|处理|改善)/.test(userInput)) {
+      // "怎么帮扶" → "怎么帮扶海底捞"
+      completed = userInput.replace(/^(怎么|如何)(帮扶|解决|处理|改善)/, `$1$2${currentMerchant.name}`);
+    } else if (/^(查看|查询|看看|了解)/.test(userInput)) {
+      // "查看档案" → "查看海底捞的档案"
+      completed = userInput.replace(/^(查看|查询|看看|了解)/, `$1${currentMerchant.name}的`);
+    } else {
+      // 其他情况：在开头添加商户名
+      completed = `${currentMerchant.name}${userInput}`;
+    }
+
+    console.log('[EnhancedContext] Omission completed:', userInput, '→', completed);
+    return { completed, wasOmitted: true };
+  }
+
+  /**
+   * ⭐ 用户偏好学习：基于反馈学习用户偏好
+   */
+  updateUserPreference(
+    conversationId: string,
+    feedbackType: 'helpful' | 'not_helpful',
+    messageLength: number
+  ): void {
+    const pref = this.userPreferences.get(conversationId) || {
+      responseStyle: 'auto',
+      feedbackCount: 0,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    pref.feedbackCount++;
+
+    // 学习规则：
+    // - 如果用户对简短回答点赞 → 偏好简洁
+    // - 如果用户对详细回答点赞 → 偏好详细
+    if (feedbackType === 'helpful') {
+      if (messageLength < 500) {
+        pref.responseStyle = 'concise';
+      } else if (messageLength > 1000) {
+        pref.responseStyle = 'detailed';
+      }
+    }
+
+    pref.lastUpdated = new Date().toISOString();
+    this.userPreferences.set(conversationId, pref);
+
+    console.log('[EnhancedContext] User preference updated:', pref);
+  }
+
+  /**
+   * 获取用户偏好
+   */
+  getUserPreference(conversationId: string): UserPreference {
+    return this.userPreferences.get(conversationId) || {
+      responseStyle: 'auto',
+      feedbackCount: 0,
+      lastUpdated: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * ⭐ 综合处理：指代消解 + 省略补全
+   *
+   * 这是推荐的入口方法，会自动应用所有增强
+   */
+  enhanceUserInput(
+    conversationId: string,
+    userInput: string
+  ): { enhanced: string; applied: string[] } {
+    const applied: string[] = [];
+    let enhanced = userInput;
+
+    // Step 1: 指代消解
+    const resolved = this.resolveReferences(conversationId, enhanced);
+    if (resolved !== enhanced) {
+      applied.push('指代消解');
+      enhanced = resolved;
+    }
+
+    // Step 2: 省略补全
+    const { completed, wasOmitted } = this.completeOmission(conversationId, enhanced);
+    if (wasOmitted) {
+      applied.push('省略补全');
+      enhanced = completed;
+    }
+
+    if (applied.length > 0) {
+      console.log('[EnhancedContext] Input enhanced:', {
+        original: userInput,
+        enhanced,
+        applied,
+      });
+    }
+
+    return { enhanced, applied };
+  }
+
+  /**
+   * 生成增强的上下文摘要（包含偏好信息）
+   */
+  generateEnhancedSummary(conversationId: string): string {
+    const baseSummary = this.generateContextSummary(conversationId);
+    const preference = this.getUserPreference(conversationId);
+
+    let summary = baseSummary;
+
+    if (preference.feedbackCount > 0) {
+      summary += `\n**用户偏好**: ${this.getPreferenceDescription(preference.responseStyle)}`;
+    }
+
+    return summary;
+  }
+
+  /**
+   * 获取偏好描述
+   */
+  private getPreferenceDescription(style: string): string {
+    const descriptions: Record<string, string> = {
+      detailed: '偏好详细回答',
+      concise: '偏好简洁回答',
+      auto: '自适应',
+    };
+    return descriptions[style] || '自适应';
+  }
+}
+
+// 导出增强版单例实例
+export const enhancedContextManager = new EnhancedContextManager();
