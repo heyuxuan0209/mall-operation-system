@@ -39,9 +39,9 @@ import { boundaryChecker } from './boundary-checker';
 
 // 现有Skills
 import { analyzeHealth } from '@/skills/health-calculator';
-import { generateDiagnosisReport } from '@/skills/ai-diagnosis-engine';
+import { generateDiagnosisReport, generateEnhancedDiagnosisReport } from '@/skills/ai-diagnosis-engine';
 import { detectRisks } from '@/skills/risk-detector';
-import { enhancedMatchCases } from '@/skills/enhanced-ai-matcher';
+import { enhancedMatchCases, enhancedMatchCasesV3 } from '@/skills/enhanced-ai-matcher';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 
 export class AgentRouter {
@@ -328,13 +328,21 @@ export class AgentRouter {
     // 健康度分析（总是执行）
     results.health = analyzeHealth(merchant.metrics);
 
-    // AI诊断（如果健康度低或有风险意图，总是执行）
+    // ⭐v3.0: AI诊断（优先使用增强版）
     const shouldDiagnose = merchant.totalScore < 70 ||
                           queryIntents.includes('risk_diagnosis') ||
                           queryIntents.includes('solution_recommend');
 
     if (shouldDiagnose) {
-      results.diagnosis = generateDiagnosisReport(merchant, knowledgeBase as any);
+      try {
+        // 尝试使用v3.0 LLM因果推理诊断
+        results.diagnosis = await generateEnhancedDiagnosisReport(merchant, knowledgeBase as any);
+        console.log('[AgentRouter] Using v3.0 enhanced diagnosis with LLM');
+      } catch (error) {
+        console.warn('[AgentRouter] Enhanced diagnosis failed, falling back to v2.0:', error);
+        // 降级到v2.0规则诊断
+        results.diagnosis = generateDiagnosisReport(merchant, knowledgeBase as any);
+      }
     }
 
     // 风险检测（如果健康度低，总是执行）
@@ -342,7 +350,7 @@ export class AgentRouter {
       results.risks = detectRisks(merchant);
     }
 
-    // 🔥 修复：案例匹配（如果有帮扶意图或健康度低，总是执行）
+    // ⭐v3.0: 案例匹配（优先使用语义相似度版本）
     const shouldMatchCases = queryIntents.includes('solution_recommend') ||
                             merchant.totalScore < 70 ||
                             merchant.riskLevel === 'high' ||
@@ -350,16 +358,40 @@ export class AgentRouter {
 
     if (shouldMatchCases) {
       const diagnosis = results.diagnosis || generateDiagnosisReport(merchant, knowledgeBase as any);
-      results.cases = enhancedMatchCases({
-        merchantName: merchant.name,
-        merchantCategory: merchant.category,
-        problemTags: diagnosis.tags || [],
-        metrics: merchant.metrics,
-        riskLevel: merchant.riskLevel,
-        symptoms: diagnosis.symptoms,
-        description: diagnosis.diagnosis,
-        knowledgeBase: knowledgeBase as any,
-      });
+
+      try {
+        // 尝试使用v3.0 LLM语义相似度匹配
+        const rawCases = await enhancedMatchCasesV3({
+          merchantName: merchant.name,
+          merchantCategory: merchant.category,
+          problemTags: diagnosis.problemTags || diagnosis.tags || [],
+          metrics: merchant.metrics,
+          riskLevel: merchant.riskLevel,
+          symptoms: diagnosis.symptoms,
+          description: diagnosis.diagnosis,
+          knowledgeBase: knowledgeBase as any,
+        });
+
+        // ⭐v3.0 质量过滤：移除低质量案例
+        results.cases = this.filterLowQualityCases(rawCases, merchant);
+        console.log('[AgentRouter] Using v3.0 semantic similarity matching');
+      } catch (error) {
+        console.warn('[AgentRouter] Semantic matching failed, falling back to v2.2:', error);
+        // 降级到v2.2标签匹配
+        const rawCases = enhancedMatchCases({
+          merchantName: merchant.name,
+          merchantCategory: merchant.category,
+          problemTags: diagnosis.problemTags || diagnosis.tags || [],
+          metrics: merchant.metrics,
+          riskLevel: merchant.riskLevel,
+          symptoms: diagnosis.symptoms,
+          description: diagnosis.diagnosis,
+          knowledgeBase: knowledgeBase as any,
+        });
+
+        // ⭐v3.0 质量过滤
+        results.cases = this.filterLowQualityCases(rawCases, merchant);
+      }
     }
 
     return results;
@@ -381,6 +413,55 @@ export class AgentRouter {
     plan: ExtendedExecutionPlan
   ): Promise<ComparisonResult> {
     return comparisonExecutor.execute(plan);
+  }
+
+  /**
+   * ⭐v3.0新增：过滤低质量案例
+   */
+  private filterLowQualityCases(casesResult: any, merchant: Merchant): any {
+    if (!casesResult?.matchedCases) {
+      return casesResult;
+    }
+
+    const filtered = casesResult.matchedCases.filter((c: any) => {
+      // 规则1: 成功率必须 >= 30%
+      if (c.successProbability < 30) {
+        console.log(`[QualityFilter] Removed case ${c.case?.id}: Low success rate (${c.successProbability}%)`);
+        return false;
+      }
+
+      // 规则2: 如果有v3.0语义相似度，overall必须 >= 40分
+      if (c.semanticSimilarity?.overall !== undefined && c.semanticSimilarity.overall < 40) {
+        console.log(`[QualityFilter] Removed case ${c.case?.id}: Low semantic similarity (${c.semanticSimilarity.overall})`);
+        return false;
+      }
+
+      // 规则3: 如果业态不同，必须有高语义相似度才保留
+      const caseCategory = c.case?.industry?.split('-')[0];
+      const merchantCategory = merchant.category?.split('-')[0];
+      const categoriesMatch = caseCategory === merchantCategory;
+
+      if (!categoriesMatch) {
+        // 业态不同，检查是否有v3.0语义相似度且足够高
+        const hasSemantic = c.semanticSimilarity?.overall !== undefined;
+        const highSemantic = c.semanticSimilarity?.overall >= 70;
+
+        if (!hasSemantic || !highSemantic) {
+          console.log(`[QualityFilter] Removed case ${c.case?.id}: Category mismatch without high semantic similarity`);
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    console.log(`[QualityFilter] Filtered cases: ${casesResult.matchedCases.length} → ${filtered.length}`);
+
+    return {
+      ...casesResult,
+      matchedCases: filtered,
+      topSuggestions: filtered.slice(0, 3).map((c: any) => c.case?.action),
+    };
   }
 
   /**
