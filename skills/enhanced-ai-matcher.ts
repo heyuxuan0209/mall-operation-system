@@ -1,7 +1,14 @@
 /**
- * AI智能推荐引擎 v2.2 - 增强版（带反馈权重）
+ * AI智能推荐引擎 v3.0 - 语义相似度版 ⭐Iteration 2升级
  *
- * 新增功能：
+ * v3.0 核心改进：
+ * - ⭐ LLM语义相似度评估：从标签匹配升级为深度语义理解
+ * - ⭐ 根因筛选：基于根本原因而非表面标签
+ * - ⭐ 多维度评分：根本原因、行业差异、方案可迁移性
+ * - ⭐ 适应性建议：LLM生成案例调整建议
+ * - ⭐ 降级策略：LLM不可用时降级到v2.2
+ *
+ * v2.2 功能（保留作为fallback）：
  * - 成功率权重：优先推荐成功案例
  * - 时效性权重：优先推荐近期案例
  * - 相似度计算：基于多维度特征的相似度
@@ -13,6 +20,8 @@
  */
 
 import { feedbackCollector } from '@/utils/ai-assistant/feedbackCollector';
+import { llmClient } from '@/utils/ai-assistant/llmClient';
+import type { LLMMessage } from '@/types/ai-assistant';
 
 /**
  * 获取案例的用户反馈权重
@@ -131,6 +140,15 @@ export interface EnhancedMatchedCase {
   matchReasons: string[];
   successProbability: number; // 成功概率 0-100
   recommendationRank: number; // 推荐排名
+  // ⭐v3.0 新增字段
+  semanticSimilarity?: {
+    rootCauseSimilarity: number;     // 根因相似度 0-100
+    industrySimilarity: number;      // 行业相似度 0-100
+    solutionTransferability: number; // 方案可迁移性 0-100
+    overall: number;                 // 综合相似度 0-100
+  };
+  adaptationSuggestion?: string;     // 适应性调整建议
+  llmEvaluation?: string;            // LLM完整评估
 }
 
 export interface EnhancedAIMatcherOutput {
@@ -582,4 +600,214 @@ export function clearMatcherCache(): void {
  */
 export function getMatcherCacheStats(): { size: number; maxSize: number; ttl: number } {
   return matcherCache.getStats();
+}
+
+// ============================================
+// ⭐ v3.0 LLM语义相似度评估 (Iteration 2)
+// ============================================
+
+/**
+ * v3.0 增强匹配（使用LLM语义评估）⭐推荐使用
+ *
+ * 改进点：
+ * 1. 根因筛选：先用v2.2筛选候选案例
+ * 2. LLM语义评估：深度分析根本原因相似度
+ * 3. 多维度评分：根因、行业、方案可迁移性
+ * 4. 适应性建议：如何调整案例以适应当前商户
+ */
+export async function enhancedMatchCasesV3(
+  input: EnhancedAIMatcherInput
+): Promise<EnhancedAIMatcherOutput> {
+  // Step 1: 先使用v2.2算法筛选候选案例（Top 10）
+  const v2Result = enhancedMatchCases(input);
+  const candidates = v2Result.matchedCases.slice(0, 10);
+
+  // Step 2: 如果LLM不可用，直接返回v2.2结果
+  if (!llmClient || candidates.length === 0) {
+    console.warn('[MatcherV3] LLM not available or no candidates, falling back to v2.2');
+    return v2Result;
+  }
+
+  try {
+    // Step 3: LLM语义相似度评估（批量评估Top 10案例）
+    const enhancedCases = await evaluateCasesWithLLM(input, candidates);
+
+    // Step 4: 重新排序（基于语义相似度）
+    enhancedCases.sort((a, b) => {
+      const scoreA = a.semanticSimilarity?.overall || a.matchScore;
+      const scoreB = b.semanticSimilarity?.overall || b.matchScore;
+      return scoreB - scoreA;
+    });
+
+    // Step 5: 更新推荐排名
+    enhancedCases.forEach((c, idx) => {
+      c.recommendationRank = idx + 1;
+    });
+
+    return {
+      ...v2Result,
+      matchedCases: enhancedCases.slice(0, 5), // 返回Top 5
+      insights: [
+        ...v2Result.insights,
+        '✨ 已使用LLM语义相似度评估',
+        '📊 考虑了根本原因、行业差异和方案可迁移性',
+      ],
+    };
+  } catch (error) {
+    console.error('[MatcherV3] LLM evaluation failed, falling back to v2.2:', error);
+    return v2Result;
+  }
+}
+
+/**
+ * 使用LLM评估案例相似度
+ */
+async function evaluateCasesWithLLM(
+  input: EnhancedAIMatcherInput,
+  candidates: EnhancedMatchedCase[]
+): Promise<EnhancedMatchedCase[]> {
+  // 批量评估（每次最多评估5个案例，避免token超限）
+  const batchSize = 5;
+  const results: EnhancedMatchedCase[] = [];
+
+  for (let i = 0; i < candidates.length; i += batchSize) {
+    const batch = candidates.slice(i, i + batchSize);
+    const batchResults = await evaluateBatch(input, batch);
+    results.push(...batchResults);
+  }
+
+  return results;
+}
+
+/**
+ * 批量评估案例
+ */
+async function evaluateBatch(
+  input: EnhancedAIMatcherInput,
+  batch: EnhancedMatchedCase[]
+): Promise<EnhancedMatchedCase[]> {
+  const prompt = `
+# 任务
+作为商户运营专家，评估以下帮扶案例与当前商户问题的语义相似度。
+
+# 当前商户问题
+- 商户名称：${input.merchantName}
+- 业态：${input.merchantCategory}
+- 风险等级：${input.riskLevel || 'N/A'}
+- 问题标签：${input.problemTags.join('、')}
+- 症状描述：${input.symptoms || input.description || '无'}
+
+# 待评估案例
+${batch.map((c, idx) => `
+## 案例${idx + 1}：${c.case.merchantName || '某商户'}
+- 案例ID：${c.case.id}
+- 业态：${c.case.industry}
+- 问题标签：${c.case.tags.join('、')}
+- 症状：${c.case.symptoms}
+- 诊断：${c.case.diagnosis}
+- 策略：${c.case.strategy}
+- 措施：${c.case.action}
+- 结果：${c.case.result || '无'}
+`).join('\n')}
+
+# 评估要求
+
+## 1. 多维度相似度评分（0-100分）
+- **根因相似度**：问题的根本原因是否相似？（关键维度）
+  - 100分：根本原因完全一致
+  - 70-90分：根本原因相似，但程度不同
+  - 40-60分：根本原因有关联
+  - 0-30分：根本原因不同
+
+- **行业相似度**：业态和场景是否相似？
+  - 100分：完全相同业态
+  - 70-90分：同大类但不同细分
+  - 40-60分：不同大类但有共性
+  - 0-30分：行业差异大
+
+- **方案可迁移性**：解决方案能否迁移？
+  - 100分：可以直接应用
+  - 70-90分：稍作调整即可应用
+  - 40-60分：需要较大调整
+  - 0-30分：难以迁移
+
+## 2. 适应性建议
+针对每个案例，说明如何调整以适应当前商户：
+- 哪些措施可以直接应用？
+- 哪些需要调整？如何调整？
+- 有哪些注意事项？
+
+# 输出格式（严格JSON）
+\`\`\`json
+{
+  "evaluations": [
+    {
+      "caseId": "CASE_XXX",
+      "rootCauseSimilarity": 85,
+      "industrySimilarity": 90,
+      "solutionTransferability": 75,
+      "overall": 83,
+      "adaptationSuggestion": "该案例的XXX策略可以直接应用，但需要注意...",
+      "reasoning": "简短评估理由（1-2句话）"
+    }
+  ]
+}
+\`\`\`
+
+# 关键约束
+1. 只返回JSON，不要有其他文字
+2. overall = (rootCauseSimilarity * 0.5 + industrySimilarity * 0.2 + solutionTransferability * 0.3)
+3. 根因相似度权重最高（50%），这是最关键的维度
+4. 适应性建议要具体、可操作
+
+现在请评估：
+`.trim();
+
+  const messages: LLMMessage[] = [
+    {
+      role: 'system',
+      content: '你是资深商户运营专家，擅长案例分析和方案迁移。你的评估必须客观、准确，基于根本原因而非表面现象。',
+    },
+    {
+      role: 'user',
+      content: prompt,
+    },
+  ];
+
+  const response = await llmClient!.chat(messages, { useCache: false });
+
+  // 解析JSON响应
+  const jsonMatch = response.content.match(/```json\n([\s\S]*?)\n```/) ||
+                    response.content.match(/\{[\s\S]*\}/);
+
+  if (!jsonMatch) {
+    throw new Error('Failed to parse LLM response as JSON');
+  }
+
+  const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+  const evaluations = parsed.evaluations || [];
+
+  // 合并评估结果到原案例
+  return batch.map((c) => {
+    const evaluation = evaluations.find((e: any) => e.caseId === c.case.id);
+    if (!evaluation) {
+      return c; // 未评估，保持原样
+    }
+
+    return {
+      ...c,
+      semanticSimilarity: {
+        rootCauseSimilarity: evaluation.rootCauseSimilarity,
+        industrySimilarity: evaluation.industrySimilarity,
+        solutionTransferability: evaluation.solutionTransferability,
+        overall: evaluation.overall,
+      },
+      adaptationSuggestion: evaluation.adaptationSuggestion,
+      llmEvaluation: evaluation.reasoning,
+      matchReasons: [
+        ...c.matchReasons,
+        `✨ LLM评估：${evaluation.reasoning}`,
+      ],
+    };
+  });
 }
