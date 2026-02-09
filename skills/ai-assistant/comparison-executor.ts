@@ -202,27 +202,36 @@ export class ComparisonExecutor {
     plan: ExtendedExecutionPlan,
     merchants: Merchant[]
   ): ComparisonResult {
-    // 🔥 修复：从entities.merchants获取两个商户对象（类型为Array<{id, name}>）
+    // 🔥 修复：支持两种格式的merchants
+    // 格式1: Array<{id, name}> - 来自resolveEntities
+    // 格式2: Array<string> - 来自LLM直接解析
     const merchantEntities = plan.entities.merchants || [];
 
     if (merchantEntities.length < 2) {
       throw new Error('需要两个商户名进行对比');
     }
 
-    // 获取两个商户 - 优先用ID匹配，否则用名称匹配
-    const merchant1 = merchantEntities[0].id
-      ? merchants.find(m => m.id === merchantEntities[0].id)
-      : merchants.find(m => m.name === merchantEntities[0].name || m.name.includes(merchantEntities[0].name));
+    // 获取商户名称（支持两种格式）
+    const merchant1Name = typeof merchantEntities[0] === 'string'
+      ? merchantEntities[0]
+      : (merchantEntities[0] as any).name;
+    const merchant2Name = typeof merchantEntities[1] === 'string'
+      ? merchantEntities[1]
+      : (merchantEntities[1] as any).name;
 
-    const merchant2 = merchantEntities[1].id
-      ? merchants.find(m => m.id === merchantEntities[1].id)
-      : merchants.find(m => m.name === merchantEntities[1].name || m.name.includes(merchantEntities[1].name));
+    // 查找商户
+    const merchant1 = merchants.find(m =>
+      m.name === merchant1Name || m.name.includes(merchant1Name) || merchant1Name.includes(m.name)
+    );
+    const merchant2 = merchants.find(m =>
+      m.name === merchant2Name || m.name.includes(merchant2Name) || merchant2Name.includes(m.name)
+    );
 
     if (!merchant1) {
-      throw new Error(`商户不存在: ${merchantEntities[0].name}`);
+      throw new Error(`商户不存在: ${merchant1Name}`);
     }
     if (!merchant2) {
-      throw new Error(`商户不存在: ${merchantEntities[1].name}`);
+      throw new Error(`商户不存在: ${merchant2Name}`);
     }
 
     // 提取数据
