@@ -34,8 +34,78 @@ export interface Merchant {
       yoy: number;
     };
   };
+
+  // ⭐v3.1新增：详细运营数据（可选，巡检时录入）
+  operationalDetails?: OperationalDetails;
+
   createdAt: string;
   updatedAt: string;
+}
+
+// 详细运营数据接口
+export interface OperationalDetails {
+  // === 通用数据（所有业态） ===
+  dailyFootfall?: number;              // 日均客流（人次）
+  peakHourFootfall?: number;           // 高峰期客流（人次）
+  conversionRate?: number;             // 进店转化率（%）
+
+  // === 餐饮专属 ===
+  restaurant?: {
+    tableCount?: number;               // 餐桌数
+    seatingCapacity?: number;          // 座位数
+    turnoverRate?: number;             // 翻台率（次/天）
+    avgWaitTime?: number;              // 平均等位时长（分钟）
+    avgMealDuration?: number;          // 平均用餐时长（分钟）
+    errorOrderRate?: number;           // 错漏单率（%）
+    avgCheckSize?: number;             // 客单价（元）
+  };
+
+  // === 零售专属 ===
+  retail?: {
+    dailySales?: number;               // 日均销售额（元）
+    avgTransactionValue?: number;      // 客单价（元）
+    inventoryTurnover?: number;        // 库存周转率（次/月）
+    returnRate?: number;               // 退货率（%）
+  };
+
+  // === 顾客数据 ===
+  customer?: {
+    npsScore?: number;                 // NPS净推荐值（-100~100）
+    repeatCustomerRate?: number;       // 复购率（%）
+    newCustomerRatio?: number;         // 新客占比（%）
+    avgCustomerLifetime?: number;      // 客户平均生命周期（月）
+  };
+
+  // === 员工数据 ===
+  staff?: {
+    totalCount?: number;               // 总人数
+    fullTimeCount?: number;            // 全职人数
+    partTimeCount?: number;            // 兼职人数
+    turnoverRate?: number;             // 员工流失率（%/年）
+    avgTenure?: number;                // 平均工龄（月）
+  };
+
+  // === 竞争环境 ===
+  competition?: {
+    nearbyCompetitors?: number;        // 3km内竞品数量
+    marketShare?: number;              // 市场份额估算（%）
+    competitivePosition?: string;      // 竞争定位（领先/持平/落后）
+  };
+
+  // === 位置数据 ===
+  location?: {
+    floor: string;                     // 楼层（B2/1F/2F等）
+    zoneType: string;                  // 区域类型（主动线/次动线/末端/核心区）
+    adjacentToAnchor: boolean;         // 是否毗邻主力店
+    visibilityRating: number;          // 可见度评级（1-5）
+  };
+
+  // === 元数据 ===
+  lastUpdated?: string;                // 最后更新时间
+  dataSource?: 'inspection' | 'pos' | 'manual' | 'third_party'; // 数据来源
+  inspectorId?: string;                // 录入人ID
+  inspectorName?: string;              // 录入人姓名
+  notes?: string;                      // 备注说明
 }
 
 // 帮扶案例类型
