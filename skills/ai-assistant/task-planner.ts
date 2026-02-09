@@ -221,6 +221,7 @@ export class TaskPlanner {
       risk_diagnosis: ['matchCases', 'generateSolution'],
       solution_recommend: ['analyzeHealth', 'diagnose'],
       data_query: ['analyzeHealth'],
+      archive_query: ['analyzeHealth'],  // 添加缺失的字段
       general_chat: [],
       unknown: [],
       // ⭐v3.0 new intents

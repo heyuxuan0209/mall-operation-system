@@ -78,7 +78,7 @@ export class AgentRouter {
           success: false,
           content: `😅 ${boundaryCheck.reason}\n\n💡 **建议**：${boundaryCheck.suggestedAction}`,
           metadata: {
-            intent: 'boundary_violation',
+            intent: 'general_chat',  // 修复类型错误：使用合法的UserIntent
             dataSource: 'hybrid',
             executionTime: Date.now() - startTime,
           },
@@ -97,7 +97,7 @@ export class AgentRouter {
           success: false,
           content: `⚠️ ${uncertaintyCheck.reason}\n\n如有疑问，请联系运营团队获取专业支持。`,
           metadata: {
-            intent: 'uncertain',
+            intent: 'unknown',  // 修复类型错误：使用合法的UserIntent
             dataSource: 'hybrid',
             executionTime: Date.now() - startTime,
           },

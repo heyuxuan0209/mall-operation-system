@@ -521,6 +521,7 @@ ${availableIntents}
       risk_diagnosis: '诊断商户风险和问题',
       solution_recommend: '推荐帮扶方案和措施',
       data_query: '查询具体数据指标',
+      archive_query: '查询历史帮扶档案',  // 添加缺失的字段
       general_chat: '通用对话',
       unknown: '未知意图',
       // ⭐v3.0 new intents

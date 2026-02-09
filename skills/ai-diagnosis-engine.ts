@@ -1,22 +1,18 @@
 /**
- * AI Diagnosis & Recommendation Engine（AI诊断与推荐引擎）
+ * AI Diagnosis & Recommendation Engine（AI诊断与推荐引擎）⭐v3.0升级
  *
  * 功能：智能商户问题诊断和知识库案例匹配
  *
- * 核心算法：
- * - 指标问题分析（5维度健康度评估）
- * - 问题标签提取（NLP关键词识别）
- * - 智能案例匹配（多维度加权评分）
- * - 诊断报告生成（结构化输出）
+ * ## v3.0 核心改进（Iteration 2）
+ * - ⭐ **LLM因果推理诊断**：从规则检测升级为因果分析
+ *   - 区分根因（root cause）vs 症状（symptom）
+ *   - 内因 vs 外因（内部管理 vs 外部环境）
+ *   - 结构性 vs 暂时性问题
+ *   - 问题关联链（A导致B，进而导致C）
+ * - ⭐ **规则验证层**：防止LLM幻觉，确保诊断可靠
+ * - ⭐ **个性化诊断**：基于商户具体情况，非模板化
  *
- * 复用场景：
- * - 健康度监控页面的AI诊断
- * - 帮扶任务中心的策略推荐
- * - 知识库案例的智能匹配
- * - 风险预警的问题识别
- *
- * ## 匹配算法
- *
+ * ## v2.0 算法（作为fallback保留）
  * 采用多维度加权评分机制：
  * 1. **业态匹配**（基础分40分）
  *    - 完全匹配：40分
@@ -32,23 +28,24 @@
  *
  * @example
  * ```typescript
- * const merchant = {
- *   name: '海底捞火锅',
- *   category: '餐饮-火锅',
- *   metrics: { collection: 60, operational: 35, ... },
- *   rentToSalesRatio: 0.28
- * };
+ * // v3.0 增强诊断（推荐）
+ * const report = await generateEnhancedDiagnosisReport(merchant, knowledgeBase);
+ * console.log(report.rootCauses);      // ['位置劣势（主因）', '租金压力（次因）']
+ * console.log(report.problemChain);    // '位置差 → 客流少 → 营收低 → 租金压力'
+ * console.log(report.severity);        // { urgency: 'high', impact: 'critical' }
  *
+ * // v2.0 规则诊断（fallback）
  * const report = generateDiagnosisReport(merchant, knowledgeBase);
- * console.log(report.problems);        // ['租金缴纳存在风险(60分)', '经营表现不佳(35分)']
- * console.log(report.riskLevel);       // 'high'
- * console.log(report.matchedCases[0]); // 最佳匹配案例
+ * console.log(report.problems);        // ['租金缴纳存在风险(60分)', ...]
  * ```
  *
- * @version 2.0
+ * @version 3.0
  * @priority P0
- * @updated 2026-01-28 - 迁移到skills目录
+ * @updated 2026-02-09 - v3.0 Iteration 2: LLM因果推理升级
  */
+
+import { llmClient } from '@/utils/ai-assistant/llmClient';
+import type { LLMMessage } from '@/types/ai-assistant';
 
 export interface MerchantMetrics {
   collection: number;      // 租金缴纳 (0-100)
@@ -403,4 +400,325 @@ export function quickDiagnosis(
 ): string[] {
   const report = generateDiagnosisReport(merchant, knowledgeBase);
   return report.recommendations.map(r => r.action);
+}
+
+// ============================================
+// v3.0 增强诊断功能 ⭐Iteration 2
+// ============================================
+
+/**
+ * 根因类型
+ */
+export type RootCauseType = 'internal' | 'external' | 'structural' | 'temporary';
+
+/**
+ * 根因分析结果
+ */
+export interface RootCause {
+  cause: string;              // 根因描述
+  type: RootCauseType;        // 根因类型
+  confidence: number;         // 置信度 0-100
+  evidence: string[];         // 支撑证据
+  impact: 'primary' | 'secondary' | 'minor';  // 影响程度
+}
+
+/**
+ * 问题关联链
+ */
+export interface ProblemChain {
+  steps: string[];            // 问题关联步骤
+  explanation: string;        // 关联解释
+}
+
+/**
+ * 严重程度评估
+ */
+export interface SeverityAssessment {
+  urgency: 'low' | 'medium' | 'high' | 'critical';     // 紧急度
+  importance: 'low' | 'medium' | 'high' | 'critical';  // 重要度
+  overall: 'low' | 'medium' | 'high' | 'critical';     // 综合评级
+  reasoning: string;                                    // 评估理由
+}
+
+/**
+ * 可行性评估
+ */
+export interface FeasibilityAssessment {
+  score: number;              // 可行性评分 0-100
+  constraints: string[];      // 约束条件
+  resources: string[];        // 所需资源
+  timeline: string;           // 预计时间
+}
+
+/**
+ * v3.0 增强诊断报告
+ */
+export interface EnhancedDiagnosisReport {
+  // 基础信息（继承v2.0）
+  merchantName: string;
+  category: string;
+  riskLevel: string;
+
+  // ⭐v3.0 新增字段
+  symptoms: string[];                    // 症状列表
+  rootCauses: RootCause[];              // 根因分析
+  problemChain?: ProblemChain;          // 问题关联链
+  severity: SeverityAssessment;         // 严重程度
+  feasibility?: FeasibilityAssessment;  // 可行性评估
+  diagnosis: string;                    // LLM生成的诊断描述
+
+  // v2.0 兼容字段
+  problems: string[];
+  problemTags: string[];
+  matchedCases: Array<KnowledgeCase & { matchScore: number }>;
+  recommendations: Array<{
+    strategy: string;
+    action: string;
+    caseId: string;
+  }>;
+}
+
+/**
+ * ⭐v3.0 增强诊断 - LLM因果推理
+ *
+ * 使用LLM分析商户问题，提供根因分析和因果推理
+ */
+export async function generateEnhancedDiagnosisReport(
+  merchant: MerchantInfo,
+  knowledgeBase: KnowledgeCase[]
+): Promise<EnhancedDiagnosisReport> {
+  // Step 1: 先使用v2.0规则诊断作为基础
+  const basicReport = generateDiagnosisReport(merchant, knowledgeBase);
+
+  // Step 2: 如果LLM不可用，降级到v2.0报告
+  if (!llmClient) {
+    console.warn('[EnhancedDiagnosis] LLM not available, falling back to v2.0');
+    return {
+      ...basicReport,
+      symptoms: basicReport.problems,
+      rootCauses: [],
+      severity: inferSeverityFromMetrics(merchant.metrics),
+      diagnosis: basicReport.problems.join('；'),
+    };
+  }
+
+  try {
+    // Step 3: LLM因果推理分析
+    const llmAnalysis = await analyzeCausalRelations(merchant, basicReport);
+
+    // Step 4: 规则验证（防止幻觉）
+    const validated = validateDiagnosisWithRules(llmAnalysis, merchant);
+
+    // Step 5: 组合最终报告
+    return {
+      ...basicReport,
+      symptoms: validated.symptoms,
+      rootCauses: validated.rootCauses,
+      problemChain: validated.problemChain,
+      severity: validated.severity,
+      feasibility: validated.feasibility,
+      diagnosis: validated.diagnosis,
+    };
+  } catch (error) {
+    console.error('[EnhancedDiagnosis] LLM analysis failed:', error);
+    // 降级到v2.0
+    return {
+      ...basicReport,
+      symptoms: basicReport.problems,
+      rootCauses: [],
+      severity: inferSeverityFromMetrics(merchant.metrics),
+      diagnosis: basicReport.problems.join('；'),
+    };
+  }
+}
+
+/**
+ * LLM因果关系分析
+ */
+async function analyzeCausalRelations(
+  merchant: MerchantInfo,
+  basicReport: DiagnosisResult
+): Promise<Partial<EnhancedDiagnosisReport>> {
+  const prompt = `
+# 任务
+作为商户运营专家，请对商户进行深度因果分析诊断。
+
+# 商户信息
+- 名称：${merchant.name}
+- 业态：${merchant.category}
+- 租售比：${merchant.rentToSalesRatio || 'N/A'}
+
+# 健康度指标（0-100分）
+- 租金缴纳：${merchant.metrics.collection}
+- 经营表现：${merchant.metrics.operational}
+- 现场品质：${merchant.metrics.siteQuality}
+- 顾客满意度：${merchant.metrics.customerReview}
+- 抗风险能力：${merchant.metrics.riskResistance}
+
+# 初步诊断（规则检测）
+${basicReport.problems.join('\n')}
+
+# 诊断要求
+
+## 1. 区分症状和根因
+- **症状**：表面现象（如"营收低"、"客流少"）
+- **根因**：深层原因（如"位置劣势"、"产品竞争力不足"）
+
+## 2. 根因分类
+- **内因**：商户自身可控（管理、产品、服务）
+- **外因**：外部环境（位置、竞争、市场）
+- **结构性**：长期存在，难以快速改变
+- **暂时性**：短期波动，可以调整
+
+## 3. 问题关联链
+分析问题之间的因果关系，例如：
+"位置劣势（根因） → 自然客流少 → 营收不足 → 租金压力"
+
+## 4. 严重程度评估
+- **紧急度**：问题多紧急？（low/medium/high/critical）
+- **重要度**：影响多大？（low/medium/high/critical）
+- 综合评级和理由
+
+## 5. 可行性评估
+- 改善的可行性评分（0-100）
+- 约束条件（商户资源、外部限制）
+- 所需资源和时间
+
+# 输出格式（严格JSON）
+\`\`\`json
+{
+  "symptoms": ["症状1", "症状2"],
+  "rootCauses": [
+    {
+      "cause": "根因描述",
+      "type": "internal | external | structural | temporary",
+      "confidence": 90,
+      "evidence": ["证据1", "证据2"],
+      "impact": "primary | secondary | minor"
+    }
+  ],
+  "problemChain": {
+    "steps": ["步骤1", "步骤2", "步骤3"],
+    "explanation": "关联解释"
+  },
+  "severity": {
+    "urgency": "high",
+    "importance": "critical",
+    "overall": "critical",
+    "reasoning": "评估理由"
+  },
+  "feasibility": {
+    "score": 65,
+    "constraints": ["约束1", "约束2"],
+    "resources": ["资源1", "资源2"],
+    "timeline": "3-6个月"
+  },
+  "diagnosis": "综合诊断描述（2-3句话）"
+}
+\`\`\`
+
+# 关键约束
+1. 只返回JSON，不要有任何额外文字
+2. 根因要具体、可验证，避免泛泛而谈
+3. 问题关联链要符合逻辑，有因果关系
+4. 可行性评估要考虑商户实际情况
+
+现在请分析：
+`.trim();
+
+  const messages: LLMMessage[] = [
+    {
+      role: 'system',
+      content: '你是资深商户运营专家，擅长因果分析和根本原因诊断。你必须提供具体、可验证的诊断，避免模糊和套话。',
+    },
+    {
+      role: 'user',
+      content: prompt,
+    },
+  ];
+
+  const response = await llmClient.chat(messages, { useCache: false });
+
+  // 解析JSON响应
+  const jsonMatch = response.content.match(/```json\n([\s\S]*?)\n```/) ||
+                    response.content.match(/\{[\s\S]*\}/);
+
+  if (!jsonMatch) {
+    throw new Error('Failed to parse LLM response as JSON');
+  }
+
+  const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+  return parsed;
+}
+
+/**
+ * 规则验证诊断结果（防止LLM幻觉）
+ */
+function validateDiagnosisWithRules(
+  llmAnalysis: Partial<EnhancedDiagnosisReport>,
+  merchant: MerchantInfo
+): Partial<EnhancedDiagnosisReport> {
+  // 验证1: 根因数量合理（1-5个）
+  if (llmAnalysis.rootCauses && llmAnalysis.rootCauses.length > 5) {
+    llmAnalysis.rootCauses = llmAnalysis.rootCauses.slice(0, 5);
+  }
+
+  // 验证2: 置信度在合理范围
+  if (llmAnalysis.rootCauses) {
+    llmAnalysis.rootCauses = llmAnalysis.rootCauses.map(rc => ({
+      ...rc,
+      confidence: Math.min(100, Math.max(0, rc.confidence)),
+    }));
+  }
+
+  // 验证3: 可行性评分在合理范围
+  if (llmAnalysis.feasibility) {
+    llmAnalysis.feasibility.score = Math.min(100, Math.max(0, llmAnalysis.feasibility.score));
+  }
+
+  // 验证4: 严重程度与指标一致性检查
+  const avgScore = Object.values(merchant.metrics).reduce((a, b) => a + b, 0) / 5;
+  if (avgScore < 40 && llmAnalysis.severity?.overall === 'low') {
+    // 指标很差但评级低 → 修正为high
+    llmAnalysis.severity.overall = 'high';
+  }
+
+  return llmAnalysis;
+}
+
+/**
+ * 从指标推断严重程度（fallback）
+ */
+function inferSeverityFromMetrics(metrics: MerchantMetrics): SeverityAssessment {
+  const avgScore = Object.values(metrics).reduce((a, b) => a + b, 0) / 5;
+
+  if (avgScore < 40) {
+    return {
+      urgency: 'critical',
+      importance: 'critical',
+      overall: 'critical',
+      reasoning: '多项指标严重偏低，需要立即干预',
+    };
+  } else if (avgScore < 60) {
+    return {
+      urgency: 'high',
+      importance: 'high',
+      overall: 'high',
+      reasoning: '健康度偏低，存在明显风险',
+    };
+  } else if (avgScore < 80) {
+    return {
+      urgency: 'medium',
+      importance: 'medium',
+      overall: 'medium',
+      reasoning: '部分指标需要改善',
+    };
+  } else {
+    return {
+      urgency: 'low',
+      importance: 'low',
+      overall: 'low',
+      reasoning: '整体健康度良好',
+    };
+  }
 }

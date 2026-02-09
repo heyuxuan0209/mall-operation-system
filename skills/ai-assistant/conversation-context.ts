@@ -197,6 +197,7 @@ export class ConversationContextManager {
       risk_diagnosis: '风险诊断',
       solution_recommend: '方案推荐',
       data_query: '数据查询',
+      archive_query: '历史档案查询',  // 添加缺失的字段
       general_chat: '通用对话',
       unknown: '未知',
       // ⭐v3.0 new intents
