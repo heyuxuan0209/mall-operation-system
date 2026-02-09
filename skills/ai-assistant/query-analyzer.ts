@@ -91,21 +91,24 @@ export class QueryAnalyzer {
       };
     }
 
-    // 规则2: 明确的对比查询（暂时禁用，返回友好提示）
+    // 规则2: 明确的对比查询 ⭐v3.0已启用
     const comparisonKeywords = ['对比', '比较', 'vs', '和...比', '相比'];
     const hasComparison = comparisonKeywords.some(kw => input.includes(kw));
 
     if (hasComparison) {
-      // 🚧 临时禁用对比查询功能，避免报错
-      console.log('[QueryAnalyzer] Comparison query temporarily disabled');
+      // ⭐ 启用对比查询功能
+      console.log('[QueryAnalyzer] Detected comparison query, delegating to LLM for detailed analysis');
+      // 交给LLM进行详细分析，LLM会识别对比目标和类型
       return {
-        confidence: 1.0,
+        confidence: 0.5, // 降低置信度，让LLM接管
         result: {
           originalInput: userInput,
-          type: 'single_merchant', // 临时返回为single_merchant避免报错
-          entities: {},
+          type: 'comparison',
+          entities: {
+            timeRange: this.parseTimeRange(input),
+          },
           intents: ['comparison_query'],
-          confidence: 1.0,
+          confidence: 0.5,
         },
       };
     }
