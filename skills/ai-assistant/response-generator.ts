@@ -192,6 +192,10 @@ ${result.cases?.matchedCases?.slice(0, 3).map((c: any, idx: number) => `
       .map(m => `- ${m.name} (${m.riskLevel}, 健康度${m.totalScore})`)
       .join('\n');
 
+    // ⭐新增: 分析数据特征，提供可视化建议
+    const visualizationHint = this.suggestVisualization(result, query);
+    const insightsHints = this.generateInsightsHints(result, query);
+
     const prompt = `
 # 任务
 为商户运营AI助手生成聚合统计报告。
@@ -215,30 +219,40 @@ ${JSON.stringify(query.filters || {}, null, 2)}
 1. **禁止编造商户名**：只能提及上述列表中的真实商户
 2. 如需举例，从列表中选择，格式："如[商户名](健康度XX)"
 3. 如列表为空，说明"当前无符合条件的商户"
-4. 不要输出完整列表，仅在需要举例时引用
+4. 不要输出完整列表，仅在需要举例时引用（最多3个示例）
 
 # 响应要求
-1. 突出关键数字（使用**加粗**）
-2. 强调变化趋势（增长/下降）
-3. 用表格或列表展示分类数据
-4. 提供可操作的洞察
-5. 简洁清晰，直奔主题
+1. **开篇直接给出核心结论**（1-2句话）
+2. 突出关键数字（使用**加粗**）
+3. 强调变化趋势（增长/下降/稳定）
+4. ${result.breakdown ? '用表格或列表展示分类数据' : ''}
+5. **提供3-5个可操作的洞察和建议**
+6. 简洁清晰，避免套话
+
+# 💡 洞察提示（参考）
+${insightsHints}
+
+# 📊 数据可视化建议
+${visualizationHint}
 
 # 格式示例
 \`\`\`markdown
-# [时间范围]商户风险统计
+# 📊 [标题]
 
-## 📊 整体情况
-- 总商户数：**${result.total || 0}**个
-${result.comparison ? `- vs ${result.comparison.baseline}：**${result.comparison.percentage}**` : ''}
+**核心结论**：[1句话总结关键发现]
 
-## 🔍 风险分布
-${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `- ${k}：${v}个`).join('\n') : ''}
+## 统计数据
+- 总计：**${result.total || 0}**${result.operation === 'count' ? '家商户' : ''}
+${result.comparison ? `- 对比${result.comparison.baseline > (result.total || 0) ? '下降' : '增长'}：**${result.comparison.percentage}**` : ''}
+
+${result.breakdown ? `## 分布情况\n${Object.entries(result.breakdown).map(([k, v]) => `- **${k}**：${v}个`).join('\n')}` : ''}
 
 ## 💡 关键洞察
-- [分析数据趋势]
-- [识别异常情况]
-- [提供行动建议]
+1. [洞察1 - 数据趋势]
+2. [洞察2 - 异常识别]
+3. [洞察3 - 行动建议]
+
+${visualizationHint ? '## 📈 可视化建议\n' + visualizationHint : ''}
 \`\`\`
 
 现在请生成响应（只返回Markdown内容）：
@@ -505,6 +519,91 @@ ${result.dataPoints.map(p => `${p.label || p.timestamp}: ${p.value}`).join('\n')
     console.error('[ResponseGenerator] Error:', error);
     return `抱歉，生成响应时遇到错误。请稍后重试。\n\n` +
            `如果问题持续，请联系技术支持。`;
+  }
+
+  /**
+   * 建议数据可视化方式 ⭐新增
+   */
+  private suggestVisualization(result: AggregationResult, query: StructuredQuery): string {
+    const { operation, breakdown, comparison } = result;
+
+    // 有分组数据 → 建议图表类型
+    if (breakdown) {
+      const groupCount = Object.keys(breakdown).length;
+
+      if (groupCount <= 5) {
+        return `建议使用**饼图**或**柱状图**展示分布情况`;
+      } else {
+        return `建议使用**柱状图**或**横向条形图**展示分类统计`;
+      }
+    }
+
+    // 有对比数据 → 建议对比图表
+    if (comparison) {
+      return `建议使用**折线图**或**对比柱状图**展示趋势变化`;
+    }
+
+    // 单一聚合值 → 建议数字卡片
+    if (operation === 'count' || operation === 'sum') {
+      return `建议使用**数字卡片**高亮显示关键指标`;
+    }
+
+    return '';
+  }
+
+  /**
+   * 生成洞察提示 ⭐新增
+   */
+  private generateInsightsHints(result: AggregationResult, query: StructuredQuery): string {
+    const hints: string[] = [];
+    const { total, breakdown, comparison, filters } = result;
+
+    // 提示1: 数据规模
+    if (total !== null) {
+      if (total === 0) {
+        hints.push('- 说明当前无符合条件的商户，分析可能的原因');
+      } else if (total > 10) {
+        hints.push('- 识别数量最多的类别，分析原因');
+      } else {
+        hints.push('- 数量较少，可以逐个商户分析');
+      }
+    }
+
+    // 提示2: 对比趋势
+    if (comparison) {
+      const { delta, percentage } = comparison;
+      if (Math.abs(delta) > 5) {
+        hints.push(`- 变化显著(${percentage})，需分析根本原因`);
+      }
+      if (delta < 0) {
+        hints.push('- 数量下降，说明改善措施可能生效');
+      } else if (delta > 0) {
+        hints.push('- 数量上升，需要重点关注和干预');
+      }
+    }
+
+    // 提示3: 分组分析
+    if (breakdown) {
+      const entries = Object.entries(breakdown);
+      const maxEntry = entries.reduce((max, curr) => curr[1] > max[1] ? curr : max);
+      hints.push(`- 重点关注${maxEntry[0]}类别（数量最多）`);
+
+      // 识别异常值
+      const minEntry = entries.reduce((min, curr) => curr[1] < min[1] ? curr : min);
+      if (maxEntry[1] > minEntry[1] * 3) {
+        hints.push(`- ${maxEntry[0]}和${minEntry[0]}差异较大，分析原因`);
+      }
+    }
+
+    // 提示4: 风险等级特定建议
+    if (filters.riskLevel) {
+      if (filters.riskLevel.includes('high') || filters.riskLevel.includes('critical')) {
+        hints.push('- 高风险商户需要立即制定帮扶计划');
+        hints.push('- 建议优先处理健康度最低的商户');
+      }
+    }
+
+    return hints.length > 0 ? hints.join('\n') : '- 根据数据特征提供具体洞察';
   }
 }
 
