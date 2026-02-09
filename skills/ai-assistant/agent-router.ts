@@ -275,6 +275,7 @@ export class AgentRouter {
             { id: merchant1?.id || '', name: merchant1?.name || entities.merchants[0] },
             { id: merchant2?.id || '', name: merchant2?.name || entities.merchants[1] },
           ],
+          comparisonTarget: 'merchant_vs_merchant',  // 🔥 修复：添加缺失的字段
         };
       }
 
