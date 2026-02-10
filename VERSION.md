@@ -6,10 +6,61 @@
 ## V3.0-dev (开发中) 🚧
 
 **开始日期**: 2026-02-07
+**最后更新**: 2026-02-10
 **状态**: 🚧 开发中 - AI问答助手系统性重构
 
 ### 版本主题
 **从"规则匹配的Chatbot"升级为"推理驱动的AI Agent"**
+
+### 最新更新 (2026-02-10)
+
+#### ✅ v3.1 商户详细运营数据扩展 - 已完成
+**功能**: 为商户添加详细运营数据采集和展示能力
+
+**新增数据维度**:
+- 通用数据: 日均客流、高峰客流、转化率
+- 餐饮专属: 翻台率、等位时间、客单价、错漏单率
+- 零售专属: 坪效、库存周转率、连带率
+- 顾客数据: NPS得分、复购率、客户生命周期
+- 员工数据: 员工流失率、平均工龄
+- 竞争环境: 竞品数量、市场份额、竞争地位
+- 位置数据: 楼层、动线类型、可见度评级
+
+**实现内容**:
+1. 数据模型扩展 (`types/index.ts` - OperationalDetails接口)
+2. 数据录入表单 (`components/merchants/OperationalDataForm.tsx`)
+3. 数据展示组件 (`components/merchants/OperationalDataDisplay.tsx`)
+4. AI诊断引擎升级 (优先使用详细数据进行分析)
+5. Demo数据填充 (M001海底捞、M002星巴克、M003优衣库)
+
+**P0修复**: localStorage缓存导致operationalDetails丢失
+- 问题: AI助手无法使用详细运营数据
+- 根因: merchantDataManager合并逻辑错误，localStorage覆盖了新字段
+- 解决: 深度合并策略，确保operationalDetails不被覆盖
+- 文件: `utils/merchantDataManager.ts`
+
+#### ✅ v3.1 AI助手图标升级 - 已完成
+**目标**: 让AI助手成为页面焦点，突出agent化特性
+
+**升级内容**:
+- 尺寸增大28%: 56x56px → 72x72px
+- 蓝紫渐变: 科技感 + 专业感
+- 图标升级: MessageCircle → Sparkles (✨更符合AI特性)
+- 永久标识: 右上角"AI"徽章始终显示
+- 多重动画:
+  - 光晕呼吸 (3秒循环，柔和发光)
+  - 轻微浮动 (上下4px，增加生命力)
+  - 圆环扩散 (持续提醒可点击)
+  - 徽章脉冲 (AI标识闪烁)
+- 交互优化:
+  - 悬停: 放大10% + 展开"AI助手"标签
+  - 点击: 缩小5%，触觉反馈
+  - 流畅: 300ms过渡动画
+
+**技术实现**:
+- 文件: `components/ai-assistant/FloatingAssistant.tsx`
+- 动画: `app/globals.css` (glow-pulse, float-gentle)
+- 显眼度提升: 200%+
 
 ### 重构背景
 **用户反馈**: "答非所问、僵化"

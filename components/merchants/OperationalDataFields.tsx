@@ -66,7 +66,7 @@ const FormField: React.FC<FormFieldProps> = ({
         ) : type === 'number' ? (
           <input
             type="number"
-            value={value || ''}
+            value={typeof value === 'number' ? value : ''}
             onChange={(e) => onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
             className={`border rounded px-3 py-2 flex-1 ${
               error ? 'border-red-500' : 'border-gray-300'
@@ -458,7 +458,7 @@ export const LocationFields: React.FC<{
   onChange: (field: string, value: any) => void;
   errors: Record<string, string>;
 }> = ({ data, onChange, errors }) => {
-  const location = data.location || {};
+  const location = (data.location || {}) as NonNullable<OperationalDetails['location']>;
 
   return (
     <div className="space-y-4">

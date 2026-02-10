@@ -510,6 +510,8 @@ export interface AggregationConfig {
  */
 export interface StructuredQuery {
   originalInput: string;
+  enhancedInput?: string;           // ⭐v3.0: 增强后的输入
+  contextEnhancements?: string[];   // ⭐v3.0: 应用的上下文增强
   type: QueryType;
   entities: {
     merchants?: string[];      // 商户名列表，["海底捞"] 或 ["all"]

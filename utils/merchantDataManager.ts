@@ -33,12 +33,19 @@ class MerchantDataManager {
       if (stored) {
         const merchants: Merchant[] = JSON.parse(stored);
 
-        // 合并 localStorage 和 mockMerchants
-        // 如果 localStorage 中有对应 ID 的商户，使用 localStorage 的数据（最新）
-        // 否则使用 mockMerchants 的数据（默认）
+        // ⭐ v3.1修复：深度合并 localStorage 和 mockMerchants
+        // 确保 mockMerchants 中新增的字段（如 operationalDetails）不会被 localStorage 覆盖
         return mockMerchants.map(mockMerchant => {
           const storedMerchant = merchants.find(m => m.id === mockMerchant.id);
-          return storedMerchant || mockMerchant;
+          if (storedMerchant) {
+            // 深度合并：localStorage数据 + mockMerchants的新字段
+            return {
+              ...mockMerchant,           // 1. 先用mockMerchants的所有字段（包括operationalDetails）
+              ...storedMerchant,         // 2. 再用localStorage覆盖（保留用户修改）
+              operationalDetails: mockMerchant.operationalDetails || storedMerchant.operationalDetails, // 3. 确保operationalDetails存在
+            };
+          }
+          return mockMerchant;
         });
       } else {
         // 首次访问，初始化为 mockMerchants

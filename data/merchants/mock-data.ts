@@ -27,8 +27,65 @@ export const mockMerchants: Merchant[] = [
       totalScore: { mom: -5, yoy: -12 },
       rentRatio: { mom: 2.3, yoy: 4.5 }
     },
+    // ⭐ 详细运营数据（反映高风险状态）
+    operationalDetails: {
+      // 通用数据 - 客流偏低
+      dailyFootfall: 800,        // 日均客流较低（450㎡店面）
+      peakHourFootfall: 300,     // 高峰期客流
+      conversionRate: 65,        // 转化率一般
+
+      // 餐饮专属 - 翻台率低是核心问题
+      restaurant: {
+        tableCount: 30,          // 30张桌子
+        seatingCapacity: 120,    // 120个座位
+        turnoverRate: 1.2,       // ⚠️ 翻台率1.2次/天（行业平均2-3次，严重偏低）
+        avgWaitTime: 45,         // 平均等位45分钟（过长）
+        avgMealDuration: 90,     // 平均用餐90分钟
+        errorOrderRate: 2.5,     // 错漏单率2.5%
+        avgCheckSize: 156,       // 客单价156元
+      },
+
+      // 顾客数据 - NPS为负，满意度低
+      customer: {
+        npsScore: -10,           // ⚠️ NPS净推荐值-10（负值，顾客满意度低）
+        repeatCustomerRate: 35,  // 复购率仅35%（偏低）
+        newCustomerRatio: 40,    // 新客占比40%
+        avgCustomerLifetime: 6,  // 客户生命周期仅6个月
+      },
+
+      // 员工数据 - 高流失率
+      staff: {
+        totalCount: 25,          // 总人数25人
+        fullTimeCount: 18,       // 全职18人
+        partTimeCount: 7,        // 兼职7人
+        turnoverRate: 40,        // ⚠️ 员工流失率40%/年（严重偏高）
+        avgTenure: 8,            // 平均工龄仅8个月
+      },
+
+      // 竞争环境 - 竞争激烈，定位落后
+      competition: {
+        nearbyCompetitors: 12,   // 3km内有12家竞品
+        marketShare: 8,          // 市场份额仅8%
+        competitivePosition: '落后',
+      },
+
+      // 位置数据 - 位置劣势
+      location: {
+        floor: 'L4',             // 4楼（楼层较高）
+        zoneType: '次动线',      // ⚠️ 次动线位置（非主流区域）
+        adjacentToAnchor: false, // 不毗邻主力店
+        visibilityRating: 3,     // 可见度3分（一般）
+      },
+
+      // 元数据
+      lastUpdated: '2026-02-10T10:30:00Z',
+      dataSource: 'inspection',
+      inspectorId: 'DEMO_USER',
+      inspectorName: '巡店专员',
+      notes: '⚠️ 核心问题：翻台率严重偏低（1.2次/天 vs 行业平均2-3次），等位时间长导致客户流失。员工流失率40%影响服务质量。顾客满意度低（NPS为负），需立即改善用餐体验和服务标准。位置劣势（次动线+4楼）导致自然客流不足。'
+    },
     createdAt: '2024-01-15',
-    updatedAt: '2026-01-20'
+    updatedAt: '2026-02-10'
   },
   {
     id: 'M002',
@@ -55,8 +112,57 @@ export const mockMerchants: Merchant[] = [
       totalScore: { mom: 3, yoy: 8 },
       rentRatio: { mom: -0.5, yoy: -1.2 }
     },
+    // ⭐ 详细运营数据（反映低风险、高健康度状态）
+    operationalDetails: {
+      // 通用数据 - 转化率高
+      dailyFootfall: 650,        // 日均客流650人次（180㎡店面）
+      peakHourFootfall: 180,     // 高峰期客流
+      conversionRate: 75,        // ✅ 转化率75%（优秀）
+
+      // 餐饮专属（饮品店简化版）- 翻台率快
+      restaurant: {
+        tableCount: 12,          // 12张桌子
+        seatingCapacity: 40,     // 40个座位
+        turnoverRate: 4.5,       // ✅ 翻台率4.5次/天（饮品店快周转）
+        avgWaitTime: 8,          // 平均等位8分钟（快速）
+        avgMealDuration: 35,     // 平均停留35分钟
+        errorOrderRate: 1.2,     // 错单率1.2%（低）
+        avgCheckSize: 42,        // 客单价42元
+      },
+
+      // 顾客数据 - NPS高，忠诚度高
+      customer: {
+        npsScore: 68,            // ✅ NPS净推荐值68分（优秀）
+        repeatCustomerRate: 72,  // ✅ 复购率72%（品牌忠诚度高）
+        newCustomerRatio: 18,    // 新客占比18%（老客为主）
+        avgCustomerLifetime: 36, // 客户生命周期36个月
+      },
+
+      // 员工数据 - 稳定且训练有素
+      staff: {
+        totalCount: 10,          // 总人数10人
+        fullTimeCount: 6,        // 全职6人
+        partTimeCount: 4,        // 兼职4人
+        turnoverRate: 12,        // ✅ 员工流失率12%/年（低）
+        avgTenure: 18,           // 平均工龄18个月（稳定）
+      },
+
+      // 竞争环境 - 品牌领先
+      competition: {
+        nearbyCompetitors: 15,   // 3km内有15家竞品
+        marketShare: 35,         // ✅ 市场份额35%（领先）
+        competitivePosition: '领先',
+      },
+
+      // 元数据
+      lastUpdated: '2026-02-10T10:30:00Z',
+      dataSource: 'manual',
+      inspectorId: 'DEMO_USER',
+      inspectorName: '巡店专员',
+      notes: '✅ 经营状况优秀：高转化率75%和复购率72%，品牌忠诚度高。翻台率4.5次/天，适合快速消费场景。员工培训体系完善，服务标准统一。1楼黄金位置，客流稳定。建议保持现有运营标准。'
+    },
     createdAt: '2023-06-10',
-    updatedAt: '2026-01-20'
+    updatedAt: '2026-02-10'
   },
   {
     id: 'M003',
@@ -83,8 +189,62 @@ export const mockMerchants: Merchant[] = [
       totalScore: { mom: 2, yoy: 5 },
       rentRatio: { mom: -0.3, yoy: -0.8 }
     },
+    // ⭐ 详细运营数据（反映低风险、良好运营状态）
+    operationalDetails: {
+      // 通用数据 - 客流量大
+      dailyFootfall: 1200,       // ✅ 日均客流1200人次（800㎡大店）
+      peakHourFootfall: 400,     // 高峰期客流
+      conversionRate: 42,        // 转化率42%（有提升空间）
+
+      // 零售专属 - 库存周转健康
+      retail: {
+        dailySales: 38000,       // 日均销售额3.8万元
+        avgTransactionValue: 285, // 客单价285元
+        inventoryTurnover: 3.2,  // ✅ 库存周转率3.2次/月（健康）
+        returnRate: 8.5,         // 退货率8.5%（控制良好）
+      },
+
+      // 顾客数据 - 满意度良好
+      customer: {
+        npsScore: 45,            // NPS净推荐值45分（良好）
+        repeatCustomerRate: 52,  // 复购率52%（稳定）
+        newCustomerRatio: 30,    // 新客占比30%
+        avgCustomerLifetime: 18, // 客户生命周期18个月
+      },
+
+      // 员工数据 - 管理规范
+      staff: {
+        totalCount: 16,          // 总人数16人
+        fullTimeCount: 12,       // 全职12人
+        partTimeCount: 4,        // 兼职4人
+        turnoverRate: 15,        // ✅ 员工流失率15%/年（低，管理规范）
+        avgTenure: 24,           // 平均工龄24个月（稳定）
+      },
+
+      // 竞争环境 - 品牌优势
+      competition: {
+        nearbyCompetitors: 8,    // 3km内有8家竞品
+        marketShare: 22,         // ✅ 市场份额22%（领先）
+        competitivePosition: '领先',
+      },
+
+      // 位置数据 - 位置优越
+      location: {
+        floor: 'L2',             // 2楼（理想楼层）
+        zoneType: '主动线',      // ✅ 主动线位置（核心区域）
+        adjacentToAnchor: true,  // ✅ 毗邻主力店（万达影城）
+        visibilityRating: 5,     // ✅ 可见度5分（最高）
+      },
+
+      // 元数据
+      lastUpdated: '2026-02-10T10:30:00Z',
+      dataSource: 'pos',
+      inspectorId: 'DEMO_USER',
+      inspectorName: '巡店专员',
+      notes: '✅ 经营状况良好：客流量大（1200人次/日），但转化率42%仍有提升空间（可能受试衣间数量限制）。库存周转率3.2次/月健康，退货率控制良好。员工稳定性高，管理规范。2楼主动线+毗邻主力店，位置优越。建议优化试衣间配置提升转化率。'
+    },
     createdAt: '2023-03-20',
-    updatedAt: '2026-01-20'
+    updatedAt: '2026-02-10'
   },
   {
     id: 'M004',

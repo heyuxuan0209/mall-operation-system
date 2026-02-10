@@ -169,35 +169,6 @@ export class ConversationManager {
   }
 
   /**
-   * 获取对话上下文（用于query-analyzer）
-   */
-  getContext(conversationId: string): ConversationContext | null {
-    const conversation = this.getConversation(conversationId);
-    if (!conversation) {
-      return null;
-    }
-
-    // 获取最近5条消息（用于上下文理解）
-    const recentMessages = conversation.messages.slice(-5);
-
-    // 提取最近一次提到的意图
-    const lastAssistantMessage = [...conversation.messages]
-      .reverse()
-      .find(m => m.role === 'assistant');
-
-    const lastIntent = lastAssistantMessage?.metadata?.intent;
-
-    return {
-      conversationId: conversation.id,
-      merchantId: conversation.merchantId,
-      merchantName: conversation.merchantName,
-      lastIntent,
-      recentMessages,
-      sessionStartTime: conversation.startedAt,
-    };
-  }
-
-  /**
    * 更新消息
    */
   updateMessage(

@@ -1,9 +1,8 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import { mockMerchants } from '@/data/merchants/mock-data';
 import MerchantHistoryArchive from '@/components/merchants/MerchantHistoryArchive';
+import OperationalDataSection from '@/components/merchants/OperationalDataSection';
 
 export default async function MerchantArchivePage({
   params,
@@ -140,6 +139,9 @@ export default async function MerchantArchivePage({
           </div>
         </div>
       </div>
+
+      {/* 详细运营数据卡片 */}
+      <OperationalDataSection merchant={merchant} />
 
       {/* 历史帮扶档案（全屏展示） */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

@@ -512,12 +512,12 @@ export async function generateEnhancedDiagnosisReport(
     // Step 5: 组合最终报告
     return {
       ...basicReport,
-      symptoms: validated.symptoms,
-      rootCauses: validated.rootCauses,
+      symptoms: validated.symptoms || basicReport.problems,
+      rootCauses: validated.rootCauses || [],
       problemChain: validated.problemChain,
-      severity: validated.severity,
+      severity: validated.severity || inferSeverityFromMetrics(merchant.metrics),
       feasibility: validated.feasibility,
-      diagnosis: validated.diagnosis,
+      diagnosis: validated.diagnosis || basicReport.problems.join('；'),
     };
   } catch (error) {
     console.error('[EnhancedDiagnosis] LLM analysis failed:', error);
@@ -530,6 +530,141 @@ export async function generateEnhancedDiagnosisReport(
       diagnosis: basicReport.problems.join('；'),
     };
   }
+}
+
+/**
+ * 格式化详细运营数据为人类可读文本
+ * @param details - 运营详细数据
+ * @param category - 商户业态
+ * @returns 格式化的文本描述
+ */
+function formatOperationalDetails(
+  details: any | undefined,
+  category: string
+): string {
+  if (!details || Object.keys(details).length === 0) {
+    return '暂无详细运营数据';
+  }
+
+  const lines: string[] = [];
+
+  // 通用数据
+  if (details.dailyFootfall !== undefined) {
+    lines.push(`- 日均客流：${details.dailyFootfall}人次`);
+  }
+  if (details.peakHourFootfall !== undefined) {
+    lines.push(`- 高峰期客流：${details.peakHourFootfall}人次`);
+  }
+  if (details.conversionRate !== undefined) {
+    lines.push(`- 进店转化率：${details.conversionRate}%`);
+  }
+
+  // 餐饮数据（仅餐饮业态）
+  if (details.restaurant && category.startsWith('餐饮')) {
+    lines.push('\n餐饮运营:');
+    if (details.restaurant.tableCount) {
+      lines.push(`- 餐桌数：${details.restaurant.tableCount}张`);
+    }
+    if (details.restaurant.seatingCapacity) {
+      lines.push(`- 座位数：${details.restaurant.seatingCapacity}个`);
+    }
+    if (details.restaurant.turnoverRate) {
+      lines.push(`- 翻台率：${details.restaurant.turnoverRate}次/天`);
+    }
+    if (details.restaurant.avgWaitTime) {
+      lines.push(`- 平均等位时长：${details.restaurant.avgWaitTime}分钟`);
+    }
+    if (details.restaurant.avgMealDuration) {
+      lines.push(`- 平均用餐时长：${details.restaurant.avgMealDuration}分钟`);
+    }
+    if (details.restaurant.errorOrderRate !== undefined) {
+      lines.push(`- 错漏单率：${details.restaurant.errorOrderRate}%`);
+    }
+    if (details.restaurant.avgCheckSize) {
+      lines.push(`- 客单价：¥${details.restaurant.avgCheckSize}`);
+    }
+  }
+
+  // 零售数据（仅零售业态）
+  if (details.retail && category.startsWith('零售')) {
+    lines.push('\n零售运营:');
+    if (details.retail.dailySales) {
+      lines.push(`- 日均销售额：¥${details.retail.dailySales}`);
+    }
+    if (details.retail.avgTransactionValue) {
+      lines.push(`- 客单价：¥${details.retail.avgTransactionValue}`);
+    }
+    if (details.retail.inventoryTurnover) {
+      lines.push(`- 库存周转率：${details.retail.inventoryTurnover}次/月`);
+    }
+    if (details.retail.returnRate !== undefined) {
+      lines.push(`- 退货率：${details.retail.returnRate}%`);
+    }
+  }
+
+  // 顾客数据
+  if (details.customer) {
+    lines.push('\n顾客数据:');
+    if (details.customer.npsScore !== undefined) {
+      lines.push(`- NPS净推荐值：${details.customer.npsScore}分`);
+    }
+    if (details.customer.repeatCustomerRate !== undefined) {
+      lines.push(`- 复购率：${details.customer.repeatCustomerRate}%`);
+    }
+    if (details.customer.newCustomerRatio !== undefined) {
+      lines.push(`- 新客占比：${details.customer.newCustomerRatio}%`);
+    }
+    if (details.customer.avgCustomerLifetime) {
+      lines.push(`- 客户生命周期：${details.customer.avgCustomerLifetime}月`);
+    }
+  }
+
+  // 员工数据
+  if (details.staff?.totalCount) {
+    lines.push('\n员工数据:');
+    lines.push(`- 总人数：${details.staff.totalCount}人`);
+    if (details.staff.fullTimeCount !== undefined) {
+      lines.push(`- 全职人数：${details.staff.fullTimeCount}人`);
+    }
+    if (details.staff.partTimeCount !== undefined) {
+      lines.push(`- 兼职人数：${details.staff.partTimeCount}人`);
+    }
+    if (details.staff.turnoverRate !== undefined) {
+      lines.push(`- 流失率：${details.staff.turnoverRate}%/年`);
+    }
+    if (details.staff.avgTenure) {
+      lines.push(`- 平均工龄：${details.staff.avgTenure}月`);
+    }
+  }
+
+  // 竞争环境
+  if (details.competition?.nearbyCompetitors !== undefined) {
+    lines.push('\n竞争环境:');
+    lines.push(`- 3km内竞品：${details.competition.nearbyCompetitors}家`);
+    if (details.competition.marketShare !== undefined) {
+      lines.push(`- 市场份额：${details.competition.marketShare}%`);
+    }
+    if (details.competition.competitivePosition) {
+      lines.push(`- 竞争定位：${details.competition.competitivePosition}`);
+    }
+  }
+
+  // 位置数据
+  if (details.location?.zoneType) {
+    lines.push('\n位置信息:');
+    if (details.location.floor) {
+      lines.push(`- 楼层：${details.location.floor}`);
+    }
+    lines.push(`- 区域类型：${details.location.zoneType}`);
+    if (details.location.adjacentToAnchor !== undefined) {
+      lines.push(`- 毗邻主力店：${details.location.adjacentToAnchor ? '是' : '否'}`);
+    }
+    if (details.location.visibilityRating) {
+      lines.push(`- 可见度评级：${details.location.visibilityRating}分/5分`);
+    }
+  }
+
+  return lines.join('\n');
 }
 
 /**
@@ -554,6 +689,13 @@ async function analyzeCausalRelations(
 - 现场品质：${merchant.metrics.siteQuality}
 - 顾客满意度：${merchant.metrics.customerReview}
 - 抗风险能力：${merchant.metrics.riskResistance}
+
+# ⭐详细运营数据（实际采集）
+${formatOperationalDetails((merchant as any).operationalDetails, merchant.category)}
+
+${(merchant as any).operationalDetails && Object.keys((merchant as any).operationalDetails).length > 0
+  ? '⚠️ 以上数据为**真实采集数据**，请在分析中优先使用，避免基于假设推测。'
+  : '⚠️ 注意：无详细运营数据，请基于健康度指标进行推测性分析，并在诊断中标注为"推测"。'}
 
 # 初步诊断（规则检测）
 ${basicReport.problems.join('\n')}
@@ -636,6 +778,10 @@ ${basicReport.problems.join('\n')}
       content: prompt,
     },
   ];
+
+  if (!llmClient) {
+    throw new Error('LLM client is not available');
+  }
 
   const response = await llmClient.chat(messages, { useCache: false });
 
