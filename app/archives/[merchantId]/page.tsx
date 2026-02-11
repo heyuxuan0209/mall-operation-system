@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { mockMerchants } from '@/data/merchants/mock-data';
 import MerchantHistoryArchive from '@/components/merchants/MerchantHistoryArchive';
 import OperationalDataSection from '@/components/merchants/OperationalDataSection';
+import KeyMetricsAlert from '@/components/merchants/KeyMetricsAlert';
 
 export default async function MerchantArchivePage({
   params,
@@ -138,6 +139,15 @@ export default async function MerchantArchivePage({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 关键指标预警 */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <i className="fas fa-exclamation-triangle text-yellow-600"></i>
+          关键指标预警
+        </h3>
+        <KeyMetricsAlert merchant={merchant} />
       </div>
 
       {/* 详细运营数据卡片 */}
