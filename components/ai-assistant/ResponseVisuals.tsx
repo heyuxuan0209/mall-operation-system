@@ -6,6 +6,7 @@
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import CausalFlowChart from './CausalFlowChart';
 
 // 统计卡片
 export function StatCard({ label, value, trend, color = 'blue' }: {
@@ -141,3 +142,6 @@ export function GroupedList({ groups }: {
     </div>
   );
 }
+
+// 因果流图（导出供外部使用）
+export { default as CausalFlowChart } from './CausalFlowChart';

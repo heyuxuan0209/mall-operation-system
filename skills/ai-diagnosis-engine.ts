@@ -675,73 +675,102 @@ async function analyzeCausalRelations(
   basicReport: DiagnosisResult
 ): Promise<Partial<EnhancedDiagnosisReport>> {
   const prompt = `
-# 任务
-作为商户运营专家，请对商户进行深度因果分析诊断。
+你是资深商业运营诊断专家。请对【${merchant.name}】进行深度诊断。
 
-# 商户信息
+# 商户数据
 - 名称：${merchant.name}
 - 业态：${merchant.category}
-- 租售比：${merchant.rentToSalesRatio || 'N/A'}
+- 租售比：${merchant.rentToSalesRatio ? (merchant.rentToSalesRatio * 100).toFixed(1) + '%' : 'N/A'}
+- 健康度指标（0-100分）：
+  - 租金缴纳：${merchant.metrics.collection}分
+  - 经营表现：${merchant.metrics.operational}分
+  - 现场品质：${merchant.metrics.siteQuality}分
+  - 顾客满意度：${merchant.metrics.customerReview}分
+  - 抗风险能力：${merchant.metrics.riskResistance}分
 
-# 健康度指标（0-100分）
-- 租金缴纳：${merchant.metrics.collection}
-- 经营表现：${merchant.metrics.operational}
-- 现场品质：${merchant.metrics.siteQuality}
-- 顾客满意度：${merchant.metrics.customerReview}
-- 抗风险能力：${merchant.metrics.riskResistance}
-
-# ⭐详细运营数据（实际采集）
+# 详细运营数据
 ${formatOperationalDetails((merchant as any).operationalDetails, merchant.category)}
 
-${(merchant as any).operationalDetails && Object.keys((merchant as any).operationalDetails).length > 0
-  ? '⚠️ 以上数据为**真实采集数据**，请在分析中优先使用，避免基于假设推测。'
-  : '⚠️ 注意：无详细运营数据，请基于健康度指标进行推测性分析，并在诊断中标注为"推测"。'}
-
-# 初步诊断（规则检测）
+# 初步诊断
 ${basicReport.problems.join('\n')}
 
-# 诊断要求
+# 输出要求（严格按此格式，用于录屏展示）
 
-## 1. 区分症状和根因
-- **症状**：表面现象（如"营收低"、"客流少"）
-- **根因**：深层原因（如"位置劣势"、"产品竞争力不足"）
+## 1. 核心问题（按影响程度排序，最多3个）
 
-## 2. 根因分类
-- **内因**：商户自身可控（管理、产品、服务）
-- **外因**：外部环境（位置、竞争、市场）
-- **结构性**：长期存在，难以快速改变
-- **暂时性**：短期波动，可以调整
+### 问题1：[问题标题]
+- **影响程度**：[具体量化影响，如"导致营收损失约30%"]
+- **根本原因**：
+  - [原因1] - 权重[X]%
+  - [原因2] - 权重[Y]%
+- **数据支撑**：
+  - [关键指标对比，如"翻台率1.2次/天 vs 行业标准2-3次（低40-60%）"]
+  - [其他数据证据]
 
-## 3. 问题关联链
-分析问题之间的因果关系，例如：
-"位置劣势（根因） → 自然客流少 → 营收不足 → 租金压力"
+### 问题2：[问题标题]
+[同上格式]
 
-## 4. 严重程度评估
-- **紧急度**：问题多紧急？（low/medium/high/critical）
-- **重要度**：影响多大？（low/medium/high/critical）
-- 综合评级和理由
+## 2. 因果关系链（用于可视化）
 
-## 5. 可行性评估
-- 改善的可行性评分（0-100）
-- 约束条件（商户资源、外部限制）
-- 所需资源和时间
+\`\`\`
+[根因A] → [中间影响B] → [最终症状C] → [恶性循环D]
+     ↓
+[根因E] → [中间影响F] → [加剧症状C]
+\`\`\`
 
-# 输出格式（严格JSON）
+## 3. 落地建议（按可行性和ROI排序，最多3个）
+
+### ✅ 建议1：[建议标题]（[执行时间框架]）
+
+**具体措施**：
+1. [具体行动1]
+2. [具体行动2]
+3. [具体行动3]
+
+**预期效果**：
+- [指标1]：[当前值] → [目标值]（[变化幅度]）
+- [指标2]：[当前值] → [目标值]（[变化幅度]）
+- [时间周期]后[整体效果]
+
+**可行性**：★★★★★（[可行性说明]）
+
+**参考案例**：[案例名称]
+- 问题：[案例问题]
+- 方案：[案例方案]
+- 结果：[案例结果]
+
+---
+
+### ✅ 建议2：[建议标题]（[执行时间框架]）
+[同上格式]
+
+---
+
+### ⚠️ 建议3：[建议标题]（[执行时间框架]）
+[同上格式]
+
+## 4. 行动优先级
+
+1. 【高优先级】[建议1简述]
+2. 【高优先级】[建议2简述]
+3. 【中优先级】[建议3简述]
+
+# 输出格式（JSON + Markdown混合）
 \`\`\`json
 {
   "symptoms": ["症状1", "症状2"],
   "rootCauses": [
     {
       "cause": "根因描述",
-      "type": "internal | external | structural | temporary",
+      "type": "internal",
       "confidence": 90,
       "evidence": ["证据1", "证据2"],
-      "impact": "primary | secondary | minor"
+      "impact": "primary"
     }
   ],
   "problemChain": {
-    "steps": ["步骤1", "步骤2", "步骤3"],
-    "explanation": "关联解释"
+    "steps": ["根因A", "中间影响B", "最终症状C", "恶性循环D"],
+    "explanation": "因果关系链的文字描述"
   },
   "severity": {
     "urgency": "high",
@@ -750,20 +779,21 @@ ${basicReport.problems.join('\n')}
     "reasoning": "评估理由"
   },
   "feasibility": {
-    "score": 65,
+    "score": 85,
     "constraints": ["约束1", "约束2"],
     "resources": ["资源1", "资源2"],
-    "timeline": "3-6个月"
+    "timeline": "立即执行"
   },
-  "diagnosis": "综合诊断描述（2-3句话）"
+  "diagnosis": "## 1. 核心问题\n\n### 问题1：翻台率严重偏低\n- **影响程度**：导致营收损失约30%\n...[完整Markdown格式诊断内容]"
 }
 \`\`\`
 
-# 关键约束
-1. 只返回JSON，不要有任何额外文字
-2. 根因要具体、可验证，避免泛泛而谈
-3. 问题关联链要符合逻辑，有因果关系
-4. 可行性评估要考虑商户实际情况
+# 关键要求
+1. diagnosis字段必须包含完整的Markdown格式诊断（包含核心问题、因果关系链、落地建议、行动优先级）
+2. 每个建议必须有具体措施、预期效果、可行性评估和参考案例
+3. 因果关系链要清晰，用于生成可视化图表
+4. 数据支撑要具体，避免模糊表述
+5. 只返回JSON，不要有任何额外文字
 
 现在请分析：
 `.trim();

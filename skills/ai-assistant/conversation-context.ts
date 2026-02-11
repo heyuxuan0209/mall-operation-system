@@ -283,6 +283,19 @@ export class EnhancedContextManager extends ConversationContextManager {
     conversationId: string,
     userInput: string
   ): { completed: string; wasOmitted: boolean } {
+    // 🔥 修复：先检查输入中是否已经包含商户名称
+    // 如果已经明确提到商户，则不应该进行省略补全
+    const allMerchants = require('@/utils/merchantDataManager').merchantDataManager.getAllMerchants();
+    const hasMerchantName = allMerchants.some((m: any) => {
+      const merchantCore = m.name.replace(/(火锅|咖啡|餐厅|店|馆)$/, '');
+      return userInput.includes(merchantCore) || userInput.includes(m.name);
+    });
+
+    if (hasMerchantName) {
+      // 输入中已经包含商户名称，不需要补全
+      return { completed: userInput, wasOmitted: false };
+    }
+
     // 省略主语的常见模式
     const omissionPatterns = [
       /^(最近|近期|现在)?(怎么样|如何|怎样)/,           // "最近怎么样"

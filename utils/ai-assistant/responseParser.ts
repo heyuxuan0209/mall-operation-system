@@ -17,6 +17,10 @@ export interface ParsedResponse {
       title?: string;
       items: Array<{ label: string; value: string; badge?: { text: string; color: string } }>;
     };
+    causalFlow?: {
+      nodes: Array<{ name: string }>;
+      links: Array<{ source: number; target: number; value: number }>;
+    };
   };
 }
 
@@ -29,8 +33,9 @@ export class ResponseParser {
     const hasStats = this.detectStats(content);
     const hasChart = this.detectChart(content);
     const hasList = this.detectList(content);
+    const causalFlow = this.parseCausalChain(content);
 
-    if (hasStats || hasChart || hasList) {
+    if (hasStats || hasChart || hasList || causalFlow) {
       return {
         type: 'mixed',
         content: {
@@ -38,6 +43,7 @@ export class ResponseParser {
           stats: hasStats ? this.extractStats(content) : undefined,
           chart: hasChart ? this.extractChart(content) : undefined,
           list: hasList ? this.extractList(content) : undefined,
+          causalFlow: causalFlow || undefined,
         },
       };
     }
@@ -228,5 +234,37 @@ export class ResponseParser {
     if (score >= 80) return 'blue';
     if (score >= 70) return 'yellow';
     return 'red';
+  }
+
+  /**
+   * 解析因果关系链
+   */
+  private static parseCausalChain(text: string): { nodes: Array<{ name: string }>; links: Array<{ source: number; target: number; value: number }> } | null {
+    // 识别格式：A → B → C 或 A->B->C
+    const chainMatch = text.match(/```\n([\s\S]*?(?:→|->)[\s\S]*?)\n```/);
+    if (!chainMatch) return null;
+
+    const chain = chainMatch[1];
+
+    // 分割箭头，支持 → 和 ->
+    const steps = chain.split(/(?:→|->)/).map(s => s.trim()).filter(s => s.length > 0);
+
+    if (steps.length < 2) return null;
+
+    // 生成 Sankey 数据
+    const nodes = steps.map(step => {
+      // 提取括号前的内容作为节点名称
+      const match = step.match(/^(.*?)(?:\(|$)/);
+      return { name: match ? match[1].trim() : step };
+    });
+
+    // 生成连接，影响强度递减
+    const links = steps.slice(0, -1).map((_, i) => ({
+      source: i,
+      target: i + 1,
+      value: 100 - i * 10  // 影响强度递减
+    }));
+
+    return { nodes, links };
   }
 }
