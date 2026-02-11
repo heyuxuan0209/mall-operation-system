@@ -4,6 +4,7 @@ import { mockMerchants } from '@/data/merchants/mock-data';
 import MerchantHistoryArchive from '@/components/merchants/MerchantHistoryArchive';
 import OperationalDataSection from '@/components/merchants/OperationalDataSection';
 import KeyMetricsAlert from '@/components/merchants/KeyMetricsAlert';
+import OperationalTrendChart from '@/components/merchants/OperationalTrendChart';
 
 export default async function MerchantArchivePage({
   params,
@@ -152,6 +153,13 @@ export default async function MerchantArchivePage({
 
       {/* 详细运营数据卡片 */}
       <OperationalDataSection merchant={merchant} />
+
+      {/* 运营趋势图 */}
+      {merchant.operationalDetails && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <OperationalTrendChart merchant={merchant} />
+        </div>
+      )}
 
       {/* 历史帮扶档案（全屏展示） */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
