@@ -5,6 +5,7 @@ import MerchantHistoryArchive from '@/components/merchants/MerchantHistoryArchiv
 import OperationalDataSection from '@/components/merchants/OperationalDataSection';
 import KeyMetricsAlert from '@/components/merchants/KeyMetricsAlert';
 import OperationalTrendChart from '@/components/merchants/OperationalTrendChart';
+import IndustryComparisonChart from '@/components/merchants/IndustryComparisonChart';
 
 export default async function MerchantArchivePage({
   params,
@@ -160,6 +161,11 @@ export default async function MerchantArchivePage({
           <OperationalTrendChart merchant={merchant} />
         </div>
       )}
+
+      {/* 同业对比图表 */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <IndustryComparisonChart merchant={merchant} />
+      </div>
 
       {/* 历史帮扶档案（全屏展示） */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
