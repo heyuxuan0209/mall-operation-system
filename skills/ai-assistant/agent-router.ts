@@ -154,6 +154,9 @@ export class AgentRouter {
         aggregations: structuredQuery.aggregations,
       };
 
+      // 🔥 修复：将意图信息传递给执行计划
+      (executionPlan as any).queryIntents = structuredQuery.intents;
+
       // ============ Phase 5: Execute ============
       let executionResult: any;
       let merchant: Merchant | undefined;
