@@ -79,17 +79,8 @@ export class ResponseGenerator {
     result: any,
     merchant: Merchant
   ): Promise<string> {
-    console.log('[ResponseGenerator] Received query object:', JSON.stringify(query, null, 2));
-    console.log('[ResponseGenerator] Query intents:', query.intents);
-    console.log('[ResponseGenerator] Generating response for:', {
-      intents: query.intents,
-      hasArchiveIntent: query.intents.includes('archive_query'),
-      isArchiveQuery: result.isArchiveQuery,
-    });
-
     // 🔥 新增：如果是档案查询，直接返回简单提示
     if (query.intents.includes('archive_query')) {
-      console.log('[ResponseGenerator] Using archive query response');
       return this.generateArchiveQueryResponse(merchant, result);
     }
 

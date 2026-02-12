@@ -118,33 +118,10 @@ export class AgentRouter {
       // 更新结构化查询的意图列表
       structuredQuery.intents = intentClassifier.extractMultipleIntents(intents);
       console.log('[AgentRouter] Extracted intents:', structuredQuery.intents);
-      console.log('[AgentRouter] Intents array reference:', structuredQuery.intents);
-      console.log('[AgentRouter] structuredQuery object:', JSON.stringify(structuredQuery, null, 2));
-
-      // ⭐Phase 2: 检查是否需要用户澄清
-      const primaryIntent = intents[0];
-      if (primaryIntent?.needsClarification) {
-        console.log('[AgentRouter] Needs clarification:', primaryIntent);
-
-        return {
-          success: true,
-          content: primaryIntent.clarificationMessage || '我理解您可能想要：',
-          metadata: {
-            intent: primaryIntent.intent,
-            dataSource: 'hybrid',
-            executionTime: Date.now() - startTime,
-            confidence: primaryIntent.confidence,
-            needsClarification: true
-          },
-          needsClarification: true,
-          clarificationOptions: this.buildClarificationOptions(primaryIntent.alternatives || []),
-        };
-      }
 
       // ============ Phase 3: Entity Resolution ============
       const entities = await this.resolveEntities(structuredQuery, context);
       console.log('[AgentRouter] Resolved entities:', entities);
-      console.log('[AgentRouter] Intents after entity resolution:', structuredQuery.intents);
 
       // ⭐Phase 2: 处理需要用户确认的情况
       if (entities.needsClarification) {
@@ -180,7 +157,6 @@ export class AgentRouter {
 
       // 🔥 修复：将意图信息传递给执行计划
       (executionPlan as any).queryIntents = structuredQuery.intents;
-      console.log('[AgentRouter] Intents before execution:', structuredQuery.intents);
 
       // ============ Phase 5: Execute ============
       let executionResult: any;
@@ -213,13 +189,11 @@ export class AgentRouter {
 
       // ============ Phase 6: Generate Response ============
       // ⭐Phase 2: 添加置信度警告到响应中
-      console.log('[AgentRouter] Intents before response generation:', structuredQuery.intents);
       let content = await responseGenerator.generate(
         structuredQuery,
         executionResult,
         merchant
       );
-      console.log('[AgentRouter] Intents after response generation:', structuredQuery.intents);
 
       // 如果有置信度警告，添加到响应开头
       if (entities.confidenceWarning) {
@@ -700,98 +674,6 @@ export class AgentRouter {
 
     // 默认：无建议操作
     return undefined;
-  }
-
-  /**
-   * ⭐Phase 2: 构建反馈提示
-   */
-  private buildFeedbackPrompt(intent: UserIntent): any {
-    return {
-      question: '这个回答有帮助吗？',
-      options: [
-        {
-          label: '👍 有帮助',
-          value: 'helpful',
-          icon: '👍'
-        },
-        {
-          label: '👎 不是我想要的',
-          value: 'not_helpful',
-          icon: '👎'
-        },
-        {
-          label: '🔄 理解错了我的意图',
-          value: 'wrong_intent',
-          icon: '🔄'
-        }
-      ]
-    };
-  }
-
-  /**
-   * ⭐Phase 2: 构建澄清选项
-   */
-  private buildClarificationOptions(alternatives: UserIntent[]): any[] {
-    const intentLabels: Record<UserIntent, { label: string; description: string }> = {
-      health_query: {
-        label: '查看商户健康状况',
-        description: '查询商户的健康度评分和整体运营状况'
-      },
-      risk_diagnosis: {
-        label: '诊断商户风险',
-        description: '分析商户存在的风险和潜在问题'
-      },
-      solution_recommend: {
-        label: '获取帮扶方案建议',
-        description: '推荐针对性的帮扶措施和解决方案'
-      },
-      data_query: {
-        label: '查询具体数据',
-        description: '查看营收、客流、租金等具体指标'
-      },
-      archive_query: {
-        label: '查看历史帮扶档案',
-        description: '查询过往的帮扶记录和档案信息'
-      },
-      aggregation_query: {
-        label: '查看统计数据',
-        description: '查看商户数量、分布等聚合统计'
-      },
-      risk_statistics: {
-        label: '查看风险统计',
-        description: '查看高风险商户数量和风险分布'
-      },
-      health_overview: {
-        label: '查看整体健康度',
-        description: '查看所有商户的健康度概览'
-      },
-      comparison_query: {
-        label: '对比分析',
-        description: '对比不同商户或不同时期的数据'
-      },
-      trend_analysis: {
-        label: '趋势分析',
-        description: '查看数据变化趋势和走势'
-      },
-      composite_query: {
-        label: '复合查询',
-        description: '包含多个查询意图的复杂查询'
-      },
-      general_chat: {
-        label: '通用对话',
-        description: '闲聊或其他一般性对话'
-      },
-      unknown: {
-        label: '其他',
-        description: '以上都不是我想要的'
-      }
-    };
-
-    return alternatives.map(intent => ({
-      label: intentLabels[intent]?.label || intent,
-      description: intentLabels[intent]?.description || '',
-      value: intent
-    }));
   }
 
   /**

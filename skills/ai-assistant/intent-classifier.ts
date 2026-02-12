@@ -15,8 +15,6 @@ import {
   LLMMessage,
 } from '@/types/ai-assistant';
 import { llmClient } from '@/utils/ai-assistant/llmClient';
-import { queryCache } from './query-cache';
-import { performanceMonitor } from './performance-monitor';
 
 interface KeywordWeight {
   keyword: string;
@@ -190,145 +188,27 @@ export class IntentClassifier {
   ];
 
   /**
-   * ⭐Phase 2: 检查是否需要用户澄清
-   * 当置信度低于阈值时，标记需要澄清并提供备选意图
-   */
-  private checkNeedsClarification(
-    result: IntentResult,
-    allResults: IntentResult[]
-  ): IntentResult {
-    const CLARIFICATION_THRESHOLD = 0.6;
-
-    // 如果置信度足够高，不需要澄清
-    if (result.confidence >= CLARIFICATION_THRESHOLD) {
-      return result;
-    }
-
-    // 获取置信度较高的备选意图（置信度 > 0.4）
-    const alternatives = allResults
-      .filter(r => r.confidence > 0.4 && r.intent !== result.intent)
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 3)
-      .map(r => r.intent);
-
-    // 如果有备选意图，标记需要澄清
-    if (alternatives.length > 0) {
-      return {
-        ...result,
-        needsClarification: true,
-        alternatives: [result.intent, ...alternatives],
-        clarificationMessage: '我理解您可能想要：'
-      };
-    }
-
-    return result;
-  }
-
-  /**
    * ⭐v3.0核心方法: LLM驱动的意图识别
    * 支持多意图识别、语义理解、动态置信度
-   *
-   * ⭐Phase 1优化：
-   * - Layer 0: 缓存查询
-   * - Layer 1: 强制规则匹配
-   * - Layer 2: 关键词分类 + 置信度阈值
-   * - Layer 3: LLM分析（只在必要时）
-   *
-   * ⭐Phase 2优化：
-   * - Layer 4: 用户澄清（置信度 < 0.6）
    */
   async classifyWithLLM(
     structuredQuery: StructuredQuery,
     context: ConversationContext
   ): Promise<IntentResult[]> {
-    const startTime = Date.now();
-    let method: 'cache' | 'forced_rule' | 'keyword' | 'llm' | 'fallback' = 'fallback';
-    let tokenUsage = 0;
-
     try {
-      // ⭐Phase 1: Layer 0 - 缓存查询
-      const cached = queryCache.get(structuredQuery.originalInput);
-      if (cached) {
-        method = 'cache';
-        console.log('[IntentClassifier] Using cached result');
-
-        // 记录性能指标
-        performanceMonitor.record({
-          method,
-          responseTime: Date.now() - startTime,
-          confidence: cached.confidence,
-          intent: cached.intent,
-          timestamp: Date.now()
-        });
-
-        return [cached];
-      }
-
-      // ⭐Phase 1: Layer 1 - 强制规则匹配（最高优先级）
+      // 🔥 Phase 1: 强制规则匹配（最高优先级）
       const forcedIntent = this.matchForcedRules(structuredQuery.originalInput);
       if (forcedIntent) {
-        method = 'forced_rule';
         console.log('[IntentClassifier] Forced rule matched:', forcedIntent);
-        queryCache.set(structuredQuery.originalInput, forcedIntent);
-
-        // 记录性能指标
-        performanceMonitor.record({
-          method,
-          responseTime: Date.now() - startTime,
-          confidence: forcedIntent.confidence,
-          intent: forcedIntent.intent,
-          timestamp: Date.now()
-        });
-
         return [forcedIntent];
       }
 
-      // ⭐Phase 1: Layer 2 - 关键词分类 + 置信度阈值
-      const keywordResult = this.classifyWithContext(structuredQuery.originalInput, context);
-      console.log('[IntentClassifier] Keyword classification result:', {
-        intent: keywordResult.intent,
-        confidence: keywordResult.confidence
-      });
-
-      // 如果置信度足够高，直接使用关键词结果，跳过LLM
-      if (keywordResult.confidence >= 0.7) {
-        method = 'keyword';
-        console.log('[IntentClassifier] Confidence sufficient, skipping LLM');
-        queryCache.set(structuredQuery.originalInput, keywordResult);
-
-        // 记录性能指标
-        performanceMonitor.record({
-          method,
-          responseTime: Date.now() - startTime,
-          confidence: keywordResult.confidence,
-          intent: keywordResult.intent,
-          timestamp: Date.now()
-        });
-
-        return [keywordResult];
-      }
-
-      // ⭐Phase 1: Layer 3 - LLM分析（只在必要时）
       if (!llmClient) {
         // 降级到关键词匹配
-        method = 'fallback';
-        console.warn('[IntentClassifier] LLM not available, using keyword result');
-        queryCache.set(structuredQuery.originalInput, keywordResult);
-
-        // 记录性能指标
-        performanceMonitor.record({
-          method,
-          responseTime: Date.now() - startTime,
-          confidence: keywordResult.confidence,
-          intent: keywordResult.intent,
-          timestamp: Date.now()
-        });
-
-        return [keywordResult];
+        console.warn('[IntentClassifier] LLM not available, falling back to keyword matching');
+        return [this.classifyWithContext(structuredQuery.originalInput, context)];
       }
 
-      method = 'llm';
-      console.log('[IntentClassifier] Confidence < 0.7, using LLM for complex query');
       const prompt = this.buildLLMPrompt(structuredQuery, context);
       const messages: LLMMessage[] = [
         {
@@ -342,53 +222,13 @@ export class IntentClassifier {
       ];
 
       const response = await llmClient.chat(messages, { useCache: true });
-
-      // 估算token使用量（粗略估计：中文1字符≈1.5token）
-      tokenUsage = Math.ceil((prompt.length + response.content.length) * 1.5);
-
-      console.log('[IntentClassifier] LLM raw response:', response.content);
       const intents = this.parseLLMIntents(response.content);
-      console.log('[IntentClassifier] Parsed intents from LLM:', intents);
-
-      // 缓存LLM结果
-      if (intents.length > 0 && intents[0].confidence >= 0.6) {
-        queryCache.set(structuredQuery.originalInput, intents[0]);
-      }
-
-      // ⭐Phase 2: 检查是否需要用户澄清
-      if (intents.length > 0) {
-        const primaryIntent = this.checkNeedsClarification(intents[0], intents);
-
-        // 记录性能指标
-        performanceMonitor.record({
-          method,
-          responseTime: Date.now() - startTime,
-          tokenUsage,
-          confidence: primaryIntent.confidence,
-          intent: primaryIntent.intent,
-          timestamp: Date.now()
-        });
-
-        return [primaryIntent, ...intents.slice(1)];
-      }
 
       return intents;
     } catch (error) {
       console.error('[IntentClassifier] LLM classification failed:', error);
       // 降级到关键词匹配
-      method = 'fallback';
-      const fallbackResult = this.classifyWithContext(structuredQuery.originalInput, context);
-
-      // 记录性能指标
-      performanceMonitor.record({
-        method,
-        responseTime: Date.now() - startTime,
-        confidence: fallbackResult.confidence,
-        intent: fallbackResult.intent,
-        timestamp: Date.now()
-      });
-
-      return [fallbackResult];
+      return [this.classifyWithContext(structuredQuery.originalInput, context)];
     }
   }
 
@@ -399,20 +239,10 @@ export class IntentClassifier {
   private matchForcedRules(userInput: string): IntentResult | null {
     const input = userInput.toLowerCase();
 
-    console.log('[IntentClassifier] Checking forced rules for:', input);
-
     // 规则1: 档案查询（最高优先级）
     // 🔥 修复：使用更精确的匹配，避免误判
-    const hasArchiveKeywords = /(档案|历史帮扶档案|帮扶记录|帮扶档案|过往帮扶|帮扶历史|查看.*档案|历史.*记录)/.test(input);
-    const hasExcludeKeywords = /(创建|新建|措施|方案|建议|怎么办)/.test(input);
-
-    console.log('[IntentClassifier] Archive check:', {
-      hasArchiveKeywords,
-      hasExcludeKeywords,
-      willMatch: hasArchiveKeywords && !hasExcludeKeywords
-    });
-
-    if (hasArchiveKeywords && !hasExcludeKeywords) {
+    if (/(档案|历史帮扶档案|帮扶记录|帮扶档案|过往帮扶|帮扶历史|查看.*档案|历史.*记录)/.test(input) &&
+        !/(创建|新建|措施|方案|建议|怎么办)/.test(input)) {
       return {
         intent: 'archive_query',
         confidence: 1.0,
@@ -438,7 +268,6 @@ export class IntentClassifier {
       };
     }
 
-    console.log('[IntentClassifier] No forced rule matched, will use LLM');
     return null;
   }
 
@@ -453,9 +282,9 @@ export class IntentClassifier {
 单商户查询意图:
 - health_query: 查询商户健康度、评分、整体状况
 - risk_diagnosis: 诊断商户风险、发现问题、分析异常
-- solution_recommend: 推荐帮扶方案、措施、解决策略、帮扶措施推进
+- solution_recommend: 推荐帮扶方案、措施、解决策略
 - data_query: 查询具体数据指标（营收、租金、客流）
-- archive_query: **仅限**明确提到"档案"、"历史帮扶档案"、"帮扶记录"、"查看档案"等关键词时使用
+- archive_query: 查询历史帮扶档案、帮扶记录、过往帮扶情况 🔥新增
 
 聚合统计意图 ⭐v3.0新增:
 - aggregation_query: 聚合查询（"多少个"、"统计"、"总共"）
@@ -511,10 +340,7 @@ ${availableIntents}
 3. 一句话可能包含多个意图，例如："这个月多少高风险商户，和上月比怎么样" → [aggregation_query, comparison_query]
 4. 置信度评估：明确指令0.9+，常规查询0.7-0.8，模糊查询0.5-0.6
 5. 如果上一轮意图是health_query且当前问"问题在哪"，应识别为risk_diagnosis
-6. 🔥 **archive_query 严格限制**：
-   - **必须**明确包含"档案"、"历史帮扶档案"、"帮扶记录"、"查看档案"等关键词
-   - "帮扶措施"、"帮扶方案"、"帮扶推进"等属于 solution_recommend，**不是** archive_query
-   - 只有用户明确说要"查看档案"或"历史记录"时才使用 archive_query
+6. 🔥 **重要**：如果用户明确提到"档案"、"历史帮扶"、"帮扶记录"、"帮扶档案"等关键词，必须识别为 archive_query，而不是 data_query 或其他意图
 
 现在请识别用户意图，返回JSON数组（只返回JSON，不要其他解释）。
 `.trim();

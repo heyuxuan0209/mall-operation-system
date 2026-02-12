@@ -171,10 +171,6 @@ export interface IntentResult {
   intent: UserIntent;
   confidence: number;
   keywords: string[];
-  // ⭐Phase 2 新增：用户澄清支持
-  needsClarification?: boolean;      // 是否需要用户澄清
-  alternatives?: UserIntent[];       // 备选意图列表
-  clarificationMessage?: string;     // 澄清提示消息
 }
 
 /**
@@ -197,37 +193,6 @@ export interface AgentExecutionResult {
   metadata: MessageMetadata;
   suggestedAction?: SuggestedAction;
   error?: string;
-  // ⭐Phase 2 新增：用户澄清和反馈
-  needsClarification?: boolean;
-  clarificationOptions?: ClarificationOption[];
-  feedbackPrompt?: FeedbackPrompt;
-}
-
-/**
- * ⭐Phase 2 新增：澄清选项
- */
-export interface ClarificationOption {
-  label: string;              // 显示文本
-  description?: string;       // 详细描述
-  value: UserIntent;          // 意图值
-  icon?: string;              // 图标（可选）
-}
-
-/**
- * ⭐Phase 2 新增：反馈提示
- */
-export interface FeedbackPrompt {
-  question: string;           // 反馈问题
-  options: FeedbackOption[];  // 反馈选项
-}
-
-/**
- * ⭐Phase 2 新增：反馈选项
- */
-export interface FeedbackOption {
-  label: string;              // 显示文本
-  value: 'helpful' | 'not_helpful' | 'wrong_intent';
-  icon?: string;              // 图标（可选）
 }
 
 /**
