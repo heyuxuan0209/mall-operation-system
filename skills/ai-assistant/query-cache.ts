@@ -154,8 +154,9 @@ export const queryCache = new QueryCache();
 
 /**
  * 定期清理过期缓存（每10分钟）
+ * 只在浏览器环境中运行
  */
-if (typeof setInterval !== 'undefined') {
+if (typeof window !== 'undefined' && typeof setInterval !== 'undefined') {
   setInterval(() => {
     queryCache.cleanup();
   }, 600000); // 10分钟

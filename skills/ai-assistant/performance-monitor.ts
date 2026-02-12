@@ -190,8 +190,9 @@ export const performanceMonitor = new PerformanceMonitor();
 
 /**
  * 定期打印性能报告（每小时）
+ * 只在浏览器环境中运行
  */
-if (typeof setInterval !== 'undefined') {
+if (typeof window !== 'undefined' && typeof setInterval !== 'undefined') {
   setInterval(() => {
     performanceMonitor.printReport();
   }, 3600000); // 1小时
