@@ -238,6 +238,7 @@ export class IntentClassifier {
 - risk_diagnosis: 诊断商户风险、发现问题、分析异常
 - solution_recommend: 推荐帮扶方案、措施、解决策略
 - data_query: 查询具体数据指标（营收、租金、客流）
+- archive_query: 查询历史帮扶档案、帮扶记录、过往帮扶情况 🔥新增
 
 聚合统计意图 ⭐v3.0新增:
 - aggregation_query: 聚合查询（"多少个"、"统计"、"总共"）
