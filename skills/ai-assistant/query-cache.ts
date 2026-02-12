@@ -115,13 +115,14 @@ export class QueryCache {
 
   /**
    * 标准化查询文本
+   * 🔥 修复：保留更多语义信息，避免不同查询被误判为相同
    */
   private normalize(text: string): string {
     return text
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, '')
-      .replace(/[，。！？；：""''（）【】《》]/g, '');
+      .replace(/\s+/g, ' ')  // 🔥 保留单个空格，不完全移除
+      .replace(/[，。！？；：""''（）【】《》]/g, ''); // 移除标点符号
   }
 
   /**

@@ -199,36 +199,20 @@ export class IntentClassifier {
     const startTime = Date.now();
 
     try {
-      // 🔥 Layer 0: 查询缓存（最快）
-      const { queryCache } = await import('./query-cache');
-      const cached = queryCache.get(structuredQuery.originalInput);
-      if (cached) {
-        const executionTime = Date.now() - startTime;
-        console.log(`[IntentClassifier] Cache hit: ${cached.intent} (${executionTime}ms)`);
-
-        // 记录性能指标
-        const { performanceMonitor } = await import('./performance-monitor');
-        performanceMonitor.record({
-          timestamp: Date.now(),
-          layer: 'cache',
-          query: structuredQuery.originalInput,
-          intent: cached.intent,
-          confidence: cached.confidence,
-          executionTime,
-          cacheHit: true,
-        });
-
-        return [cached];
-      }
+      // 🔥 临时禁用缓存，调试问题
+      // const { queryCache } = await import('./query-cache');
+      // const cached = queryCache.get(structuredQuery.originalInput);
+      // if (cached) {
+      //   const executionTime = Date.now() - startTime;
+      //   console.log(`[IntentClassifier] Cache hit: ${cached.intent} (${executionTime}ms)`);
+      //   return [cached];
+      // }
 
       // 🔥 Layer 1: 强制规则匹配（最高优先级）
       const forcedIntent = this.matchForcedRules(structuredQuery.originalInput);
       if (forcedIntent) {
         const executionTime = Date.now() - startTime;
         console.log(`[IntentClassifier] Forced rule matched: ${forcedIntent.intent} (${executionTime}ms)`);
-
-        // 缓存结果
-        queryCache.set(structuredQuery.originalInput, forcedIntent);
 
         // 记录性能指标
         const { performanceMonitor } = await import('./performance-monitor');
@@ -249,9 +233,6 @@ export class IntentClassifier {
       if (keywordResult.confidence >= 0.7) {
         const executionTime = Date.now() - startTime;
         console.log(`[IntentClassifier] Keyword match (high confidence): ${keywordResult.intent} (${executionTime}ms)`);
-
-        // 缓存结果
-        queryCache.set(structuredQuery.originalInput, keywordResult);
 
         // 记录性能指标
         const { performanceMonitor } = await import('./performance-monitor');
@@ -290,11 +271,6 @@ export class IntentClassifier {
       const executionTime = Date.now() - startTime;
 
       console.log(`[IntentClassifier] LLM classification: ${intents[0]?.intent} (${executionTime}ms)`);
-
-      // 缓存结果
-      if (intents[0]) {
-        queryCache.set(structuredQuery.originalInput, intents[0]);
-      }
 
       // 记录性能指标
       const { performanceMonitor } = await import('./performance-monitor');
