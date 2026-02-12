@@ -190,6 +190,41 @@ export class IntentClassifier {
   ];
 
   /**
+   * ⭐Phase 2: 检查是否需要用户澄清
+   * 当置信度低于阈值时，标记需要澄清并提供备选意图
+   */
+  private checkNeedsClarification(
+    result: IntentResult,
+    allResults: IntentResult[]
+  ): IntentResult {
+    const CLARIFICATION_THRESHOLD = 0.6;
+
+    // 如果置信度足够高，不需要澄清
+    if (result.confidence >= CLARIFICATION_THRESHOLD) {
+      return result;
+    }
+
+    // 获取置信度较高的备选意图（置信度 > 0.4）
+    const alternatives = allResults
+      .filter(r => r.confidence > 0.4 && r.intent !== result.intent)
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 3)
+      .map(r => r.intent);
+
+    // 如果有备选意图，标记需要澄清
+    if (alternatives.length > 0) {
+      return {
+        ...result,
+        needsClarification: true,
+        alternatives: [result.intent, ...alternatives],
+        clarificationMessage: '我理解您可能想要：'
+      };
+    }
+
+    return result;
+  }
+
+  /**
    * ⭐v3.0核心方法: LLM驱动的意图识别
    * 支持多意图识别、语义理解、动态置信度
    *
@@ -198,6 +233,9 @@ export class IntentClassifier {
    * - Layer 1: 强制规则匹配
    * - Layer 2: 关键词分类 + 置信度阈值
    * - Layer 3: LLM分析（只在必要时）
+   *
+   * ⭐Phase 2优化：
+   * - Layer 4: 用户澄清（置信度 < 0.6）
    */
   async classifyWithLLM(
     structuredQuery: StructuredQuery,
@@ -317,16 +355,21 @@ export class IntentClassifier {
         queryCache.set(structuredQuery.originalInput, intents[0]);
       }
 
-      // 记录性能指标
+      // ⭐Phase 2: 检查是否需要用户澄清
       if (intents.length > 0) {
+        const primaryIntent = this.checkNeedsClarification(intents[0], intents);
+
+        // 记录性能指标
         performanceMonitor.record({
           method,
           responseTime: Date.now() - startTime,
           tokenUsage,
-          confidence: intents[0].confidence,
-          intent: intents[0].intent,
+          confidence: primaryIntent.confidence,
+          intent: primaryIntent.intent,
           timestamp: Date.now()
         });
+
+        return [primaryIntent, ...intents.slice(1)];
       }
 
       return intents;
