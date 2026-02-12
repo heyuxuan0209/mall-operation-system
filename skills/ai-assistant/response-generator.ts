@@ -79,6 +79,11 @@ export class ResponseGenerator {
     result: any,
     merchant: Merchant
   ): Promise<string> {
+    // 🔥 新增：如果是档案查询，直接返回简单提示
+    if (query.intents.includes('archive_query')) {
+      return this.generateArchiveQueryResponse(merchant, result);
+    }
+
     if (!llmClient) {
       // 降级：使用简单模板
       return this.generateSimpleMerchantTemplate(merchant, result);
@@ -802,6 +807,23 @@ ${result.dataPoints.map(p => `${p.label || p.timestamp}: ${p.value}`).join('\n')
     }
 
     return lines.join('\n');
+  }
+
+  /**
+   * 🔥 新增：生成档案查询响应
+   */
+  private generateArchiveQueryResponse(merchant: Merchant, result: any): string {
+    return `# ${merchant.name} - 历史帮扶档案
+
+📋 正在为您跳转到历史帮扶档案页面...
+
+您可以在档案页面查看：
+- 历史帮扶记录
+- 帮扶措施和效果
+- 问题解决进展
+- 相关文档和附件
+
+💡 如需创建新的帮扶任务，请告诉我具体需求。`;
   }
 }
 

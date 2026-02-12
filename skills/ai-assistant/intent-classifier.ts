@@ -168,6 +168,23 @@ export class IntentClassifier {
         { keyword: '波动', weight: 10 },
       ],
     },
+    // 🔥 新增: 历史帮扶档案查询
+    {
+      intent: 'archive_query',
+      priority: 4, // 高优先级，避免被其他意图覆盖
+      keywords: [
+        { keyword: '档案', weight: 20 },
+        { keyword: '历史帮扶', weight: 20 },
+        { keyword: '帮扶档案', weight: 20 },
+        { keyword: '帮扶记录', weight: 18 },
+        { keyword: '历史记录', weight: 15 },
+        { keyword: '过往帮扶', weight: 15 },
+        { keyword: '帮扶历史', weight: 15 },
+        { keyword: '查看档案', weight: 18 },
+        { keyword: '过往记录', weight: 12 },
+        { keyword: '之前的帮扶', weight: 12 },
+      ],
+    },
   ];
 
   /**

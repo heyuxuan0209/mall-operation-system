@@ -399,6 +399,14 @@ export class AgentRouter {
     // 🔥 修复：从entities获取查询信息，并检查intents
     const queryIntents = (plan as any).queryIntents || [];
 
+    // 🔥 新增：如果是档案查询，直接返回商户信息，不执行任何分析
+    if (queryIntents.includes('archive_query')) {
+      return {
+        merchant,
+        isArchiveQuery: true, // 标记为档案查询
+      };
+    }
+
     const results: any = {
       merchant,
       health: undefined,
