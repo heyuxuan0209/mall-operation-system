@@ -118,10 +118,13 @@ export class AgentRouter {
       // 更新结构化查询的意图列表
       structuredQuery.intents = intentClassifier.extractMultipleIntents(intents);
       console.log('[AgentRouter] Extracted intents:', structuredQuery.intents);
+      console.log('[AgentRouter] Intents array reference:', structuredQuery.intents);
+      console.log('[AgentRouter] structuredQuery object:', JSON.stringify(structuredQuery, null, 2));
 
       // ============ Phase 3: Entity Resolution ============
       const entities = await this.resolveEntities(structuredQuery, context);
       console.log('[AgentRouter] Resolved entities:', entities);
+      console.log('[AgentRouter] Intents after entity resolution:', structuredQuery.intents);
 
       // ⭐Phase 2: 处理需要用户确认的情况
       if (entities.needsClarification) {
@@ -157,6 +160,7 @@ export class AgentRouter {
 
       // 🔥 修复：将意图信息传递给执行计划
       (executionPlan as any).queryIntents = structuredQuery.intents;
+      console.log('[AgentRouter] Intents before execution:', structuredQuery.intents);
 
       // ============ Phase 5: Execute ============
       let executionResult: any;
@@ -189,11 +193,13 @@ export class AgentRouter {
 
       // ============ Phase 6: Generate Response ============
       // ⭐Phase 2: 添加置信度警告到响应中
+      console.log('[AgentRouter] Intents before response generation:', structuredQuery.intents);
       let content = await responseGenerator.generate(
         structuredQuery,
         executionResult,
         merchant
       );
+      console.log('[AgentRouter] Intents after response generation:', structuredQuery.intents);
 
       // 如果有置信度警告，添加到响应开头
       if (entities.confidenceWarning) {
