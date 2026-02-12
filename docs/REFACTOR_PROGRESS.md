@@ -127,8 +127,38 @@ recognize(userInput, context) {
 
 **测试状态**: ✅ 编译通过，类型检查通过
 
-### 6. 废弃旧的省略补全逻辑 ⏳
+### ✅ 6. 废弃旧的省略补全逻辑 (已完成 - Phase 3)
 **目标**: 废弃 `EnhancedContextManager.completeOmission`
+
+**完成时间**: 2026-02-12
+
+**实施内容**:
+1. ✅ 标记 `completeOmission` 方法为 `@deprecated`
+2. ✅ 标记 `enhanceUserInput` 方法为部分废弃
+3. ✅ 新增 `enhanceUserInputV2` 方法，只做指代消解
+4. ✅ 添加详细的废弃说明和迁移指引
+5. ✅ 保留向后兼容性，避免破坏现有功能
+
+**关键改动**:
+- `conversation-context.ts:282`: 标记 `completeOmission` 为废弃
+- `conversation-context.ts:389`: 标记 `enhanceUserInput` 为部分废弃
+- `conversation-context.ts:428`: 新增 `enhanceUserInputV2` 方法
+
+**废弃原因**:
+- 旧的省略补全逻辑会修改用户输入，导致与新的实体识别服务冲突
+- 新的 `EntityRecognitionService` 通过上下文策略更智能地处理省略主语
+- 避免双重逻辑：旧的省略补全 + 新的实体识别
+
+**保留功能**:
+- ✅ `resolveReferences`（指代消解）：处理"它"、"这家店"等指代词
+- ✅ 向后兼容：`enhanceUserInput` 仍然可用，但会在日志中标记为 deprecated
+
+**测试状态**: ✅ 编译通过，类型检查通过
+
+---
+
+### 7. 端到端测试 ⏳
+**目标**: 测试所有场景，确保新架构正常工作
 
 ---
 
@@ -216,8 +246,13 @@ ConfidenceManager (决策)
 - 扩展类型定义
 - 编译测试通过
 
-### ⏳ Phase 3: 废弃旧逻辑和测试 (待完成)
-- 清理旧代码
+### ✅ Phase 3: 废弃旧逻辑 (已完成)
+- 标记旧方法为废弃
+- 添加迁移指引
+- 保留向后兼容性
+- 编译测试通过
+
+### ⏳ Phase 4: 端到端测试和优化 (进行中)
 - 端到端测试
 - 性能优化
 - 文档更新

@@ -274,6 +274,9 @@ export class EnhancedContextManager extends ConversationContextManager {
   /**
    * ⭐ 省略补全：检测并补全省略的主语
    *
+   * @deprecated Phase 2: 此方法已被 EntityRecognitionService 替代
+   * 新的实体识别服务通过上下文策略更智能地处理省略主语的情况
+   *
    * 检测模式：
    * - "最近怎么样" → "海底捞最近怎么样"
    * - "有风险吗" → "海底捞有风险吗"
@@ -384,6 +387,9 @@ export class EnhancedContextManager extends ConversationContextManager {
   /**
    * ⭐ 综合处理：指代消解 + 省略补全
    *
+   * @deprecated Phase 2: 省略补全部分已废弃，建议只使用 resolveReferences
+   * 新架构中，省略主语的处理由 EntityRecognitionService 负责
+   *
    * 这是推荐的入口方法，会自动应用所有增强
    */
   enhanceUserInput(
@@ -393,22 +399,53 @@ export class EnhancedContextManager extends ConversationContextManager {
     const applied: string[] = [];
     let enhanced = userInput;
 
-    // Step 1: 指代消解
+    // Step 1: 指代消解（保留）
     const resolved = this.resolveReferences(conversationId, enhanced);
     if (resolved !== enhanced) {
       applied.push('指代消解');
       enhanced = resolved;
     }
 
-    // Step 2: 省略补全
+    // Step 2: 省略补全（已废弃，但为了向后兼容暂时保留）
+    // ⚠️ Phase 2: 此步骤将在 Phase 3 完全移除
+    // 新的实体识别服务会在 agent-router.ts 中处理省略主语
     const { completed, wasOmitted } = this.completeOmission(conversationId, enhanced);
     if (wasOmitted) {
-      applied.push('省略补全');
+      applied.push('省略补全(deprecated)');
       enhanced = completed;
     }
 
     if (applied.length > 0) {
       console.log('[EnhancedContext] Input enhanced:', {
+        original: userInput,
+        enhanced,
+        applied,
+      });
+    }
+
+    return { enhanced, applied };
+  }
+
+  /**
+   * ⭐ Phase 2 新增：只做指代消解，不做省略补全
+   * 推荐在新架构中使用此方法替代 enhanceUserInput
+   */
+  enhanceUserInputV2(
+    conversationId: string,
+    userInput: string
+  ): { enhanced: string; applied: string[] } {
+    const applied: string[] = [];
+    let enhanced = userInput;
+
+    // 只做指代消解
+    const resolved = this.resolveReferences(conversationId, enhanced);
+    if (resolved !== enhanced) {
+      applied.push('指代消解');
+      enhanced = resolved;
+    }
+
+    if (applied.length > 0) {
+      console.log('[EnhancedContext] Input enhanced (v2):', {
         original: userInput,
         enhanced,
         applied,
