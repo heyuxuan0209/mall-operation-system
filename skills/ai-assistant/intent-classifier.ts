@@ -294,6 +294,7 @@ ${availableIntents}
 3. 一句话可能包含多个意图，例如："这个月多少高风险商户，和上月比怎么样" → [aggregation_query, comparison_query]
 4. 置信度评估：明确指令0.9+，常规查询0.7-0.8，模糊查询0.5-0.6
 5. 如果上一轮意图是health_query且当前问"问题在哪"，应识别为risk_diagnosis
+6. 🔥 **重要**：如果用户明确提到"档案"、"历史帮扶"、"帮扶记录"、"帮扶档案"等关键词，必须识别为 archive_query，而不是 data_query 或其他意图
 
 现在请识别用户意图，返回JSON数组（只返回JSON，不要其他解释）。
 `.trim();
