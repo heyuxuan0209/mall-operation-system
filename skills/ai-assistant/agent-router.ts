@@ -37,6 +37,12 @@ import { responseGenerator } from './response-generator';
 import { entityExtractor } from './entity-extractor';
 import { boundaryChecker } from './boundary-checker';
 
+// ⭐Phase 1 新增模块
+import { entityRecognitionService } from './entity-recognition-service';
+import { entityDisambiguationService } from './entity-disambiguation-service';
+import { confidenceManager } from './confidence-manager';
+import { contextSwitchDetector } from './context-switch-detector';
+
 // 现有Skills
 import { analyzeHealth } from '@/skills/health-calculator';
 import { generateDiagnosisReport, generateEnhancedDiagnosisReport } from '@/skills/ai-diagnosis-engine';
@@ -116,6 +122,22 @@ export class AgentRouter {
       const entities = await this.resolveEntities(structuredQuery, context);
       console.log('[AgentRouter] Resolved entities:', entities);
 
+      // ⭐Phase 2: 处理需要用户确认的情况
+      if (entities.needsClarification) {
+        return {
+          success: false,
+          content: entities.clarificationPrompt || '请明确您要查询的商户',
+          metadata: {
+            intent: structuredQuery.intents[0] || 'unknown',
+            dataSource: 'hybrid',
+            executionTime: Date.now() - startTime,
+            needsClarification: true,
+            candidates: entities.candidates,
+          },
+          error: 'NEEDS_CLARIFICATION'
+        };
+      }
+
       // 验证：如果需要商户但未找到，返回错误
       if (structuredQuery.type === 'single_merchant' && !entities.merchantId) {
         return this.createMerchantNotFoundResult(userInput);
@@ -162,11 +184,17 @@ export class AgentRouter {
       }
 
       // ============ Phase 6: Generate Response ============
-      const content = await responseGenerator.generate(
+      // ⭐Phase 2: 添加置信度警告到响应中
+      let content = await responseGenerator.generate(
         structuredQuery,
         executionResult,
         merchant
       );
+
+      // 如果有置信度警告，添加到响应开头
+      if (entities.confidenceWarning) {
+        content = `${entities.confidenceWarning}\n\n${content}`;
+      }
 
       const executionTime = Date.now() - startTime;
 
@@ -186,6 +214,8 @@ export class AgentRouter {
           intent: structuredQuery.intents[0] || 'unknown',
           merchantId: merchant?.id,
           merchantName: merchant?.name,
+          // ⭐Phase 2: 添加置信度信息
+          confidence: entities.confidence,
         },
         suggestedAction,
       };
@@ -196,7 +226,7 @@ export class AgentRouter {
   }
 
   /**
-   * 解析实体
+   * ⭐Phase 2: 解析实体（集成新模块）
    */
   private async resolveEntities(
     query: StructuredQuery,
@@ -208,41 +238,93 @@ export class AgentRouter {
     if (query.type === 'single_merchant') {
       const merchantName = entities.merchants?.[0];
 
-      if (!merchantName) {
-        // 🔥 新增：尝试entity-extractor作为fallback
-        const extractedEntity = entityExtractor.extractMerchant(
-          query.originalInput,
-          context.merchantId
-        );
+      // Step 1: 检测上下文切换
+      const currentContext = conversationManager.getCurrentMerchant(context.conversationId);
+      const switchDetection = contextSwitchDetector.detectSwitch(
+        query.originalInput,
+        currentContext ? {
+          conversationId: context.conversationId,
+          merchantId: currentContext.id,
+          merchantName: currentContext.name,
+          recentMessages: context.recentMessages || [],
+          sessionStartTime: context.sessionStartTime || new Date().toISOString(),
+        } : undefined
+      );
 
-        if (extractedEntity.matched && extractedEntity.merchantId) {
-          return {
-            type: 'single_merchant',
-            merchantId: extractedEntity.merchantId,
-            merchantName: extractedEntity.merchantName,
-          };
-        }
+      console.log('[AgentRouter] Context switch detection:', switchDetection);
 
-        // 尝试从上下文获取
-        const contextMerchant = conversationManager.getCurrentMerchant(context.conversationId);
-        if (contextMerchant) {
-          return {
-            type: 'single_merchant',
-            merchantId: contextMerchant.id,
-            merchantName: contextMerchant.name,
-          };
-        }
-        return { type: 'single_merchant' };
+      // Step 2: 使用统一实体识别服务
+      const recognitionCandidates = entityRecognitionService.recognize(
+        query.originalInput,
+        currentContext ? {
+          conversationId: context.conversationId,
+          merchantId: currentContext.id,
+          merchantName: currentContext.name,
+          recentMessages: context.recentMessages || [],
+          sessionStartTime: context.sessionStartTime || new Date().toISOString(),
+        } : undefined
+      );
+
+      console.log('[AgentRouter] Entity recognition candidates:', recognitionCandidates);
+
+      // Step 3: 消歧处理
+      const disambiguationResult = entityDisambiguationService.disambiguate(
+        recognitionCandidates,
+        query.originalInput,
+        currentContext ? {
+          conversationId: context.conversationId,
+          merchantId: currentContext.id,
+          merchantName: currentContext.name,
+          recentMessages: context.recentMessages || [],
+          sessionStartTime: context.sessionStartTime || new Date().toISOString(),
+        } : undefined
+      );
+
+      console.log('[AgentRouter] Disambiguation result:', disambiguationResult);
+
+      // Step 4: 验证消歧结果
+      const validation = entityDisambiguationService.validateResult(disambiguationResult, query.originalInput);
+
+      if (!validation.valid) {
+        console.error('[AgentRouter] Invalid disambiguation result:', validation.warning);
       }
 
-      // 查找商户
-      const merchant = merchantDataManager.findMerchantByName(merchantName);
-      if (merchant) {
+      // Step 5: 处理需要用户确认的情况
+      if (disambiguationResult.needsClarification) {
         return {
           type: 'single_merchant',
-          merchantId: merchant.id,
-          merchantName: merchant.name,
+          needsClarification: true,
+          clarificationPrompt: disambiguationResult.clarificationPrompt,
+          candidates: disambiguationResult.candidates,
         };
+      }
+
+      // Step 6: 使用置信度管理器决定是否执行
+      const confidenceDecision = confidenceManager.shouldExecute(disambiguationResult.confidence);
+      console.log('[AgentRouter] Confidence decision:', confidenceDecision);
+
+      // Step 7: 返回结果
+      if (disambiguationResult.matched && disambiguationResult.merchantId) {
+        return {
+          type: 'single_merchant',
+          merchantId: disambiguationResult.merchantId,
+          merchantName: disambiguationResult.merchantName,
+          confidence: disambiguationResult.confidence,
+          confidenceWarning: confidenceDecision.showWarning ?
+            confidenceManager.generateConfidenceMessage(disambiguationResult.confidence) : undefined,
+        };
+      }
+
+      // Fallback: 如果新模块没有找到，尝试旧逻辑
+      if (merchantName) {
+        const merchant = merchantDataManager.findMerchantByName(merchantName);
+        if (merchant) {
+          return {
+            type: 'single_merchant',
+            merchantId: merchant.id,
+            merchantName: merchant.name,
+          };
+        }
       }
 
       return { type: 'single_merchant' };

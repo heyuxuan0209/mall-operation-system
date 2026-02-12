@@ -90,8 +90,18 @@ recognize(userInput, context) {
 
 ## 待完成的任务
 
-### 5. 重构AgentRouter数据流 ⏳
+### ✅ 5. 重构AgentRouter数据流 (已完成 - Phase 2)
 **目标**: 集成新模块，重构数据流
+
+**完成时间**: 2026-02-12
+
+**实施内容**:
+1. ✅ 在 `agent-router.ts` 中导入 Phase 1 新增的4个核心模块
+2. ✅ 重构 `resolveEntities` 方法，集成新的实体识别流程
+3. ✅ 添加上下文切换检测逻辑
+4. ✅ 添加消歧处理和用户确认机制
+5. ✅ 集成置信度管理器，添加置信度警告
+6. ✅ 扩展类型定义，支持新的字段（confidence, needsClarification, candidates）
 
 **新的数据流**:
 ```
@@ -107,6 +117,15 @@ recognize(userInput, context) {
   ↓
 [5] 执行或询问用户
 ```
+
+**关键改动**:
+- `agent-router.ts:220-295`: 重构 `resolveEntities` 方法
+- `agent-router.ts:121-140`: 添加消歧确认处理
+- `agent-router.ts:186-198`: 添加置信度警告到响应
+- `types/ai-assistant.ts:600-616`: 扩展 `ResolvedEntity` 接口
+- `types/ai-assistant.ts:92-110`: 扩展 `MessageMetadata` 接口
+
+**测试状态**: ✅ 编译通过，类型检查通过
 
 ### 6. 废弃旧的省略补全逻辑 ⏳
 **目标**: 废弃 `EnhancedContextManager.completeOmission`
@@ -161,14 +180,44 @@ ConfidenceManager (决策)
 
 ## 下一步
 
-1. **集成到AgentRouter** (预计2小时)
-2. **废弃旧逻辑** (预计30分钟)
-3. **测试验证** (预计1小时)
-4. **提交代码** (预计15分钟)
+### Phase 3: 废弃旧逻辑和完整测试
+1. **废弃旧的省略补全逻辑** (预计30分钟)
+   - 移除或标记废弃 `EnhancedContextManager.completeOmission`
+   - 清理不再使用的旧实体提取逻辑
+
+2. **端到端测试** (预计1小时)
+   - 测试单商户查询场景
+   - 测试消歧场景（多个候选商户）
+   - 测试上下文切换场景
+   - 测试置信度警告场景
+
+3. **性能优化** (预计30分钟)
+   - 检查是否有重复的实体识别调用
+   - 优化候选实体的去重逻辑
+
+4. **文档更新** (预计15分钟)
+   - 更新 API 文档
+   - 添加使用示例
 
 ---
 
-## Token使用情况
-- 当前消耗: ~98,000 tokens
-- 剩余: ~102,000 tokens
-- 建议: 完成集成后提交，重启会话继续测试
+## 进度总结
+
+### ✅ Phase 1: 核心模块开发 (已完成)
+- 置信度管理器
+- 统一实体识别服务
+- 实体消歧服务
+- 上下文切换检测器
+
+### ✅ Phase 2: AgentRouter 集成 (已完成)
+- 导入新模块
+- 重构 resolveEntities 方法
+- 添加消歧和置信度处理
+- 扩展类型定义
+- 编译测试通过
+
+### ⏳ Phase 3: 废弃旧逻辑和测试 (待完成)
+- 清理旧代码
+- 端到端测试
+- 性能优化
+- 文档更新

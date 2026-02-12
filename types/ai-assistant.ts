@@ -103,6 +103,10 @@ export interface MessageMetadata {
     merchantId?: string;
     merchantName?: string;
   }>;
+  // ⭐Phase 2 新增字段
+  confidence?: number;
+  needsClarification?: boolean;
+  candidates?: Array<{ merchantId: string; merchantName: string; confidence: number }>;
 }
 
 /**
@@ -605,6 +609,12 @@ export interface ResolvedEntity {
   filters?: QueryFilters;
   timeRange?: TimeRange;
   comparisonTarget?: string;
+  // ⭐Phase 2 新增字段
+  confidence?: number;
+  confidenceWarning?: string;
+  needsClarification?: boolean;
+  clarificationPrompt?: string;
+  candidates?: Array<{ merchantId: string; merchantName: string; confidence: number }>;
 }
 
 /**
