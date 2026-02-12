@@ -113,10 +113,11 @@ export class AgentRouter {
 
       // ============ Phase 2: Intent Classification ============
       const intents = await intentClassifier.classifyWithLLM(structuredQuery, context);
-      console.log('[AgentRouter] Intents:', intents);
+      console.log('[AgentRouter] Intents from classifier:', intents);
 
       // 更新结构化查询的意图列表
       structuredQuery.intents = intentClassifier.extractMultipleIntents(intents);
+      console.log('[AgentRouter] Extracted intents:', structuredQuery.intents);
 
       // ============ Phase 3: Entity Resolution ============
       const entities = await this.resolveEntities(structuredQuery, context);
@@ -202,11 +203,19 @@ export class AgentRouter {
       const executionTime = Date.now() - startTime;
 
       // ============ Phase 7: Generate Suggested Action ============
+      console.log('[AgentRouter] Generating suggested action for:', {
+        intents: structuredQuery.intents,
+        merchantId: merchant?.id,
+        merchantName: merchant?.name,
+      });
+
       const suggestedAction = this.generateSuggestedAction(
         structuredQuery,
         merchant,
         executionResult
       );
+
+      console.log('[AgentRouter] Generated suggested action:', suggestedAction);
 
       return {
         success: true,
@@ -595,6 +604,25 @@ export class AgentRouter {
     merchant: Merchant | undefined,
     executionResult: any
   ): import('@/types/ai-assistant').SuggestedAction | undefined {
+    // 🔥 场景0: 档案查询 - 最高优先级
+    console.log('[AgentRouter] Checking archive_query:', {
+      hasArchiveIntent: query.intents.includes('archive_query'),
+      intents: query.intents,
+      hasMerchant: !!merchant,
+      merchantId: merchant?.id,
+    });
+
+    if (query.intents.includes('archive_query') && merchant) {
+      return {
+        type: 'navigate_archives',
+        data: {
+          merchantId: merchant.id,
+          merchantName: merchant.name,
+        },
+        description: `查看 ${merchant.name} 历史帮扶档案`,
+      };
+    }
+
     // 场景1: 单商户查询 - 提供查看详情/档案/创建任务
     if (query.type === 'single_merchant' && merchant) {
       // 优先级：高风险商户 → 创建帮扶任务
@@ -641,18 +669,6 @@ export class AgentRouter {
           caseId: executionResult.cases.matchedCases?.[0]?.case?.id,
         },
         description: '查看完整帮扶案例',
-      };
-    }
-
-    // 场景4: 档案查询 - 提供查看历史档案
-    if (query.intents.includes('archive_query') && merchant) {
-      return {
-        type: 'navigate_archives',
-        data: {
-          merchantId: merchant.id,
-          merchantName: merchant.name,
-        },
-        description: `查看 ${merchant.name} 历史帮扶档案`,
       };
     }
 
