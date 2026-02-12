@@ -196,6 +196,13 @@ export class IntentClassifier {
     context: ConversationContext
   ): Promise<IntentResult[]> {
     try {
+      // 🔥 Phase 1: 强制规则匹配（最高优先级）
+      const forcedIntent = this.matchForcedRules(structuredQuery.originalInput);
+      if (forcedIntent) {
+        console.log('[IntentClassifier] Forced rule matched:', forcedIntent);
+        return [forcedIntent];
+      }
+
       if (!llmClient) {
         // 降级到关键词匹配
         console.warn('[IntentClassifier] LLM not available, falling back to keyword matching');
@@ -223,6 +230,43 @@ export class IntentClassifier {
       // 降级到关键词匹配
       return [this.classifyWithContext(structuredQuery.originalInput, context)];
     }
+  }
+
+  /**
+   * 🔥 Phase 1 新增：强制规则匹配
+   * 对于明确的关键词，直接返回意图，不依赖LLM
+   */
+  private matchForcedRules(userInput: string): IntentResult | null {
+    const input = userInput.toLowerCase();
+
+    // 规则1: 档案查询（最高优先级）
+    if (/(档案|历史帮扶|帮扶记录|帮扶档案|过往帮扶|帮扶历史)/.test(input)) {
+      return {
+        intent: 'archive_query',
+        confidence: 1.0,
+        keywords: ['档案', '历史帮扶'],
+      };
+    }
+
+    // 规则2: 聚合查询
+    if (/(多少个|几个|几家|统计|总共|数量).*?(商户|店|高风险|中风险|低风险)/.test(input)) {
+      return {
+        intent: 'aggregation_query',
+        confidence: 1.0,
+        keywords: ['聚合查询'],
+      };
+    }
+
+    // 规则3: 对比查询
+    if (/(对比|比较|vs|和.*比|差异|相比)/.test(input)) {
+      return {
+        intent: 'comparison_query',
+        confidence: 1.0,
+        keywords: ['对比'],
+      };
+    }
+
+    return null;
   }
 
   /**

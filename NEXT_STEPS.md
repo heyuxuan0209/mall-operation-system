@@ -237,3 +237,273 @@ v3.1 总体进度: ████████░░ 80%
 ---
 
 **准备就绪！等待你的测试反馈！** 🚀
+
+---
+
+## 🔮 v3.2+ 架构演进规划：从RAG到Ontology
+
+**更新时间**: 2026-02-12
+**状态**: 📋 待讨论
+
+### 背景问题
+
+#### 当前架构痛点
+1. **P0 - 存储限制**: localStorage容量不足，无法存储大量历史数据
+2. **数据关系隐式**: 商户、任务、快照之间的关系通过ID引用，缺少显式关系图
+3. **跨实体查询困难**: 需要手动join多个数据源
+4. **推理能力受限**: AI助手难以进行多跳推理和因果分析
+5. **历史追溯能力弱**: 无法有效追踪问题的根本原因链
+
+#### 技术对比：RAG vs Palantir Ontology
+
+**当前系统（类RAG架构）**:
+- 数据组织：扁平化JSON存储
+- 查询方式：实体识别 + 意图分类 + 数据检索
+- 推理能力：单层查询，依赖LLM理解
+- 适用场景：问答、数据展示
+
+**目标架构（Ontology增强）**:
+- 数据组织：实体-关系-属性的语义网络
+- 查询方式：图遍历 + 多跳推理 + 因果分析
+- 推理能力：结构化推理，可验证的因果链
+- 适用场景：复杂决策、根因分析、预测
+
+### 改造难度评估
+
+**项目现状**:
+- 代码规模：~34,000行
+- 架构：Next.js + React + TypeScript
+- AI能力：v3.0已完成推理框架重构 ✅
+- 数据模型：清晰的类型定义 ✅
+
+**总体难度**: 🟡 中等（6/10）
+
+**有利因素**:
+- ✅ 数据模型清晰（Merchant、Task、Snapshot等）
+- ✅ AI推理框架已搭建（实体识别、意图分类、查询分析）
+- ✅ 代码结构模块化良好
+- ✅ 已有30+运营字段，数据维度丰富
+
+**挑战因素**:
+- ⚠️ localStorage容量限制（P0问题）
+- ⚠️ 需要重构数据访问层
+- ⚠️ 图查询算法复杂度高
+- ⚠️ 测试工作量大
+
+---
+
+### 分阶段实施方案
+
+#### Phase 1: 轻量级Ontology层 🟢
+
+**目标**: 在现有架构上加语义理解层，不改存储
+
+**工作量**: 3-5天
+**难度**: 3/10
+**风险**: ⭐ 低
+
+**改动范围**:
+```
+新增文件（~800行）:
+├── types/ontology.ts              // 实体关系类型定义
+├── utils/ontologyService.ts       // 图查询服务
+├── utils/relationshipMapper.ts    // 关系映射器
+└── skills/ai-assistant/ontology-reasoner.ts  // 本体推理器
+
+修改文件（~5处）:
+├── skills/ai-assistant/query-analyzer.ts     // 集成Ontology查询
+├── skills/ai-assistant/skill-executor.ts     // 添加图遍历能力
+└── utils/merchantData.ts                     // 添加关系查询方法
+```
+
+**核心能力**:
+- 定义实体关系类型（has_task、caused_by、improves等）
+- 实现基础图遍历（邻居查询、路径查询）
+- 因果链分析（从症状追溯根因）
+
+**示例**:
+```typescript
+// 查询："海底捞翻台率低的根本原因"
+const causalChain = ontologyService.findCausalPath(
+  { type: 'merchant', id: 'M001' },
+  { type: 'metric', name: '翻台率' }
+);
+// 返回：Merchant -> 低翻台率 -> 等位时间长 -> 高峰客流管理不足
+```
+
+---
+
+#### Phase 2: IndexedDB迁移 🟡
+
+**目标**: 解决localStorage容量限制，支持复杂查询
+
+**工作量**: 5-7天
+**难度**: 5/10
+**风险**: ⭐⭐ 中等
+
+**改动范围**:
+```
+新增文件（~1200行）:
+├── utils/storage/indexedDBAdapter.ts    // IndexedDB封装
+├── utils/storage/migrationService.ts    // 数据迁移工具
+└── utils/storage/queryBuilder.ts        // 查询构建器
+
+修改文件（~15处）:
+所有数据访问层（merchantData.ts、historyArchiveService.ts等）
+```
+
+**迁移策略**:
+1. 新数据写入IndexedDB
+2. 读取时先查IndexedDB，fallback到localStorage
+3. 后台异步迁移历史数据
+4. 迁移完成后清理localStorage
+
+**技术选型**: Dexie.js（成熟的IndexedDB封装库）
+
+---
+
+#### Phase 3: 图查询能力 🟠
+
+**目标**: 实现多跳推理和因果分析
+
+**工作量**: 7-10天
+**难度**: 7/10
+**风险**: ⭐⭐⭐ 较高
+
+**改动范围**:
+```
+新增文件（~2000行）:
+├── utils/graph/graphEngine.ts           // 图引擎核心
+├── utils/graph/pathFinder.ts            // 路径查找算法
+├── utils/graph/causalAnalyzer.ts        // 因果分析
+├── utils/graph/temporalReasoner.ts      // 时序推理
+└── skills/ai-assistant/graph-query-executor.ts
+
+修改文件（~20处）:
+AI助手相关模块（query-analyzer、response-generator等）
+```
+
+**核心能力**:
+- 多跳推理："海底捞翻台率低的根本原因"
+- 对比分析："对比海底捞和西贝的客流差异"
+- 时序分析："健康度下降的历史演变路径"
+- 预测推理："基于历史路径预测未来趋势"
+
+---
+
+#### Phase 4: 后端API + 图数据库 🔴
+
+**目标**: 企业级架构，支持多用户、权限、实时同步
+
+**工作量**: 10-15天
+**难度**: 8/10
+**风险**: ⭐⭐⭐⭐ 高
+
+**改动范围**:
+```
+新增后端项目（~5000行）:
+backend/
+├── api/（merchants、tasks、ontology）
+├── services/（graphService、reasoningService）
+└── db/neo4j-schema.cypher
+
+前端改动（~30处）:
+所有数据访问层改为API调用 + 实时同步 + 离线缓存
+```
+
+**技术选型**:
+- 图数据库：Neo4j（企业级）或 Memgraph（轻量级）
+- API：Next.js API Routes
+- 实时同步：Server-Sent Events
+
+---
+
+### 推荐实施路径
+
+#### 🎯 方案A：渐进式演进（推荐）
+
+```
+Week 1-2:  Phase 1（Ontology层）
+Week 3-4:  Phase 2（IndexedDB）
+Week 5-6:  Phase 3（图查询）
+Week 7+:   Phase 4（后端）- 可选
+```
+
+**优势**:
+- 每个阶段都能交付可用功能
+- 风险可控，可随时暂停
+- 用户体验逐步提升
+
+#### 🚀 方案B：快速验证（适合POC）
+
+```
+Week 1:    只做Phase 1，验证Ontology价值
+Week 2-3:  如果效果好，直接跳到Phase 4
+```
+
+**优势**:
+- 快速验证技术方向
+- 避免中间状态的技术债
+
+---
+
+### 工作量估算
+
+| 阶段 | 新增代码 | 修改文件 | 测试工作 | 总工时 |
+|------|---------|---------|---------|--------|
+| Phase 1 | 800行 | 5处 | 2天 | 3-5天 |
+| Phase 2 | 1200行 | 15处 | 3天 | 5-7天 |
+| Phase 3 | 2000行 | 20处 | 5天 | 7-10天 |
+| Phase 4 | 5000行 | 30处 | 7天 | 10-15天 |
+| **累计** | **9000行** | **70处** | **17天** | **25-37天** |
+
+---
+
+### 关键决策点
+
+#### Q1: 是否需要图数据库？
+- 单商户demo → ❌ 不需要，Phase 1-2足够
+- 100+商户 → ✅ 需要，直接Phase 4
+- 复杂推理 → ✅ 需要，至少Phase 3
+
+#### Q2: 是否需要后端？
+- localStorage已接近极限 → ✅ 是（P0问题）
+- 需要多用户协作 → ✅ 是
+- 只是个人使用 → ❌ 否，IndexedDB够用
+
+#### Q3: 改造优先级？
+```
+P0: Phase 2（解决存储限制）
+P1: Phase 1（提升AI能力）
+P2: Phase 3（高级推理）
+P3: Phase 4（企业级架构）
+```
+
+---
+
+### 立即建议
+
+**推荐行动**:
+1. **立即开始**: Phase 1（3-5天）
+   - 风险最低，收益明显
+   - 不影响现有功能
+   - 为后续打基础
+
+2. **并行准备**: Phase 2方案设计
+   - 解决P0问题（localStorage限制）
+   - 可以边做Phase 1边设计Phase 2
+
+3. **暂缓**: Phase 4
+   - 除非商业化或多用户部署
+   - 否则前端图查询已够用
+
+---
+
+### 待讨论事项
+
+- [ ] 确认是否启动Phase 1
+- [ ] 确认Phase 2的技术选型（IndexedDB vs 后端API）
+- [ ] 确认是否需要图数据库
+- [ ] 确认预算和时间安排
+
+**状态**: 等待进一步讨论后决定是否执行
