@@ -189,69 +189,24 @@ export class IntentClassifier {
 
   /**
    * ⭐v3.0核心方法: LLM驱动的意图识别
-   * 🔥 Phase 1 优化：4层架构（缓存 → 强制规则 → 关键词 → LLM）
    * 支持多意图识别、语义理解、动态置信度
    */
   async classifyWithLLM(
     structuredQuery: StructuredQuery,
     context: ConversationContext
   ): Promise<IntentResult[]> {
-    const startTime = Date.now();
-
     try {
-      // 🔥 临时禁用缓存，调试问题
-      // const { queryCache } = await import('./query-cache');
-      // const cached = queryCache.get(structuredQuery.originalInput);
-      // if (cached) {
-      //   const executionTime = Date.now() - startTime;
-      //   console.log(`[IntentClassifier] Cache hit: ${cached.intent} (${executionTime}ms)`);
-      //   return [cached];
-      // }
-
-      // 🔥 Layer 1: 强制规则匹配（最高优先级）
+      // 🔥 Phase 1: 强制规则匹配（最高优先级）
       const forcedIntent = this.matchForcedRules(structuredQuery.originalInput);
       if (forcedIntent) {
-        const executionTime = Date.now() - startTime;
-        console.log(`[IntentClassifier] Forced rule matched: ${forcedIntent.intent} (${executionTime}ms)`);
-
-        // 记录性能指标
-        const { performanceMonitor } = await import('./performance-monitor');
-        performanceMonitor.record({
-          timestamp: Date.now(),
-          layer: 'forced_rule',
-          query: structuredQuery.originalInput,
-          intent: forcedIntent.intent,
-          confidence: forcedIntent.confidence,
-          executionTime,
-        });
-
+        console.log('[IntentClassifier] Forced rule matched:', forcedIntent);
         return [forcedIntent];
       }
 
-      // 🔥 Layer 2: 关键词匹配 + 置信度阈值（跳过LLM）
-      const keywordResult = this.classifyWithContext(structuredQuery.originalInput, context);
-      if (keywordResult.confidence >= 0.7) {
-        const executionTime = Date.now() - startTime;
-        console.log(`[IntentClassifier] Keyword match (high confidence): ${keywordResult.intent} (${executionTime}ms)`);
-
-        // 记录性能指标
-        const { performanceMonitor } = await import('./performance-monitor');
-        performanceMonitor.record({
-          timestamp: Date.now(),
-          layer: 'keyword',
-          query: structuredQuery.originalInput,
-          intent: keywordResult.intent,
-          confidence: keywordResult.confidence,
-          executionTime,
-        });
-
-        return [keywordResult];
-      }
-
-      // 🔥 Layer 3: LLM语义理解（最慢但最准确）
       if (!llmClient) {
-        console.warn('[IntentClassifier] LLM not available, using keyword result');
-        return [keywordResult];
+        // 降级到关键词匹配
+        console.warn('[IntentClassifier] LLM not available, falling back to keyword matching');
+        return [this.classifyWithContext(structuredQuery.originalInput, context)];
       }
 
       const prompt = this.buildLLMPrompt(structuredQuery, context);
@@ -268,40 +223,12 @@ export class IntentClassifier {
 
       const response = await llmClient.chat(messages, { useCache: true });
       const intents = this.parseLLMIntents(response.content);
-      const executionTime = Date.now() - startTime;
-
-      console.log(`[IntentClassifier] LLM classification: ${intents[0]?.intent} (${executionTime}ms)`);
-
-      // 记录性能指标
-      const { performanceMonitor } = await import('./performance-monitor');
-      performanceMonitor.record({
-        timestamp: Date.now(),
-        layer: 'llm',
-        query: structuredQuery.originalInput,
-        intent: intents[0]?.intent || 'unknown',
-        confidence: intents[0]?.confidence || 0,
-        executionTime,
-        llmTokens: response.tokens?.total || 0,
-      });
 
       return intents;
     } catch (error) {
       console.error('[IntentClassifier] LLM classification failed:', error);
       // 降级到关键词匹配
-      const fallbackResult = this.classifyWithContext(structuredQuery.originalInput, context);
-
-      // 记录性能指标
-      const { performanceMonitor } = await import('./performance-monitor');
-      performanceMonitor.record({
-        timestamp: Date.now(),
-        layer: 'keyword',
-        query: structuredQuery.originalInput,
-        intent: fallbackResult.intent,
-        confidence: fallbackResult.confidence,
-        executionTime: Date.now() - startTime,
-      });
-
-      return [fallbackResult];
+      return [this.classifyWithContext(structuredQuery.originalInput, context)];
     }
   }
 
