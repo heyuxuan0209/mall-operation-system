@@ -180,11 +180,7 @@ ${this.getResponseStrategy(query.intents)}
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
@@ -290,11 +286,7 @@ ${visualizationHint ? '## 📈 可视化建议\n' + visualizationHint : ''}
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
@@ -374,11 +366,7 @@ ${result.insights.map(i => `- ${i}`).join('\n')}
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
@@ -438,11 +426,7 @@ ${result.dataPoints.map(p => `${p.label || p.timestamp}: ${p.value}`).join('\n')
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
