@@ -205,15 +205,29 @@ export class CacheManager {
   }
 }
 
-// 导出单例实例
-export const cacheManager = new CacheManager();
+// 🔥 使用懒加载单例，避免服务端初始化问题
+let _instance: CacheManager | null = null;
 
-// 定期清理过期缓存（每5分钟）
-if (typeof window !== 'undefined') {
-  setInterval(() => {
-    const removed = cacheManager.cleanup();
-    if (removed > 0) {
-      console.log(`[CacheManager] Cleaned up ${removed} expired entries`);
+export function getCacheManager(): CacheManager {
+  if (!_instance) {
+    _instance = new CacheManager();
+
+    // 只在客户端启动定期清理
+    if (typeof window !== 'undefined') {
+      setInterval(() => {
+        const removed = _instance!.cleanup();
+        if (removed > 0) {
+          console.log(`[CacheManager] Cleaned up ${removed} expired entries`);
+        }
+      }, 5 * 60 * 1000);
     }
-  }, 5 * 60 * 1000);
+  }
+  return _instance;
 }
+
+// 保持向后兼容的导出
+export const cacheManager = new Proxy({} as CacheManager, {
+  get(target, prop) {
+    return getCacheManager()[prop as keyof CacheManager];
+  }
+});
