@@ -10,7 +10,7 @@
  * 技术实现：LLM驱动的语义理解 + 规则验证
  */
 
-import { llmClient } from '@/utils/ai-assistant/llmClient';
+import { getLLMClient } from '@/utils/ai-assistant/llmHelper';
 import {
   StructuredQuery,
   QueryType,
@@ -187,7 +187,7 @@ export class QueryAnalyzer {
     userInput: string,
     context: ConversationContext
   ): Promise<StructuredQuery> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       throw new Error('LLM client not available');
     }
 
@@ -205,7 +205,7 @@ export class QueryAnalyzer {
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
     console.log('[QueryAnalyzer] LLM raw response:', response.content);
 
     // 解析LLM响应

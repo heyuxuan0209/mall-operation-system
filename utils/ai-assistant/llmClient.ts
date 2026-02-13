@@ -328,9 +328,18 @@ export class LLMClient {
 
 /**
  * 创建 LLM 客户端实例
+ * 🔥 安全改进：生产环境使用服务端 API，开发环境使用客户端直连
  */
 export function createLLMClient(): LLMClient | null {
   try {
+    // 🔥 生产环境：使用安全的服务端 API
+    if (process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENV === 'production') {
+      console.log('[LLMClient] Using secure server-side API in production');
+      // 返回 null，让调用方使用 secureLLMClient
+      return null;
+    }
+
+    // 开发环境：使用客户端直连（方便调试）
     const provider = (process.env.NEXT_PUBLIC_LLM_PROVIDER || 'openai') as LLMProvider;
 
     let apiKey: string | undefined;
@@ -351,7 +360,7 @@ export function createLLMClient(): LLMClient | null {
     }
 
     if (!apiKey) {
-      console.warn('[LLMClient] No API key configured, LLM features will be disabled');
+      console.warn('[LLMClient] No API key configured for development, will use server-side API');
       return null;
     }
 
@@ -374,5 +383,8 @@ export function createLLMClient(): LLMClient | null {
   }
 }
 
-// 导出单例实例
+// 导出单例实例（开发环境可能有值，生产环境为 null）
 export const llmClient = createLLMClient();
+
+// 🔥 导出安全的客户端（生产环境使用）
+export { secureLLMClient } from './secureLLMClient';

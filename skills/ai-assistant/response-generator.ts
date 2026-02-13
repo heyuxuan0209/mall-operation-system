@@ -14,7 +14,7 @@
  * - 趋势分析（trend_analysis）
  */
 
-import { llmClient } from '@/utils/ai-assistant/llmClient';
+import { getLLMClient } from '@/utils/ai-assistant/llmHelper';
 import {
   StructuredQuery,
   LLMMessage,
@@ -84,7 +84,7 @@ export class ResponseGenerator {
       return this.generateArchiveQueryResponse(merchant, result);
     }
 
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       // 降级：使用简单模板
       return this.generateSimpleMerchantTemplate(merchant, result);
     }
@@ -180,7 +180,7 @@ ${this.getResponseStrategy(query.intents)}
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
@@ -194,7 +194,7 @@ ${this.getResponseStrategy(query.intents)}
     query: StructuredQuery,
     result: AggregationResult
   ): Promise<string> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       return this.generateSimpleAggregationTemplate(result);
     }
 
@@ -286,7 +286,7 @@ ${visualizationHint ? '## 📈 可视化建议\n' + visualizationHint : ''}
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
@@ -300,7 +300,7 @@ ${visualizationHint ? '## 📈 可视化建议\n' + visualizationHint : ''}
     query: StructuredQuery,
     result: ComparisonResult
   ): Promise<string> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       return this.generateSimpleComparisonTemplate(result);
     }
 
@@ -366,7 +366,7 @@ ${result.insights.map(i => `- ${i}`).join('\n')}
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);
@@ -380,7 +380,7 @@ ${result.insights.map(i => `- ${i}`).join('\n')}
     query: StructuredQuery,
     result: TrendAnalysisResult
   ): Promise<string> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       return this.generateSimpleTrendTemplate(result);
     }
 
@@ -426,7 +426,7 @@ ${result.dataPoints.map(p => `${p.label || p.timestamp}: ${p.value}`).join('\n')
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
 
     // 后处理：替换残留的英文术语
     const cleanedContent = replaceEnglishTerms(response.content);

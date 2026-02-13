@@ -5,7 +5,7 @@
 
 import { Merchant } from '@/types';
 import { LLMMessage, LLMResponse } from '@/types/ai-assistant';
-import { llmClient } from '@/utils/ai-assistant/llmClient';
+import { getLLMClient } from '@/utils/ai-assistant/llmHelper';
 
 export class LLMIntegration {
   /**
@@ -15,7 +15,7 @@ export class LLMIntegration {
     merchant: Merchant,
     diagnosisData: any
   ): Promise<string> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       throw new Error('LLM client not available');
     }
 
@@ -31,7 +31,7 @@ export class LLMIntegration {
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
     return response.content;
   }
 
@@ -43,7 +43,7 @@ export class LLMIntegration {
     diagnosis: any,
     knowledgeCases: any[]
   ): Promise<string> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       throw new Error('LLM client not available');
     }
 
@@ -59,7 +59,7 @@ export class LLMIntegration {
       },
     ];
 
-    const response = await llmClient.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
     return response.content;
   }
 
@@ -67,7 +67,7 @@ export class LLMIntegration {
    * 通用对话（使用LLM）
    */
   async chat(userInput: string, context?: string): Promise<string> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       throw new Error('LLM client not available');
     }
 
@@ -90,7 +90,7 @@ export class LLMIntegration {
       content: userInput,
     });
 
-    const response = await llmClient.chat(messages, { useCache: false });
+    const response = await getLLMClient().chat(messages, { useCache: false });
     return response.content;
   }
 
@@ -186,7 +186,7 @@ ${casesText}
     prompt: string,
     onChunk: (chunk: string) => void
   ): Promise<void> {
-    if (!llmClient) {
+    const llmClient = getLLMClient(); if (!llmClient) {
       throw new Error('LLM client not available');
     }
 
@@ -197,7 +197,7 @@ ${casesText}
       },
     ];
 
-    await llmClient.chat(messages, {
+    await getLLMClient().chat(messages, {
       useCache: false,
       stream: true,
       onChunk,
@@ -208,7 +208,7 @@ ${casesText}
    * 检查LLM是否可用
    */
   isAvailable(): boolean {
-    return llmClient !== null;
+    return getLLMClient() !== null;
   }
 }
 

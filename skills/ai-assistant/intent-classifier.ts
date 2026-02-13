@@ -14,7 +14,7 @@ import {
   StructuredQuery,
   LLMMessage,
 } from '@/types/ai-assistant';
-import { llmClient } from '@/utils/ai-assistant/llmClient';
+import { getLLMClient } from '@/utils/ai-assistant/llmHelper';
 
 interface KeywordWeight {
   keyword: string;
@@ -203,7 +203,9 @@ export class IntentClassifier {
         return [forcedIntent];
       }
 
-      if (!llmClient) {
+      // 🔥 使用安全的 LLM 客户端（生产环境）或直连（开发环境）
+      const client = getLLMClient();
+      if (!client) {
         // 降级到关键词匹配
         console.warn('[IntentClassifier] LLM not available, falling back to keyword matching');
         return [this.classifyWithContext(structuredQuery.originalInput, context)];
@@ -221,7 +223,7 @@ export class IntentClassifier {
         },
       ];
 
-      const response = await llmClient.chat(messages, { useCache: true });
+      const response = await client.chat(messages, { useCache: true });
       const intents = this.parseLLMIntents(response.content);
 
       return intents;
