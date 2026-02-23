@@ -50,9 +50,6 @@ import { detectRisks } from '@/skills/risk-detector';
 import { enhancedMatchCases, enhancedMatchCasesV3 } from '@/skills/enhanced-ai-matcher';
 import knowledgeBase from '@/data/cases/knowledge_base.json';
 
-// ⭐演示模式
-import { isDemoMode, getDemoResponse } from './demo-mode';
-
 export class AgentRouter {
   /**
    * ⭐v3.0核心方法：处理用户输入
@@ -65,23 +62,6 @@ export class AgentRouter {
     const startTime = Date.now();
 
     try {
-      // ============ Phase 0: Demo Mode Check ============
-      // 🎬 演示模式：返回固定响应，确保演示视频与旁白音频一致
-      const demoResponse = getDemoResponse(userInput);
-      if (demoResponse) {
-        console.log('[AgentRouter] 🎬 演示模式激活，返回固定响应');
-        return {
-          success: true,
-          content: demoResponse.content,
-          metadata: {
-            intent: demoResponse.intent as any,
-            dataSource: 'hybrid' as const,
-            executionTime: Date.now() - startTime,
-            suggestedActions: demoResponse.suggestedActions,
-          },
-        };
-      }
-
       // ============ Phase 1: Query Analysis ============
       const context = conversationManager.getContext(conversationId) || {
         conversationId,
