@@ -18,7 +18,7 @@ export default function proxy(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/favicon') ||
-    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js)$/)
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|html)$/)
   ) {
     return NextResponse.next();
   }
