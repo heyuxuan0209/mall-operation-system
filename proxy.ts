@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export default function middleware(request: NextRequest) {
+// 访问码验证代理函数
+export default function proxy(request: NextRequest) {
   const ACCESS_CODE = process.env.ACCESS_CODE || 'demo2026';
   const ACCESS_PAGE = '/access-verify';
   const { pathname } = request.nextUrl;
@@ -9,6 +10,7 @@ export default function middleware(request: NextRequest) {
   // 排除：访问码页面、静态资源、API、landing page
   if (
     pathname === ACCESS_PAGE ||
+    pathname === '/landing.html' ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/favicon') ||
@@ -17,7 +19,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 验证 cookie
+  // 检查 cookie 中的访问码
   const accessToken = request.cookies.get('access_verified')?.value;
   if (accessToken === ACCESS_CODE) {
     return NextResponse.next();
@@ -31,5 +33,7 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|landing\\.html).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|landing\\.html).*)',
+  ],
 };

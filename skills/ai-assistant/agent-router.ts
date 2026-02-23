@@ -75,7 +75,7 @@ export class AgentRouter {
           content: demoResponse.content,
           metadata: {
             intent: demoResponse.intent as any,
-            dataSource: 'demo',
+            dataSource: 'hybrid' as const,
             executionTime: Date.now() - startTime,
             suggestedActions: demoResponse.suggestedActions,
           },
