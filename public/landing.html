@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商户智运Agent — 商户健康度诊断与帮扶闭环 Agent 系统</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --bg-secondary: #161616;
+      --bg-card: #1a1a1a;
+      --bg-card-hover: #1f1f1f;
+      --border: #262626;
+      --border-hover: #3a3a3a;
+      --text-primary: #e8e8e8;
+      --text-secondary: #888;
+      --accent: #4c6ef5;
+      --accent-hover: #6281f7;
+      --font: system-ui, -apple-system, sans-serif;
+      --radius-card: 8px;
+      --radius-btn: 6px;
+      --line-height: 1.7;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font);
+      line-height: var(--line-height);
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 15, 15, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .nav-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ── Section wrapper ── */
+    .section {
+      padding: 96px 48px;
+    }
+
+    .section-inner {
+      max-width: 960px;
+    }
+
+    /* ── Hero ── */
+    #hero {
+      min-height: calc(100vh - 56px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-eyebrow {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 48px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.15;
+      margin-bottom: 16px;
+      max-width: 760px;
+    }
+
+    .hero-subtitle {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin-bottom: 48px;
+    }
+
+    .hero-desc p + p {
+      margin-top: 12px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 150ms ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* ── Demo Section ── */
+    #demo {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin-bottom: 32px;
+    }
+
+    .demo-btn-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .btn-demo {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      transition: border-color 150ms, background 150ms, color 150ms;
+    }
+
+    .btn-demo:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+    }
+
+    .btn-demo.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(76, 110, 245, 0.08);
+    }
+
+    .demo-player-wrapper {
+      max-width: 900px;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .demo-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .demo-placeholder-icon {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .demo-player-wrapper video,
+    .demo-player-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: none;
+    }
+
+    .demo-hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .demo-hint a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .demo-hint a:hover {
+      color: var(--accent-hover);
+    }
+
+    /* ── Capabilities ── */
+    #capabilities {
+      background: var(--bg);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 900px;
+      margin-top: 40px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 28px 24px;
+      transition: border-color 150ms, background 150ms;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+    }
+
+    .card-icon {
+      font-size: 22px;
+      margin-bottom: 14px;
+      display: block;
+      line-height: 1;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ── Stack ── */
+    #stack {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+    }
+
+    .stack-table {
+      max-width: 640px;
+      margin-top: 40px;
+    }
+
+    .stack-row {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      align-items: baseline;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 24px;
+    }
+
+    .stack-row:first-child {
+      border-top: 1px solid var(--border);
+    }
+
+    .stack-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .stack-value {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 36px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 150ms;
+    }
+
+    .footer-link:hover {
+      color: var(--accent-hover);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 767px) {
+      nav {
+        padding: 0 20px;
+      }
+
+      .section {
+        padding: 64px 20px;
+      }
+
+      .hero-title {
+        font-size: 32px;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+      }
+
+      .section-title {
+        font-size: 26px;
+      }
+
+      .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .demo-btn-group {
+        flex-direction: column;
+      }
+
+      .btn-demo {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stack-row {
+        grid-template-columns: 80px 1fr;
+      }
+
+      footer {
+        padding: 28px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-logo">智</div>
+    <span class="nav-name">商户智运Agent</span>
+  </nav>
+
+  <!-- Hero -->
+  <section class="section" id="hero">
+    <div class="section-inner">
+      <p class="hero-eyebrow">Agent System · 商户运营智能化</p>
+      <h1 class="hero-title">商户健康度诊断与帮扶闭环 Agent 系统</h1>
+      <p class="hero-subtitle">商户智运Agent</p>
+      <div class="hero-desc">
+        <p>面向购物中心的 AI 运营系统，能够自动分析商户经营健康度、定位问题根因，并生成可执行的帮扶任务，形成"感知 → 诊断 → 干预 → 复盘"的闭环。</p>
+        <p>系统集成 LLM 推理链、RAG 知识检索与多工具 Agent 编排，将原本依赖人工经验的运营决策流程转化为可复用、可追溯的智能工作流。</p>
+      </div>
+      <a href="#demo" class="btn-primary">
+        观看 3 分钟完整演示 ↓
+      </a>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section class="section" id="demo">
+    <div class="section-inner">
+      <p class="section-label">Demo</p>
+      <h2 class="section-title">完整业务闭环演示</h2>
+      <p class="section-desc">本视频展示从问题发现到任务生成与知识沉淀的完整流程。</p>
+
+      <div class="demo-btn-group">
+        <button class="btn-demo" id="btn-local" onclick="loadVideo('local')">
+          ▶ 国内播放
+        </button>
+        <button class="btn-demo" id="btn-intl" onclick="openYoutube()">
+          ↗ 海外播放
+        </button>
+      </div>
+
+      <div class="demo-player-wrapper" id="demo-player">
+        <div class="demo-placeholder">
+          <div class="demo-placeholder-icon">▶</div>
+          <span>选择播放方式以加载视频</span>
+        </div>
+      </div>
+      <p class="demo-hint" id="demo-hint" style="display:none">
+        画面不够清晰？
+        <a href="https://www.bilibili.com/video/BV178fiB1EkG/" target="_blank" rel="noopener">在 B 站观看完整高清版 ↗</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Capabilities -->
+  <section class="section" id="capabilities">
+    <div class="section-inner">
+      <p class="section-label">系统能力</p>
+      <h2 class="section-title">系统能力结构</h2>
+      <p class="section-desc">五层能力模块协同工作，覆盖数据接入到知识沉淀的全链路。</p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <span class="card-icon">◼</span>
+          <h3 class="card-title">数据层</h3>
+          <p class="card-desc">商户档案 / 行为日志 / 指标数据，统一接入与结构化存储，为上层分析提供可靠数据基础。</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔍</span>
+          <h3 class="card-title">RAG 检索</h3>
+          <p class="card-desc">历史案例语义检索与推荐，将过往成功的帮扶经验召回，辅助当前诊断决策。</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🧠</span>
+          <h3 class="card-title">Agent 推理链</h3>
+          <p class="card-desc">问题拆解与根因分析，通过多步推理将复杂经营问题定位到可干预的具体因素。</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">⚙️</span>
+          <h3 class="card-title">任务流编排</h3>
+          <p class="card-desc">自动生成巡检与帮扶任务，将诊断结论转化为结构化任务，分配给对应运营人员。</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">📚</span>
+          <h3 class="card-title">记忆系统</h3>
+          <p class="card-desc">知识沉淀与经验复用，每次帮扶结果回写知识库，持续优化后续诊断质量。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stack -->
+  <section class="section" id="stack">
+    <div class="section-inner">
+      <p class="section-label">技术架构</p>
+      <h2 class="section-title">技术架构</h2>
+      <p class="section-desc">基于现代 AI 工程栈构建，各模块职责清晰、可独立演进。</p>
+
+      <div class="stack-table">
+        <div class="stack-row">
+          <span class="stack-label">LLM</span>
+          <span class="stack-value">Claude / GPT-4</span>
+        </div>
+        <div class="stack-row">
+          <span class="stack-label">RAG</span>
+          <span class="stack-value">向量数据库 + 语义检索</span>
+        </div>
+        <div class="stack-row">
+          <span class="stack-label">Agent</span>
+          <span class="stack-value">多工具编排 · 推理链</span>
+        </div>
+        <div class="stack-row">
+          <span class="stack-label">Workflow</span>
+          <span class="stack-value">任务流自动生成 · 状态追踪</span>
+        </div>
+        <div class="stack-row">
+          <span class="stack-label">Memory</span>
+          <span class="stack-value">档案 + 行为日志持久化</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <span class="footer-copy">© 2025 商户智运Agent · 商户健康度诊断与帮扶闭环系统</span>
+    <a href="https://merchant-smartops.zeabur.app" class="footer-link" target="_blank" rel="noopener">
+      在线体验（需访问码）→
+    </a>
+  </footer>
+
+  <script>
+    var currentMode = null;
+
+    function loadVideo(mode) {
+      if (currentMode === mode) return;
+      currentMode = mode;
+
+      var player = document.getElementById('demo-player');
+      var btnLocal = document.getElementById('btn-local');
+      var hint = document.getElementById('demo-hint');
+
+      player.innerHTML = '';
+      btnLocal.classList.add('active');
+      hint.style.display = 'block';
+
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://player.bilibili.com/player.html?bvid=BV178fiB1EkG&autoplay=0&high_quality=1&danmaku=0';
+      iframe.allowFullscreen = true;
+      iframe.allow = 'fullscreen';
+      player.appendChild(iframe);
+    }
+
+    function openYoutube() {
+      window.open('https://youtu.be/uTbHGTIPEyA', '_blank', 'noopener');
+    }
+  </script>
+
+</body>
+</html>

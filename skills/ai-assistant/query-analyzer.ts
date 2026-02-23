@@ -205,11 +205,7 @@ export class QueryAnalyzer {
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
     console.log('[QueryAnalyzer] LLM raw response:', response.content);
 
     // 解析LLM响应

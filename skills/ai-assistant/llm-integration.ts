@@ -31,11 +31,7 @@ export class LLMIntegration {
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
     return response.content;
   }
 
@@ -63,11 +59,7 @@ export class LLMIntegration {
       },
     ];
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: true });
+    const response = await getLLMClient().chat(messages, { useCache: true });
     return response.content;
   }
 
@@ -98,11 +90,7 @@ export class LLMIntegration {
       content: userInput,
     });
 
-    const client = getLLMClient();
-    if (!client) {
-      throw new Error('LLM client not available');
-    }
-    const response = await client.chat(messages, { useCache: false });
+    const response = await getLLMClient().chat(messages, { useCache: false });
     return response.content;
   }
 
@@ -209,19 +197,7 @@ ${casesText}
       },
     ];
 
-    const client = getLLMClient();
-
-
-    if (!client) {
-
-
-      throw new Error('LLM client not available');
-
-
-    }
-
-
-    await client.chat(messages, {
+    await getLLMClient().chat(messages, {
       useCache: false,
       stream: true,
       onChunk,
