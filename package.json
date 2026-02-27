@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 8080",
+    "start": "next start",
     "lint": "eslint",
     "init:production": "tsx utils/deployment/initProductionConfig.ts",
     "check:deploy": "tsx utils/deployment/checkDeploymentReady.ts",
