@@ -1,8 +1,0 @@
-.git
-node_modules
-.next
-.env.local
-.env*.local
-README.md
-*.md
-.DS_Store
