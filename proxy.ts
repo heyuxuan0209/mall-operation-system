@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// 访问码验证 Middleware
-export default function middleware(request: NextRequest) {
+// 访问码验证代理函数
+export default function proxy(request: NextRequest) {
   // 获取配置的访问码（从环境变量）
   const ACCESS_CODE = process.env.ACCESS_CODE || 'demo2026';
 
@@ -12,7 +12,7 @@ export default function middleware(request: NextRequest) {
   // 当前请求路径
   const { pathname } = request.nextUrl;
 
-  // 排除：访问码页面本身、Next.js 内部路径、API 路由、静态资源（含 .html）
+  // 排除访问码验证页面本身和静态资源（含 .html，使 landing.html 可直接访问）
   if (
     pathname === ACCESS_PAGE ||
     pathname.startsWith('/_next') ||
@@ -31,13 +31,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 未验证：根路径 "/" 重定向到 landing page，其他路径跳到验证页
-  if (pathname === '/') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/landing.html';
-    return NextResponse.redirect(url);
-  }
-
+  // 未验证，重定向到访问码输入页面
   const url = request.nextUrl.clone();
   url.pathname = ACCESS_PAGE;
   url.searchParams.set('redirect', pathname);
@@ -48,13 +42,6 @@ export default function middleware(request: NextRequest) {
 // 配置需要保护的路径
 export const config = {
   matcher: [
-    /*
-     * 匹配所有路径，除了：
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
