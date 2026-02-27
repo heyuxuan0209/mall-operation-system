@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// 访问码验证代理函数
-export default function proxy(request: NextRequest) {
+// 访问码验证 Middleware
+export default function middleware(request: NextRequest) {
   // 获取配置的访问码（从环境变量）
   const ACCESS_CODE = process.env.ACCESS_CODE || 'demo2026';
 
@@ -12,7 +12,7 @@ export default function proxy(request: NextRequest) {
   // 当前请求路径
   const { pathname } = request.nextUrl;
 
-  // 排除访问码验证页面本身和静态资源
+  // 排除：访问码页面本身、Next.js 内部路径、API 路由、静态资源（含 .html）
   if (
     pathname === ACCESS_PAGE ||
     pathname.startsWith('/_next') ||
@@ -47,7 +47,7 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico
      */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
