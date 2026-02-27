@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import MainLayout from "@/components/layout/MainLayout";
 import WelcomeBanner from "@/components/demo/WelcomeBanner";
@@ -7,11 +6,6 @@ import DemoFooter from "@/components/demo/DemoFooter";
 import DemoWatermark from "@/components/demo/DemoWatermark";
 import FloatingAssistant from "@/components/ai-assistant/FloatingAssistant";
 import Script from "next/script";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export const metadata: Metadata = {
   title: "商户智运Agent - AI驱动的商户健康管理系统",
@@ -42,7 +36,7 @@ export default function RootLayout({
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
       </head>
-      <body className={`${inter.variable} antialiased bg-slate-50`}>
+      <body className="antialiased bg-slate-50">
         {/* Demo版本欢迎横幅 */}
         <WelcomeBanner />
 
