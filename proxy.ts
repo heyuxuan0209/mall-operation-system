@@ -31,7 +31,13 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 未验证，重定向到访问码输入页面
+  // 未验证：根路径 "/" 重定向到 landing page，其他路径跳到验证页
+  if (pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/landing.html';
+    return NextResponse.redirect(url);
+  }
+
   const url = request.nextUrl.clone();
   url.pathname = ACCESS_PAGE;
   url.searchParams.set('redirect', pathname);
