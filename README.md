@@ -10,7 +10,7 @@
 [![AI](https://img.shields.io/badge/AI-LLM%20Powered-purple.svg)](https://anthropic.com)
 
 **🌐 在线体验**: [https://merchant-smartops.zeabur.app](https://merchant-smartops.zeabur.app)
-**🔑 访问码**: `hyx2026` | 如有疑问请联系何雨轩 **182 1020 9768**
+**🔑 访问码**: `如需访问码，请联系何雨轩 **182 1020 9768**
 
 ---
 
