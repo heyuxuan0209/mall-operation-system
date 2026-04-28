@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import DeadlineAlert from '../DeadlineAlert';
@@ -12,6 +13,17 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  // These routes manage their own layout completely — skip the v1 chrome
+  if (
+    pathname.startsWith('/workspace') ||
+    pathname.startsWith('/v2') ||
+    pathname.startsWith('/access-verify')
+  ) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col lg:flex-row relative">
       <Sidebar />

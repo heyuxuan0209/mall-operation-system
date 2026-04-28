@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Zap } from 'lucide-react';
 
 const menuItems = [
   { id: 'dashboard', label: '总览', fullLabel: '运营总览', icon: 'fa-chart-pie', path: '/' },
@@ -49,6 +50,27 @@ export default function Sidebar() {
             );
           })}
         </nav>
+        {/* v2 Entry */}
+        <div className="p-4 border-t border-slate-800 space-y-2">
+          <Link
+            href="/workspace"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', boxShadow: '0 0 14px rgba(124,58,237,0.3)' }}
+          >
+            <Zap size={14} />
+            <span>线程工作台</span>
+            <span className="ml-auto text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">NEW</span>
+          </Link>
+          <Link
+            href="/v2"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+            style={{ background: 'linear-gradient(135deg,#0ea5e9,#2563eb)', boxShadow: '0 0 14px rgba(14,165,233,0.3)' }}
+          >
+            <Zap size={14} />
+            <span>体验新版 v2.0</span>
+            <span className="ml-auto text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">AI 决策中枢</span>
+          </Link>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation:

@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import MainLayout from "@/components/layout/MainLayout";
-import WelcomeBanner from "@/components/demo/WelcomeBanner";
-import DemoFooter from "@/components/demo/DemoFooter";
-import DemoWatermark from "@/components/demo/DemoWatermark";
-import FloatingAssistant from "@/components/ai-assistant/FloatingAssistant";
+import RootChrome from "@/components/layout/RootChrome";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -37,21 +34,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-slate-50">
-        {/* Demo版本欢迎横幅 */}
-        <WelcomeBanner />
-
-        {/* Demo版本右下角水印 */}
-        <DemoWatermark />
-
-        {/* AI助手浮动按钮 */}
-        <FloatingAssistant />
-
-        {/* 主要内容区域 */}
-        <div className="flex flex-col min-h-screen">
+        <RootChrome>
           <MainLayout>{children}</MainLayout>
-          {/* Demo版本页脚 */}
-          <DemoFooter />
-        </div>
+        </RootChrome>
       </body>
     </html>
   );

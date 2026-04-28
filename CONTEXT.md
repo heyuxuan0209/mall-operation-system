@@ -1,6 +1,83 @@
-# 项目上下文索引 v3.1
+# 项目上下文索引 v4.0
 
-## 🎯 当前版本状态
+## 🚨 最新进展 — 商户智运Agent 改版 V2 (2026-04-28)
+
+### 当前工作阶段：改版 V2 UI 重建（作品集展示版）
+
+**背景**：在原有 v3.1 完整系统基础上，新增一套全新的 V2 界面，突出 AI 多 Agent 协作、会商推理、决策闭环等产品设计概念，用于作品集展示和面试。V2 与原系统并行存在，通过路由隔离。
+
+**新增路由体系**：
+- `/v2` — AI 决策中心（总览仪表盘）
+- `/v2/session` — 会话列表
+- `/v2/decision` — 决策中心
+- `/v2/execution` — 执行追踪 ⭐已增强
+- `/v2/memory` — 组织记忆 ⭐已增强
+- `/workspace` — 多 Agent 会商工作台 ⭐核心页面，已完成 Phase 1
+
+---
+
+### ✅ Phase 1 完成（已完成）
+
+#### 1. `/app/workspace/page.tsx` — 多 Agent 会商工作台（全量重写）
+完整实现了以下 5 项核心功能：
+- **AutoPlay 引擎**：Script 驱动的自动播放，支持 typing 动画、pauseMs 间隔、1x/2x/3x 速度切换、暂停/继续
+- **Phase 阶段时间线**：发现→证据→判断→请示→方案→决策→执行→沉淀，8 阶段进度可视化
+- **CEO Directive Bar**：总经理指令输入栏，含快捷指令 chips（先补证据/换议题/点名发言/拍板指令）、@Agent 点名
+- **PhaseConclusionCard**：会商阶段收敛卡（已确认/仍待确认/总经理需决定/建议下一步）
+- **BusinessThreadCard**：左侧经营事项盘，3条线程（望潮港P0/辛香汇P1/B区复盘P1），已实现切换
+
+关键组件：`DataEmbed`, `InspectionEmbed`, `CaseEmbed`, `PhaseConclusionCard`, `JudgmentRevisionCard`, `PlanCard`(8字段), `TaskCard`, `MemoryCard`, `MsgBubble`, `TypingBubble`, `BusinessThreadCard`, `CeoDirectiveBar`
+
+#### 2. `/app/v2/execution/page.tsx` — 执行追踪页增强
+- 新增 `Sparkline` SVG折线图组件（纯 SVG，无外部依赖）
+- `LeadingIndicatorDashboard`：望潮港专属领先指标面板（人均消费/差评率/高毛利占比，进度条+趋势图）
+- 续约风险降级通知 banner（高→中，链接到 /workspace）
+- 4 条望潮港干预任务（含 2 周复盘任务）
+
+#### 3. `/app/v2/memory/page.tsx` — 组织记忆页增强
+- 新增 Case #2024-088（望潮港，isNew+sourceWorkspace，NEW 徽章+天蓝色边框）
+- `CrossCaseInsights` 跨案例洞察面板（3条规律：双修策略/领先指标/最优窗口）
+- AI 使用日志新增 91% 相似度条目
+
+---
+
+### 🚧 Phase 2 进行中（已授权，待完成）
+
+**目标**：为 `/app/workspace/page.tsx` 添加多线程支持
+
+#### 2-A 辛香汇线程（经营下滑场景）
+- 静态消息数组 `XINXIANG_BASE_MSGS`（8条，discovery→diagnosis）
+- `XINXIANG_MSGS`（末尾加 consultation waiting）
+- `XINXIANG_MSGS_APPROVED`（consultation approved + gm + advisor + task-card）
+- 新增数据：`XINXIANG_DATA_ROWS`（5项）、`XINXIANG_INSPECTION_ITEMS`（3项）、`XINXIANG_TASKS`（3项）
+- 新增 embed 类型：`data-xinxiang`、`inspection-xinxiang`
+
+#### 2-B B区复盘线程（活动复盘场景）
+- 静态消息数组 `BEVENT_MSGS`（9条，全流程完成）
+- 新增数据：`BEVENT_DATA_ROWS`（5项活动指标）
+- 新增 embed 类型：`data-bevent`
+- memory-card 等待 GM 确认沉淀
+
+**技术架构变更**：
+- `THREAD_META` 配置（每条线程的 header/panel 数据）
+- `currentMsgs` useMemo（基于 activeThread + xinxiangApproved + beventConfirmed 切换消息数组）
+- `xinxiangApproved`, `beventConfirmed` state flags
+- `TaskCard` 支持 `tasks` prop（线程特定任务列表）
+- `MsgBubble` 新增 `threadTasks`, `activeThread` props
+- 自动播放控件仅在 `activeThread === 'wangchao'` 时显示
+- 所有派生状态（participants/pendingDecisions/evidenceList 等）改用 `currentMsgs`
+
+---
+
+### 📋 Phase 3 待规划
+
+1. 商户档案页 `/archives/[id]`
+2. 今日晨报线程（左侧自动运行区域）
+3. 发起新会商流程（全局 + 按钮）
+
+---
+
+## 🎯 当前版本状态（历史 v3.1）
 - **版本**: v3.1-dev ✅ 已完成
 - **最后更新**: 2026-02-11
 - **在线地址**: https://merchant-smartops.zeabur.app
@@ -250,14 +327,23 @@ npm run dev  # 访问 http://localhost:3000
 - **2026-02-03**: 🛠️ 新增 md-to-pdf 工具 - Markdown转PDF（中文优化 + npm scripts集成）
 
 ## 🎯 Top 4 待办事项
-1. **v3.2 规划** ⭐新增 - 历史数据存储 + 后端API集成 + 更多图表类型
-2. **IndexedDB迁移** ⭐高优先级 - 解决localStorage容量限制 + 历史数据持久化
-3. **帮扶档案Skills提取** 📋计划 - 提取5个核心Skills（档案摘要、措施分析等）
-4. **智能拍照分类** - 启发式规则自动建议分类（P1优化）
+1. **多 Agent 架构实现** ⭐⭐⭐ 新增 - 从单 Agent 到多 Agent 协作架构演进
+   - 详细设计已完成（见 `docs/career/PROJECT-DETAILED.md` Section 3）
+   - 5个专业化Agent：Orchestrator、Diagnostic、Knowledge、Execution、Learning
+   - 分3个Phase实施：拆分（2周）→ 优化（2周）→ 扩展（持续）
+   - 预期收益：并行能力提升3倍、可扩展性+100%、持续学习闭环
+2. **v3.2 规划** - 历史数据存储 + 后端API集成 + 更多图表类型
+3. **IndexedDB迁移** ⭐高优先级 - 解决localStorage容量限制 + 历史数据持久化
+4. **帮扶档案Skills提取** 📋计划 - 提取5个核心Skills（档案摘要、措施分析等）
 
 ## ⚠️ 当前关注点
 - [x] **v3.1 商户详细运营数据扩展** ⭐ 已完成 ✅ (Phase 1-3全部完成)
 - [x] **v3.0 AI问答助手重构** ⭐ 已完成 ✅ (3个迭代全部完成)
+- [ ] **多 Agent 架构实现** ⭐⭐⭐ 新增待办 - 架构设计文档已完成 (见 `docs/career/PROJECT-DETAILED.md` Section 3)
+  - 详细架构设计：5个专业化Agent + 通信协议 + 协作流程示例
+  - 实施计划：Phase 1 拆分（2周）→ Phase 2 优化（2周）→ Phase 3 扩展（持续）
+  - 预期收益：职责分离、并行执行（提速3倍）、可扩展性+100%、持续学习
+  - 技术亮点：多Agent协作、架构演进思维、系统设计能力展示
 - [x] 执行P1任务 (提取4个Skills，已完成 ✅)
 - [x] 执行P2方案A (统一导出+开发规范，已完成 ✅)
 - [x] **批量巡检模式** ⭐ Sprint 1 P0任务完成 ✅ (效率提升47%)
