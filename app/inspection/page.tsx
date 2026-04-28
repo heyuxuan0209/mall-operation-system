@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Camera, Mic, MapPin, Star, Save, List } from 'lucide-react';
+import { Camera, Mic, MapPin, Star, Save, List, Lightbulb } from 'lucide-react';
 import ImageUploader from '@/components/inspection/ImageUploader';
 import VoiceRecorder from '@/components/inspection/VoiceRecorder';
 import QuickCheckIn from '@/components/inspection/QuickCheckIn';
 import QuickRatingComponent from '@/components/inspection/QuickRating';
 import SaveFeedbackModal from '@/components/inspection/SaveFeedbackModal';
+import RealTimeDiagnostics from '@/components/inspection/RealTimeDiagnostics';
 import ReturnToArchiveButton from '@/components/ui/ReturnToArchiveButton';
+import DebugPanel from '@/components/inspection/DebugPanel';
 import { PhotoAttachment, CheckInData, QuickRating, Merchant, VoiceNote } from '@/types';
 import { inspectionServiceInstance } from '@/utils/inspectionService';
 import { DEFAULT_MERCHANT_LOCATION } from '@/utils/merchantData';
@@ -21,6 +23,9 @@ export default function InspectionPage() {
   const [checkIn, setCheckIn] = useState<CheckInData | null>(null);
   const [rating, setRating] = useState<QuickRating | null>(null);
   const [textNotes, setTextNotes] = useState('');
+
+  // Sprint 2: 实时诊断助手状态
+  const [showDiagnostics, setShowDiagnostics] = useState(true);
 
   // 反馈弹窗状态
   const [showFeedback, setShowFeedback] = useState(false);
@@ -164,13 +169,22 @@ export default function InspectionPage() {
                 </p>
               </div>
             </div>
-            <a
-              href="/inspection/batch"
-              className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-all text-sm font-medium"
-            >
-              <List size={18} />
-              <span>批量巡检</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/inspection/planning"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-sm"
+              >
+                <Lightbulb size={18} />
+                <span>智能规划</span>
+              </Link>
+              <a
+                href="/inspection/batch"
+                className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-all text-sm font-medium"
+              >
+                <List size={18} />
+                <span>批量巡检</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -264,9 +278,21 @@ export default function InspectionPage() {
             <li>语音笔记支持自动转文字（需浏览器支持）</li>
             <li>快速评分可以使用预设或滑动调整</li>
             <li>所有数据暂存在浏览器本地</li>
+            <li className="text-purple-700 font-medium">💡 AI诊断助手会实时分析巡检数据，提供智能建议</li>
           </ul>
         </div>
       </div>
+
+      {/* Sprint 2: 实时诊断助手 */}
+      {checkIn && (
+        <RealTimeDiagnostics
+          photos={photos}
+          audioNotes={audioNote ? [audioNote] : []}
+          rating={rating}
+          isExpanded={showDiagnostics}
+          onToggle={() => setShowDiagnostics(!showDiagnostics)}
+        />
+      )}
 
       {/* 反馈弹窗 */}
       {showFeedback && feedbackData && (
@@ -279,6 +305,14 @@ export default function InspectionPage() {
           highlights={feedbackData.highlights}
         />
       )}
+
+      {/* Debug Panel */}
+      <DebugPanel
+        checkIn={checkIn}
+        photos={photos}
+        audioNote={audioNote}
+        rating={rating}
+      />
     </div>
   );
 }

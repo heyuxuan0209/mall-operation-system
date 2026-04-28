@@ -20,8 +20,11 @@ export default function FloatingAssistant() {
   useEffect(() => {
     const hasBeenWelcomed = localStorage.getItem(STORAGE_KEY);
 
-    if (!hasBeenWelcomed) {
-      // 首次访问：2秒后自动打开
+    // 检测是否为移动设备
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    if (!hasBeenWelcomed && !isMobile) {
+      // 首次访问且非移动设备：2秒后自动打开
       const timer = setTimeout(() => {
         setIsOpen(true);
         localStorage.setItem(STORAGE_KEY, 'true');
@@ -30,6 +33,9 @@ export default function FloatingAssistant() {
       return () => {
         clearTimeout(timer);
       };
+    } else if (!hasBeenWelcomed && isMobile) {
+      // 移动设备首次访问：不自动打开，但标记为已欢迎
+      localStorage.setItem(STORAGE_KEY, 'true');
     }
   }, []);
 

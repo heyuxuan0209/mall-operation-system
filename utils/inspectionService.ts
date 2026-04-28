@@ -1,4 +1,4 @@
-import { Merchant, MerchantProfile, ChecklistItem, PhotoAttachment, CheckInData, QuickRating, VoiceNote } from '@/types';
+import { Merchant, MerchantProfile, ChecklistItem, PhotoAttachment, CheckInData, QuickRating, VoiceNote, InspectionRecord } from '@/types';
 import { merchantDataManager } from './merchantDataManager';
 import {
   generateMerchantInsights,
@@ -7,25 +7,6 @@ import {
   extractIssuesFromPhotos,
   generateHighlights,
 } from '@/skills/inspection-analyzer';
-
-/**
- * 巡检记录接口
- */
-export interface InspectionRecord {
-  id: string;
-  merchantId: string;
-  merchantName: string;
-  inspectorId: string;
-  inspectorName: string;
-  checkIn: CheckInData;
-  rating: QuickRating | null;
-  photos: PhotoAttachment[];
-  audioNotes: VoiceNote[];
-  textNotes: string;
-  issues: string[];
-  createdAt: string;
-  updatedAt: string;
-}
 
 /**
  * 保存结果接口（包含反馈数据）
@@ -122,7 +103,7 @@ class InspectionServiceClass {
       inspectorId,
       inspectorName,
       checkIn,
-      rating,
+      rating: rating || undefined, // 将null转换为undefined
       photos,
       audioNotes,
       textNotes,

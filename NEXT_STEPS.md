@@ -1,4 +1,4 @@
-# 下一步计划 — 商户智运Agent 改版 V2
+# 下一步计划 — 商户智运Agent 改版 V4
 
 **更新时间**: 2026-04-28
 **当前阶段**: Phase 2 进行中（/workspace 多线程支持）
@@ -12,8 +12,8 @@
 | 文件 | 内容 |
 |------|------|
 | `app/workspace/page.tsx` | 多Agent会商工作台全量重写：AutoPlay引擎、8阶段Phase时间线、CEO Directive Bar、PhaseConclusionCard、JudgmentRevisionCard、PlanCard(8字段)、左侧经营事项盘 |
-| `app/v2/execution/page.tsx` | Sparkline组件、LeadingIndicatorDashboard（望潮港领先指标）、续约风险降级banner、4条干预任务 |
-| `app/v2/memory/page.tsx` | Case #2024-088（NEW徽章）、CrossCaseInsights跨案例洞察面板（3条规律）、AI使用日志新条目 |
+| `app/v4/execution/page.tsx` | Sparkline组件、LeadingIndicatorDashboard（望潮港领先指标）、续约风险降级banner、4条干预任务 |
+| `app/v4/memory/page.tsx` | Case #2024-088（NEW徽章）、CrossCaseInsights跨案例洞察面板（3条规律）、AI使用日志新条目 |
 
 ---
 

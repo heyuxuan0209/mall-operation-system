@@ -253,7 +253,7 @@ export default function DecisionPage() {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Link href="/v2" className="hover:text-slate-300 transition-colors">经营驾驶舱</Link>
+          <Link href="/v4" className="hover:text-slate-300 transition-colors">经营驾驶舱</Link>
           <ChevronRight size={11} />
           <span className="text-slate-300">AI 决策工作台</span>
           <ChevronRight size={11} />
@@ -448,7 +448,7 @@ export default function DecisionPage() {
                   <p className="text-sm font-semibold text-emerald-400">任务已发起</p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     已生成 4 项执行任务，任务调度官已自动分配至运营团队。
-                    <Link href="/v2/execution" className="text-sky-400 hover:underline ml-1">查看执行中心 →</Link>
+                    <Link href="/v4/execution" className="text-sky-400 hover:underline ml-1">查看执行中心 →</Link>
                   </p>
                 </div>
               </div>
@@ -512,7 +512,7 @@ export default function DecisionPage() {
           <p className="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-2">
             <BookOpen size={12} className="text-cyan-400" /> 引用历史案例
           </p>
-          <Link href="/v2/memory"
+          <Link href="/v4/memory"
             className="block rounded-xl p-3.5 transition-all"
             style={{ background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.18)' }}>
             <div className="flex items-center justify-between mb-2">

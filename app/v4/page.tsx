@@ -99,7 +99,7 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
 };
 
 /* ─── Main Page ──────────────────────────────────────────────────── */
-export default function V2Dashboard() {
+export default function V4Dashboard() {
   const [reportExpanded, setReportExpanded] = useState(false);
 
   const stats = {
@@ -126,7 +126,7 @@ export default function V2Dashboard() {
             style={{ background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.1)' }}>
             <RefreshCw size={11} /> 刷新
           </button>
-          <Link href="/v2/session"
+          <Link href="/v4/session"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all"
             style={{ background: 'linear-gradient(135deg,#0ea5e9,#2563eb)', boxShadow: '0 0 12px rgba(14,165,233,0.3)' }}>
             <Brain size={11} /> 启动 AI 会商
@@ -172,7 +172,7 @@ export default function V2Dashboard() {
               </p>
             )}
           </div>
-          <Link href="/v2/session" className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium text-sky-300 transition-all"
+          <Link href="/v4/session" className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium text-sky-300 transition-all"
             style={{ background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.2)' }}>
             启动会商 <ArrowRight size={12} />
           </Link>
@@ -252,7 +252,7 @@ export default function V2Dashboard() {
                   </span>
                 ))}
               </div>
-              <Link href="/v2/session"
+              <Link href="/v4/session"
                 className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{ background: 'rgba(14,165,233,0.1)', color: '#38bdf8', border: '1px solid rgba(14,165,233,0.2)' }}>
                 AI 研判此问题 <ChevronRight size={11} />
@@ -368,7 +368,7 @@ export default function V2Dashboard() {
             );
           })}
 
-          <Link href="/v2/execution"
+          <Link href="/v4/execution"
             className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-xs font-medium transition-all"
             style={{ background: 'rgba(14,165,233,0.08)', color: '#38bdf8', border: '1px solid rgba(14,165,233,0.15)' }}>
             查看全部任务 <ArrowRight size={11} />

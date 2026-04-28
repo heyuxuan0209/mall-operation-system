@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MapPin, Check, Loader, AlertTriangle, Target, CheckSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, Check, Loader, AlertTriangle, Target, CheckSquare, AlertCircle, Clock } from 'lucide-react';
 import { CheckInData, Merchant } from '@/types';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { getMerchantProfile } from '@/utils/inspectionService';
+import { inspectionServiceInstance } from '@/utils/inspectionService';
 
 interface QuickCheckInProps {
   merchantId: string;
@@ -28,6 +29,20 @@ export default function QuickCheckIn({
   const [checkInData, setCheckInData] = useState<CheckInData | null>(initialCheckIn);
   // 修改为Map存储：itemId -> true(是) | false(否) | null(未选择)
   const [checklistAnswers, setChecklistAnswers] = useState<Map<string, boolean | null>>(new Map());
+
+  // 新增：历史巡检记录
+  const [lastInspection, setLastInspection] = useState<any>(null);
+  const [hasHistoricalIssues, setHasHistoricalIssues] = useState(false);
+
+  // 加载历史巡检记录
+  useEffect(() => {
+    const records = inspectionServiceInstance.getRecordsByMerchant(merchantId);
+    if (records && records.length > 0) {
+      const latest = records[0]; // 已按时间排序，第一个是最新的
+      setLastInspection(latest);
+      setHasHistoricalIssues(latest.issues && latest.issues.length > 0);
+    }
+  }, [merchantId]);
 
   // 计算两点间距离（Haversine公式）
   const calculateDistance = (
@@ -94,6 +109,40 @@ export default function QuickCheckIn({
       }
     } catch (err) {
       console.error('Check-in failed:', err);
+    }
+  };
+
+  // 模拟签到（用于开发测试）
+  const handleMockCheckIn = () => {
+    const merchantProfile = getMerchantProfile(merchant);
+
+    // 使用商户位置或默认位置
+    const mockLat = merchantLocation?.lat || 39.9042;
+    const mockLng = merchantLocation?.lng || 116.4074;
+
+    const data: CheckInData = {
+      id: `checkin_${Date.now()}`,
+      merchantId,
+      merchantName,
+      userId: 'current_user',
+      userName: '当前用户',
+      timestamp: new Date().toISOString(),
+      location: {
+        latitude: mockLat,
+        longitude: mockLng,
+        accuracy: 10,
+      },
+      distance: 0, // 模拟在商户位置
+      merchantProfile,
+    };
+
+    setCheckInData(data);
+    setChecked(true);
+    onCheckIn(data);
+
+    // 触发触觉反馈（如果支持）
+    if ('vibrate' in navigator) {
+      navigator.vibrate(200);
     }
   };
 
@@ -198,6 +247,59 @@ export default function QuickCheckIn({
             )}
           </div>
         </div>
+
+        {/* 新增：历史问题追踪 */}
+        {hasHistoricalIssues && lastInspection && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <AlertCircle size={18} className="text-orange-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">上次巡检发现的问题</h3>
+              <div className="ml-auto flex items-center gap-1 text-xs text-orange-600">
+                <Clock size={14} />
+                <span>
+                  {new Date(lastInspection.createdAt).toLocaleDateString('zh-CN')}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              {lastInspection.issues.slice(0, 5).map((issue: string, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 p-3 bg-white rounded-md border border-orange-100"
+                >
+                  <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-orange-600">{index + 1}</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-800">{issue}</div>
+                  </div>
+                </div>
+              ))}
+              {lastInspection.issues.length > 5 && (
+                <div className="text-sm text-orange-600 text-center">
+                  还有 {lastInspection.issues.length - 5} 个问题未显示...
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gradient-to-r from-orange-100 to-yellow-100 rounded-lg p-4 border border-orange-200">
+              <div className="flex items-start gap-2">
+                <Target size={18} className="text-orange-700 flex-shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-sm font-semibold text-orange-900 mb-1">
+                    本次巡检重点验证
+                  </div>
+                  <div className="text-sm text-orange-800">
+                    请重点检查上述问题的改善情况，并拍照记录对比效果
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Phase 2: 商户健康度诊断简报 */}
         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
@@ -391,11 +493,55 @@ export default function QuickCheckIn({
 
       {/* 错误提示 */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
-          {error.code === 1 && '位置权限被拒绝，请在浏览器设置中允许位置访问'}
-          {error.code === 2 && '无法获取位置信息'}
-          {error.code === 3 && '获取位置超时'}
-          {!error.code && error.message}
+        <div className="space-y-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-600">
+            <div className="font-semibold mb-2 flex items-center gap-2">
+              <AlertTriangle size={16} />
+              无法获取位置信息
+            </div>
+            {error.code === 1 && (
+              <div className="space-y-2">
+                <div>位置权限被拒绝</div>
+                <div className="text-xs text-red-500 bg-red-100 p-2 rounded">
+                  <div className="font-medium mb-1">📱 移动端说明：</div>
+                  <div>出于安全考虑，移动浏览器仅允许 HTTPS 网站或 localhost 访问位置。</div>
+                  <div className="mt-1">当前通过内网 IP 访问，无法使用真实定位功能。</div>
+                  <div className="mt-2 font-medium">👉 请使用下方"模拟签到"按钮进行测试</div>
+                </div>
+              </div>
+            )}
+            {error.code === 2 && (
+              <div className="space-y-1">
+                <div className="font-medium">定位服务不可用</div>
+                <div className="text-xs">可能原因：</div>
+                <ul className="text-xs list-disc list-inside pl-2 space-y-1">
+                  <li>系统定位服务未开启</li>
+                  <li>浏览器定位权限未授予</li>
+                  <li>移动端需要 HTTPS 或 localhost</li>
+                </ul>
+              </div>
+            )}
+            {error.code === 3 && '获取位置超时，请检查网络连接'}
+            {!error.code && error.message}
+          </div>
+
+          {/* 模拟签到按钮 - 移动端突出显示 */}
+          <button
+            onClick={handleMockCheckIn}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all active:scale-95 shadow-lg"
+          >
+            <MapPin size={22} />
+            <span className="text-lg font-semibold">使用模拟签到</span>
+          </button>
+
+          <div className="text-sm text-orange-700 bg-orange-50 p-3 rounded-lg border border-orange-200">
+            <div className="font-medium mb-1">💡 模拟签到说明</div>
+            <div className="text-xs space-y-1">
+              <div>• 使用商户默认位置进行签到</div>
+              <div>• 功能完全正常，仅位置为模拟数据</div>
+              <div>• 适合内网开发测试和功能演示</div>
+            </div>
+          </div>
         </div>
       )}
 

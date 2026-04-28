@@ -246,7 +246,7 @@ function CaseDetail({ c, onClose }: { c: typeof successCases[0]; onClose: () => 
                 <span className="text-[10px] text-slate-500">{log.time}</span>
                 <span className="text-[10px] text-slate-300 flex-1">{log.merchant}</span>
                 <span className="text-[10px] text-cyan-500">相似度{log.similarity}%</span>
-                <Link href="/v2/decision" className="text-[10px] text-sky-400 flex items-center gap-0.5">
+                <Link href="/v4/decision" className="text-[10px] text-sky-400 flex items-center gap-0.5">
                   {log.decisionId} <ExternalLink size={8} />
                 </Link>
               </div>
@@ -572,7 +572,7 @@ export default function MemoryPage() {
                     style={{ background: 'rgba(14,165,233,0.1)', color: '#38bdf8' }}>
                     {log.similarity}% 匹配
                   </span>
-                  <Link href="/v2/decision"
+                  <Link href="/v4/decision"
                     className="flex items-center gap-1 text-[10px] text-sky-400 hover:underline">
                     {log.decisionId} <ExternalLink size={9} />
                   </Link>

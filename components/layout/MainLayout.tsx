@@ -18,7 +18,7 @@ export default function MainLayout({
   // These routes manage their own layout completely — skip the v1 chrome
   if (
     pathname.startsWith('/workspace') ||
-    pathname.startsWith('/v2') ||
+    pathname.startsWith('/v4') ||
     pathname.startsWith('/access-verify')
   ) {
     return <>{children}</>;

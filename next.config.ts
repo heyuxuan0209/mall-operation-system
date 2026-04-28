@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  // 修复 Turbopack 多 lockfile 根目录识别问题
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
+
   // 禁用生产环境的Source Maps，保护源代码
   productionBrowserSourceMaps: false,
 

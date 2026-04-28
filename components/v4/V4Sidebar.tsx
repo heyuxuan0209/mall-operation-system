@@ -20,7 +20,7 @@ const navItems = [
     label: '经营驾驶舱',
     sub: 'Command Center',
     icon: LayoutDashboard,
-    path: '/v2',
+    path: '/v4',
     exact: true,
   },
   {
@@ -28,7 +28,7 @@ const navItems = [
     label: 'AI 会商决策',
     sub: 'Deliberation Studio',
     icon: MessagesSquare,
-    path: '/v2/session',
+    path: '/v4/session',
     exact: false,
     highlight: true,
   },
@@ -37,7 +37,7 @@ const navItems = [
     label: '执行推进中心',
     sub: 'Execution Hub',
     icon: ListChecks,
-    path: '/v2/execution',
+    path: '/v4/execution',
     exact: false,
   },
   {
@@ -45,7 +45,7 @@ const navItems = [
     label: '组织记忆中心',
     sub: 'Memory Center',
     icon: BookMarked,
-    path: '/v2/memory',
+    path: '/v4/memory',
     exact: false,
   },
 ];
@@ -59,7 +59,7 @@ const agents = [
   { id: 'memory', name: '案例记忆官', color: '#06b6d4', status: 'active' },
 ];
 
-export default function V2Sidebar() {
+export default function V4Sidebar() {
   const pathname = usePathname();
 
   const isActive = (item: typeof navItems[0]) => {
@@ -97,7 +97,7 @@ export default function V2Sidebar() {
             <h1 className="text-[13px] font-bold text-slate-100 tracking-tight leading-tight truncate">
               商户智运Agent
             </h1>
-            <p className="text-[10px] text-slate-500 mt-0.5">AI 经营决策中枢 · v2.0</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">AI 经营决策中枢 · v4.0</p>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ export default function V2Sidebar() {
           {/* Settings */}
           <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(148,163,184,0.07)', marginTop: '8px' }}>
             <Link
-              href="/v2/settings"
+              href="/v4/settings"
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
               style={{ color: '#64748b', border: '1px solid transparent' }}
               onMouseEnter={(e) => {

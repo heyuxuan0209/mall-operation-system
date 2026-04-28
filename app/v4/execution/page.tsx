@@ -489,7 +489,7 @@ export default function ExecutionPage() {
                 {/* Task source */}
                 <div className="rounded-xl p-4" style={{ background: '#0c1525', border: '1px solid rgba(14,165,233,0.15)' }}>
                   <p className="text-[10px] text-slate-500 mb-2">任务来源（可溯源至 AI 决策）</p>
-                  <Link href="/v2/decision"
+                  <Link href="/v4/decision"
                     className="flex items-center gap-2 group">
                     <span className="text-xs font-mono text-sky-400">{selectedTask.source.id}</span>
                     <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors">{selectedTask.source.label}</span>

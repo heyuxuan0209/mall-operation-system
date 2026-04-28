@@ -1,17 +1,17 @@
 # 项目上下文索引 v4.0
 
-## 🚨 最新进展 — 商户智运Agent 改版 V2 (2026-04-28)
+## 🚨 最新进展 — 商户智运Agent 改版 V4 (2026-04-28)
 
-### 当前工作阶段：改版 V2 UI 重建（作品集展示版）
+### 当前工作阶段：改版 V4 UI 重建（作品集展示版）
 
-**背景**：在原有 v3.1 完整系统基础上，新增一套全新的 V2 界面，突出 AI 多 Agent 协作、会商推理、决策闭环等产品设计概念，用于作品集展示和面试。V2 与原系统并行存在，通过路由隔离。
+**背景**：在原有 v3.1 完整系统基础上，新增一套全新的 V4 界面，突出 AI 多 Agent 协作、会商推理、决策闭环等产品设计概念，用于作品集展示和面试。V4 与原系统并行存在，通过路由隔离。
 
 **新增路由体系**：
-- `/v2` — AI 决策中心（总览仪表盘）
-- `/v2/session` — 会话列表
-- `/v2/decision` — 决策中心
-- `/v2/execution` — 执行追踪 ⭐已增强
-- `/v2/memory` — 组织记忆 ⭐已增强
+- `/v4` — AI 决策中心（总览仪表盘）
+- `/v4/session` — 会话列表
+- `/v4/decision` — 决策中心
+- `/v4/execution` — 执行追踪 ⭐已增强
+- `/v4/memory` — 组织记忆 ⭐已增强
 - `/workspace` — 多 Agent 会商工作台 ⭐核心页面，已完成 Phase 1
 
 ---
@@ -28,13 +28,13 @@
 
 关键组件：`DataEmbed`, `InspectionEmbed`, `CaseEmbed`, `PhaseConclusionCard`, `JudgmentRevisionCard`, `PlanCard`(8字段), `TaskCard`, `MemoryCard`, `MsgBubble`, `TypingBubble`, `BusinessThreadCard`, `CeoDirectiveBar`
 
-#### 2. `/app/v2/execution/page.tsx` — 执行追踪页增强
+#### 2. `/app/v4/execution/page.tsx` — 执行追踪页增强
 - 新增 `Sparkline` SVG折线图组件（纯 SVG，无外部依赖）
 - `LeadingIndicatorDashboard`：望潮港专属领先指标面板（人均消费/差评率/高毛利占比，进度条+趋势图）
 - 续约风险降级通知 banner（高→中，链接到 /workspace）
 - 4 条望潮港干预任务（含 2 周复盘任务）
 
-#### 3. `/app/v2/memory/page.tsx` — 组织记忆页增强
+#### 3. `/app/v4/memory/page.tsx` — 组织记忆页增强
 - 新增 Case #2024-088（望潮港，isNew+sourceWorkspace，NEW 徽章+天蓝色边框）
 - `CrossCaseInsights` 跨案例洞察面板（3条规律：双修策略/领先指标/最优窗口）
 - AI 使用日志新增 91% 相似度条目

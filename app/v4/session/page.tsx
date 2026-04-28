@@ -636,7 +636,7 @@ function ExecCard({ plan }: { plan: 'A' | 'B' }) {
       <div className="px-5 py-3 border-b border-emerald-200 flex items-center gap-2">
         <CheckCircle2 size={14} className="text-emerald-600" />
         <span className="text-sm font-semibold text-emerald-700">已拍板 · 方案 {plan} · 执行任务已创建</span>
-        <Link href="/v2/execution" className="ml-auto text-[11px] text-emerald-600 hover:underline flex items-center gap-1">
+        <Link href="/v4/execution" className="ml-auto text-[11px] text-emerald-600 hover:underline flex items-center gap-1">
           查看执行中心 <ArrowRight size={10} />
         </Link>
       </div>
@@ -856,7 +856,7 @@ export default function SessionPage() {
       {/* ── Problem Header (fixed top) ── */}
       <div className="flex-shrink-0 border-b border-slate-100 bg-white">
         <div className="px-5 py-3 flex items-center gap-4">
-          <Link href="/v2" className="text-slate-400 hover:text-slate-600 transition-colors">
+          <Link href="/v4" className="text-slate-400 hover:text-slate-600 transition-colors">
             <ChevronLeft size={18} />
           </Link>
 
@@ -1009,7 +1009,7 @@ export default function SessionPage() {
           </div>
 
           {decided && (
-            <Link href="/v2/execution"
+            <Link href="/v4/execution"
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex-shrink-0">
               <CheckCircle2 size={14} /> 查看执行任务
             </Link>
