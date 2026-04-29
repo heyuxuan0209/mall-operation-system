@@ -41,31 +41,26 @@
 
 ---
 
-### 🚧 Phase 2 进行中（已授权，待完成）
+### ✅ Phase 2 完成（2026-04-28）
 
 **目标**：为 `/app/workspace/page.tsx` 添加多线程支持
 
-#### 2-A 辛香汇线程（经营下滑场景）
-- 静态消息数组 `XINXIANG_BASE_MSGS`（8条，discovery→diagnosis）
-- `XINXIANG_MSGS`（末尾加 consultation waiting）
-- `XINXIANG_MSGS_APPROVED`（consultation approved + gm + advisor + task-card）
-- 新增数据：`XINXIANG_DATA_ROWS`（5项）、`XINXIANG_INSPECTION_ITEMS`（3项）、`XINXIANG_TASKS`（3项）
-- 新增 embed 类型：`data-xinxiang`、`inspection-xinxiang`
-
-#### 2-B B区复盘线程（活动复盘场景）
-- 静态消息数组 `BEVENT_MSGS`（9条，全流程完成）
-- 新增数据：`BEVENT_DATA_ROWS`（5项活动指标）
-- 新增 embed 类型：`data-bevent`
-- memory-card 等待 GM 确认沉淀
-
-**技术架构变更**：
+新增内容：
 - `THREAD_META` 配置（每条线程的 header/panel 数据）
-- `currentMsgs` useMemo（基于 activeThread + xinxiangApproved + beventConfirmed 切换消息数组）
-- `xinxiangApproved`, `beventConfirmed` state flags
-- `TaskCard` 支持 `tasks` prop（线程特定任务列表）
-- `MsgBubble` 新增 `threadTasks`, `activeThread` props
+- `XINXIANG_DATA_ROWS`（5项）、`XINXIANG_INSPECTION_ITEMS`（3项）、`XINXIANG_TASKS`（3项）
+- `BEVENT_DATA_ROWS`（5项活动指标）
+- `XINXIANG_BASE_MSGS`（8条）、`XINXIANG_MSGS`、`XINXIANG_MSGS_APPROVED`
+- `BEVENT_MSGS`（9条，全流程完成）
+- 新 Embed 组件：`DataXinxiangEmbed`、`InspectionXinxiangEmbed`、`DataBeventEmbed`
+- `xinxiangApproved`、`beventConfirmed` state flags
+- `currentMsgs` useMemo（基于 activeThread + 状态标志切换消息源）
+- `threadTasks` useMemo（线程专属任务列表）
+- `TaskCard` 支持 `tasks` prop
+- `MemoryCard` 支持自定义 `memoryTitle/memoryTags/memoryConditions`
+- `MsgBubble` 新增 `threadTasks` prop
 - 自动播放控件仅在 `activeThread === 'wangchao'` 时显示
-- 所有派生状态（participants/pendingDecisions/evidenceList 等）改用 `currentMsgs`
+- Thread Header、右侧面板完全动态化
+- 所有派生状态改用 `currentMsgs`
 
 ---
 

@@ -1,7 +1,7 @@
 # 下一步计划 — 商户智运Agent 改版 V4
 
 **更新时间**: 2026-04-28
-**当前阶段**: Phase 2 进行中（/workspace 多线程支持）
+**当前阶段**: Phase 3 完成（发起新会商 + 今日晨报 + 商户档案页）
 
 ---
 
@@ -15,9 +15,26 @@
 | `app/v4/execution/page.tsx` | Sparkline组件、LeadingIndicatorDashboard（望潮港领先指标）、续约风险降级banner、4条干预任务 |
 | `app/v4/memory/page.tsx` | Case #2024-088（NEW徽章）、CrossCaseInsights跨案例洞察面板（3条规律）、AI使用日志新条目 |
 
+### Phase 2（多线程 — 2026-04-28 完成）
+
+| 新增内容 | 说明 |
+|----------|------|
+| `THREAD_META` | 三条线程的 badge/title/riskBadge/window 配置 |
+| `XINXIANG_DATA_ROWS` / `XINXIANG_INSPECTION_ITEMS` / `XINXIANG_TASKS` | 辛香汇线程数据 |
+| `BEVENT_DATA_ROWS` | B区复盘线程数据 |
+| `XINXIANG_BASE_MSGS` / `XINXIANG_MSGS` / `XINXIANG_MSGS_APPROVED` | 辛香汇静态消息数组 |
+| `BEVENT_MSGS` | B区复盘静态消息数组（9条） |
+| `DataXinxiangEmbed` / `InspectionXinxiangEmbed` / `DataBeventEmbed` | 新 Embed 组件 |
+| `currentMsgs` useMemo | 基于 activeThread + 状态标志切换消息源 |
+| `xinxiangApproved` / `beventConfirmed` state | 线程交互状态标志 |
+| `threadTasks` useMemo | 线程专属任务列表 |
+| 动态 Thread Header | 基于 THREAD_META 渲染，不再硬编码 |
+| 自动播放控件条件显示 | 仅 `activeThread === 'wangchao'` 时显示 |
+| 右侧面板动态化 | 当前议题、任务列表均随线程切换 |
+
 ---
 
-## 🚧 Phase 2（已授权，立即执行）
+## 🚧 Phase 2（已授权，立即执行）✅ 已完成（2026-04-28）
 
 ### 目标：`/app/workspace/page.tsx` 多线程支持
 
@@ -82,11 +99,19 @@ b-event:  badge=🔵活动复盘  title=B区周末活动复盘          riskBadg
 
 ---
 
-## 📋 Phase 3（待规划）
+## ✅ Phase 3（已完成 2026-04-28）
 
-1. **商户档案页** `/archives/[id]` — 从 memory 页或 workspace 跳转，展示单商户完整干预历史
-2. **今日晨报线程** — 左侧"自动运行"区，点击展开晨报内容
-3. **发起新会商流程** — 顶部"发起新会商"按钮，弹出商户选择 + 问题类型选择
+| 新增内容 | 说明 |
+|----------|------|
+| `NewConsultModal` 组件 | 商户 Grid 选择 + 议题类型 chips + 补充说明 textarea |
+| `CustomThread` 接口 + `MERCHANT_OPTIONS` / `ISSUE_TYPES` | 发起新会商数据层 |
+| `getCustomThreadInitMsgs()` | 自定义线程初始 4 条消息生成函数 |
+| `handleNewConsult` callback | 创建 CustomThread → 追加到 customThreads → 切换线程 |
+| 左侧栏「新发起」分组 | 渲染所有用户发起的自定义线程 |
+| `MORNING_REPORT_MSGS` 静态消息数组 | 今日经营晨报完整内容（4条消息） |
+| `morning-report` 线程 | 接入 THREAD_META + currentMsgs + 左侧按钮点击 |
+| `app/archives/[id]/page.tsx` | 望潮港火锅干预档案页：Hero + 指标对比 + 时间线 + 任务 + 案例 |
+| workspace 右侧面板「查看干预档案」链接 | 望潮港线程下显示，跳转 /archives/wangchao |
 
 ---
 
