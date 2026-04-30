@@ -43,6 +43,10 @@ interface Msg {
   memoryTitle?: string;
   memoryTags?: string[];
   memoryConditions?: string[];
+  // Lifecycle transition fields
+  lifecycleFrom?: IssueLifecycle;
+  lifecycleTo?: IssueLifecycle;
+  lifecycleTrigger?: string;
 }
 interface ScriptItem extends Omit<Msg, 'id'> { typingMs?: number; pauseMs?: number; }
 
@@ -51,6 +55,146 @@ interface CustomThread {
   issueType: string; issueBadge: string; issueColorCls: string;
   note: string; createdAt: string;
 }
+
+/* ════════════════════════════════════════════════════════════
+   LIFECYCLE STATE MACHINE
+════════════════════════════════════════════════════════════ */
+type IssueLifecycle =
+  | 'auto-detected'    // 自动识别
+  | 'suggest-escalate' // 建议升级
+  | 'in-deliberation'  // 联合研判中
+  | 'pending-consult'  // 等待请示
+  | 'pending-decision' // 等待拍板
+  | 'decided'          // 已拍板
+  | 'in-execution'     // 执行中
+  | 'pending-review'   // 待复盘
+  | 'archived';        // 已沉淀
+
+interface LifecycleStateDef {
+  label: string;
+  meaning: string;
+  entryCondition: string;
+  nextAction: string;
+  owner: string;
+  needsGM: boolean;
+  colorCls: string;
+  dotColor: string;
+}
+
+const LIFECYCLE_STATES: Record<IssueLifecycle, LifecycleStateDef> = {
+  'auto-detected':    { label: '自动识别',   meaning: 'Agent 扫描发现异动，尚未人工确认',       entryCondition: '数据指标触发预警阈值',           nextAction: '确认是否升级为联合研判',     owner: '风险诊断师',   needsGM: false, colorCls: 'bg-slate-100 text-slate-600',   dotColor: '#94a3b8' },
+  'suggest-escalate': { label: '建议升级',   meaning: 'Agent 建议发起联合研判，等待总经理确认', entryCondition: '风险定级 P0/P1，影响面超阈值',   nextAction: '总经理确认是否发起联合研判',   owner: '风险诊断师',   needsGM: true,  colorCls: 'bg-amber-100 text-amber-700',   dotColor: '#f59e0b' },
+  'in-deliberation':  { label: '联合研判中', meaning: '多 Agent 正在协同分析，收集证据',        entryCondition: '总经理确认发起联合研判',         nextAction: '等待证据收敛，形成判断结论',   owner: '联合研判团队', needsGM: false, colorCls: 'bg-blue-100 text-blue-700',     dotColor: '#3b82f6' },
+  'pending-consult':  { label: '等待请示',   meaning: '超出 Agent 权限，需总经理指示方向',      entryCondition: '议题涉及跨部门或高风险决策',     nextAction: '总经理给出研判方向指示',       owner: '总经理',       needsGM: true,  colorCls: 'bg-orange-100 text-orange-700', dotColor: '#f97316' },
+  'pending-decision': { label: '等待拍板',   meaning: '方案已收敛，等待总经理最终决策',         entryCondition: '方案对比完成，推荐方案已明确',   nextAction: '总经理选择执行方案并批预算',   owner: '总经理',       needsGM: true,  colorCls: 'bg-rose-100 text-rose-600',     dotColor: '#f43f5e' },
+  'decided':          { label: '已拍板',     meaning: '总经理已做出决策，等待任务生成',         entryCondition: '总经理选定方案',                 nextAction: '任务调度官生成执行任务',       owner: '任务调度官',   needsGM: false, colorCls: 'bg-violet-100 text-violet-700', dotColor: '#7c3aed' },
+  'in-execution':     { label: '执行中',     meaning: '执行任务已分配，各责任人推进中',         entryCondition: '执行任务已生成并同步',           nextAction: '按领先指标追踪执行进度',       owner: '各任务责任人', needsGM: false, colorCls: 'bg-emerald-100 text-emerald-700', dotColor: '#16a34a' },
+  'pending-review':   { label: '待复盘',     meaning: '执行周期结束，等待复盘验证结果',         entryCondition: '执行截止时间到达或领先指标可读', nextAction: '对比预期指标，形成复盘结论',   owner: '风险诊断师',   needsGM: false, colorCls: 'bg-cyan-100 text-cyan-700',     dotColor: '#0891b2' },
+  'archived':         { label: '已沉淀',     meaning: '复盘结论已沉淀为组织记忆，可复用',       entryCondition: '复盘结论确认，记忆官完成归档',   nextAction: '下次同类议题自动引用',         owner: '案例记忆官',   needsGM: false, colorCls: 'bg-slate-100 text-slate-500',   dotColor: '#64748b' },
+};
+
+/* ════════════════════════════════════════════════════════════
+   DECISION OBJECT (决策对象)
+════════════════════════════════════════════════════════════ */
+interface DecisionObject {
+  id: string;
+  question: string;
+  options: { id: string; label: string; recommended: boolean }[];
+  recommendedOption: string;
+  recommendReason: string;
+  keyEvidence: string[];
+  risks: string;
+  decisionMaker: string;
+  deadline: string;
+  result?: string;
+  verificationMetrics: string[];
+}
+
+const WANGCHAO_DECISION: DecisionObject = {
+  id: 'dec-wangchao-001',
+  question: '在91天续约窗口内，选择哪个干预方案能最大化续约成功概率？',
+  options: [
+    { id: 'A', label: '方案A · 经营修复优先（¥3-5万）', recommended: false },
+    { id: 'B', label: '方案B · 修复＋体验整改（¥8-12万）', recommended: true },
+    { id: 'C', label: '方案C · 活动拉新优先（¥6-8万）', recommended: false },
+  ],
+  recommendedOption: '方案B',
+  recommendReason: '经营+体验双修，产生的改善信号能同时说服招商侧，30天内最可能改变"观察→保留"评级',
+  keyEvidence: [
+    '客单价下降12%，消费质量恶化（商户经营顾问）',
+    '现场体验5项短板，拖累复购（巡店督导）',
+    '招商侧仍保留窗口，30天改善可影响评分（招商经理）',
+    '历史案例相似度87%，体验整改是关键（案例记忆官）',
+  ],
+  risks: '执行协同复杂度中等，需总经理授权推进，预算需先批第一阶段',
+  decisionMaker: '总经理',
+  deadline: '今日内',
+  verificationMetrics: ['2周：人均消费回升≥5%', '2周：差评率降至5%以内', '30天：客单价≥¥128', '30天：招商侧评级回到"优先保留"'],
+};
+
+/* ════════════════════════════════════════════════════════════
+   EVIDENCE LEDGER (证据账本)
+════════════════════════════════════════════════════════════ */
+type EvidenceType = '经营数据' | '现场证据' | '历史案例' | '招商判断' | '活动数据' | '客诉反馈';
+
+interface EvidenceItem {
+  id: string;
+  type: EvidenceType;
+  summary: string;
+  provider: string;
+  updatedAt: string;
+  supportsJudgment: string;
+  credibility: 'high' | 'medium' | 'low';
+}
+
+const EVIDENCE_TYPE_COLOR: Record<EvidenceType, string> = {
+  '经营数据': 'bg-blue-100 text-blue-700',
+  '现场证据': 'bg-green-100 text-green-700',
+  '历史案例': 'bg-cyan-100 text-cyan-700',
+  '招商判断': 'bg-indigo-100 text-indigo-700',
+  '活动数据': 'bg-amber-100 text-amber-700',
+  '客诉反馈': 'bg-orange-100 text-orange-700',
+};
+
+const WANGCHAO_EVIDENCE: EvidenceItem[] = [
+  { id: 'ev1', type: '经营数据', summary: '人均消费↓12%，高毛利单品占比从42%降至31%，翻台率↓14%', provider: '商户经营顾问', updatedAt: '09:29', supportsJudgment: '消费质量恶化，非纯流量问题', credibility: 'high' },
+  { id: 'ev2', type: '活动数据', summary: '两次活动客流+11%但客单-9%，复购率18%低于行业均值27%', provider: '活动策略师', updatedAt: '09:31', supportsJudgment: '活动带来低质量流量，不建议继续补贴', credibility: 'high' },
+  { id: 'ev3', type: '现场证据', summary: '5项体验短板：服务响应慢、导视弱、照明不足、出品慢、卫生间问题', provider: '巡店督导', updatedAt: '09:33', supportsJudgment: '现场体验拖累复购，放大经营恶化', credibility: 'high' },
+  { id: 'ev4', type: '历史案例', summary: '相似度87%案例：体验整改→套餐优化→续约沟通，21天见效', provider: '案例记忆官', updatedAt: '09:35', supportsJudgment: '干预策略可复用，优先前移体验整改', credibility: 'medium' },
+  { id: 'ev5', type: '招商判断', summary: '续约优先级已从"保留"降至"观察"，30天改善信号可逆转', provider: '招商经理', updatedAt: '09:41', supportsJudgment: '经营改善仍可影响续约评分，窗口短', credibility: 'high' },
+];
+
+/* ════════════════════════════════════════════════════════════
+   EXECUTION VERIFICATION (执行验证闭环)
+════════════════════════════════════════════════════════════ */
+interface ExecutionTask {
+  no: number;
+  title: string;
+  owner: string;
+  deadline: string;
+  leadIndicator: string;
+  actualResult?: string;
+  onTarget?: boolean;
+  reviewConclusion?: string;
+  archived?: boolean;
+}
+
+const WANGCHAO_EXECUTION_TASKS: ExecutionTask[] = [
+  { no: 1, title: '套餐结构优化', owner: '商户经营顾问', deadline: '3天内', leadIndicator: '高毛利单品占比回升≥5pt', actualResult: undefined, onTarget: undefined },
+  { no: 2, title: '店外导视与门头轻改', owner: '巡店督导', deadline: '5天内', leadIndicator: '进店意愿评分提升', actualResult: undefined, onTarget: undefined },
+  { no: 3, title: '晚高峰服务响应整改', owner: '门店店长', deadline: '7天内', leadIndicator: '差评率降至5%以内', actualResult: undefined, onTarget: undefined },
+  { no: 4, title: '两周复盘', owner: '风险诊断师', deadline: '14天后', leadIndicator: '人均消费≥¥128，差评率≤5%，招商评级回升', actualResult: undefined, onTarget: undefined },
+];
+
+/* ════════════════════════════════════════════════════════════
+   THREAD LIFECYCLE MAP (每个议题线程的当前生命周期状态)
+════════════════════════════════════════════════════════════ */
+const THREAD_LIFECYCLE: Record<string, IssueLifecycle> = {
+  wangchao:       'pending-decision',
+  xinxiang:       'in-deliberation',
+  'b-event':      'pending-review',
+  'morning-report': 'auto-detected',
+};
 
 /* ════════════════════════════════════════════════════════════
    BUSINESS TABS
@@ -134,6 +278,12 @@ const BUSINESS_THREADS = [
 const SCRIPT: ScriptItem[] = [
   /* ── Phase: discovery ── */
   { type: 'phase-sep', time: '09:23', phase: 'discovery', content: '发现问题' },
+  {
+    type: 'system', time: '09:23', phase: 'discovery',
+    lifecycleFrom: 'auto-detected', lifecycleTo: 'suggest-escalate',
+    lifecycleTrigger: '风险定级 P0，影响面超阈值（续约风险 + 坪效下滑22%）',
+    content: '状态流转：自动识别 → 建议升级'
+  },
   {
     type: 'agent', agentId: 'risk', time: '09:23', phase: 'discovery',
     typingMs: 1800, pauseMs: 1400,
@@ -234,6 +384,12 @@ const SCRIPT: ScriptItem[] = [
   /* ── Phase: consultation ── */
   { type: 'phase-sep', time: '09:37', phase: 'consultation', content: '向总经理请示' },
   {
+    type: 'system', time: '09:37', phase: 'consultation',
+    lifecycleFrom: 'in-deliberation', lifecycleTo: 'pending-consult',
+    lifecycleTrigger: '议题涉及续约策略判断，超出经营 Agent 权限范围',
+    content: '状态流转：联合研判中 → 等待请示'
+  },
+  {
     type: 'consultation', agentId: 'risk', time: '09:37', phase: 'consultation',
     consultStatus: 'waiting', waitForCEO: true,
     typingMs: 1400, pauseMs: 500,
@@ -308,6 +464,12 @@ const SCRIPT: ScriptItem[] = [
   /* ── Phase: solution ── */
   { type: 'phase-sep', time: '09:46', phase: 'solution', content: '形成方案' },
   {
+    type: 'system', time: '09:46', phase: 'solution',
+    lifecycleFrom: 'in-deliberation', lifecycleTo: 'pending-decision',
+    lifecycleTrigger: '方案对比完成，推荐方案已明确（方案B）',
+    content: '状态流转：联合研判中 → 等待拍板'
+  },
+  {
     type: 'agent', agentId: 'scheduler', time: '09:46', phase: 'solution',
     typingMs: 900, pauseMs: 700,
     content: `基于当前联合研判进展，我开始收敛执行方案。
@@ -327,6 +489,12 @@ const SCRIPT: ScriptItem[] = [
   },
   /* ── Phase: decision ── */
   { type: 'phase-sep', time: '09:49', phase: 'decision', content: '总经理决策参与' },
+  {
+    type: 'system', time: '09:49', phase: 'decision',
+    lifecycleFrom: 'pending-decision', lifecycleTo: 'decided',
+    lifecycleTrigger: '总经理选定方案B，批准第一阶段预算',
+    content: '状态流转：等待拍板 → 已拍板（待总经理确认方案）'
+  },
   {
     type: 'gm', time: '09:49', phase: 'decision',
     typingMs: 900, pauseMs: 1000,
@@ -362,11 +530,23 @@ const SCRIPT: ScriptItem[] = [
   /* ── Phase: execution ── */
   { type: 'phase-sep', time: '09:53', phase: 'execution', content: '进入执行' },
   {
+    type: 'system', time: '09:53', phase: 'execution',
+    lifecycleFrom: 'decided', lifecycleTo: 'in-execution',
+    lifecycleTrigger: '执行任务已生成并同步给各责任人',
+    content: '状态流转：已拍板 → 执行中'
+  },
+  {
     type: 'task-card', agentId: 'scheduler', time: '09:53', phase: 'execution',
     typingMs: 800, pauseMs: 1000,
   },
   /* ── Phase: archive ── */
   { type: 'phase-sep', time: '09:55', phase: 'archive', content: '沉淀记忆' },
+  {
+    type: 'system', time: '09:55', phase: 'archive',
+    lifecycleFrom: 'in-execution', lifecycleTo: 'archived',
+    lifecycleTrigger: '复盘结论确认，案例记忆官完成归档',
+    content: '状态流转：执行中 → 待复盘 → 已沉淀'
+  },
   {
     type: 'memory-card', agentId: 'memory', time: '09:55', phase: 'archive',
     waitForCEO: true, typingMs: 900, pauseMs: 500,
@@ -991,7 +1171,7 @@ function PlanCard({ msg, onSelect }: { msg: Msg; onSelect: (p: 'A' | 'B' | 'C') 
         <div className="px-4 py-3 bg-violet-50 border-b border-violet-100">
           <p className="text-[10px] font-bold text-violet-600 uppercase tracking-wider mb-1.5">拍板前关键问题</p>
           <div className="space-y-1">
-            <p className="text-[11px] text-violet-700">• 哪个方案最可能在30天内改变招商侧"观察→保留"评级？</p>
+            <p className="text-[11px] text-violet-700">• 哪个方案最可能在30天内改变招商侧&ldquo;观察→保留&rdquo;评级？</p>
             <p className="text-[11px] text-violet-700">• 如果预算有限，哪个方案ROI最高？</p>
             <p className="text-[11px] text-violet-700">• 2周后先看什么领先指标，能证明方向对了？</p>
           </div>
@@ -1188,6 +1368,10 @@ function MsgBubble({ msg, onConsultApprove, onPlanSelect, onMemoryConfirm, threa
     );
   }
   if (msg.type === 'system') {
+    // Check if this is a lifecycle transition message
+    if (msg.lifecycleFrom && msg.lifecycleTo && msg.lifecycleTrigger) {
+      return <LifecycleTransitionCard from={msg.lifecycleFrom} to={msg.lifecycleTo} trigger={msg.lifecycleTrigger} time={msg.time} />;
+    }
     return (
       <div className="flex items-center gap-3 my-3 px-2">
         <div className="flex-1 h-px bg-slate-100" />
@@ -1300,7 +1484,7 @@ function MsgBubble({ msg, onConsultApprove, onPlanSelect, onMemoryConfirm, threa
           {approved && (
             <div className="px-4 py-2.5 bg-emerald-50 border-t border-emerald-100">
               <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">招商经理补充的关键信息</p>
-              <p className="text-[11px] text-emerald-800 leading-snug">• 该商户续约优先级已从"保留"降至"观察"<br/>• 30天经营改善信号可直接影响续约评分<br/>• 招商侧尚未明确淘汰，仍有保留窗口</p>
+              <p className="text-[11px] text-emerald-800 leading-snug">• 该商户续约优先级已从&ldquo;保留&rdquo;降至&ldquo;观察&rdquo;<br/>• 30天经营改善信号可直接影响续约评分<br/>• 招商侧尚未明确淘汰，仍有保留窗口</p>
             </div>
           )}
         </div>
@@ -1360,10 +1544,53 @@ function TypingBubble({ agentId }: { agentId: AgentId }) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   P0-1: BUSINESS THREAD CARD
+   LIFECYCLE TRANSITION CARD (状态流转卡)
 ════════════════════════════════════════════════════════════ */
-function BusinessThreadCard({ thread, active, onClick }: {
-  thread: typeof BUSINESS_THREADS[0]; active: boolean; onClick: () => void;
+function LifecycleTransitionCard({ from, to, trigger, time }: {
+  from: IssueLifecycle; to: IssueLifecycle; trigger: string; time: string;
+}) {
+  const fromState = LIFECYCLE_STATES[from];
+  const toState = LIFECYCLE_STATES[to];
+  return (
+    <div className="my-4 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
+        <div className="w-2 h-2 rounded-full bg-indigo-400" />
+        <span className="text-[11px] font-bold text-slate-700">状态流转</span>
+        <span className="text-[10px] text-slate-400 ml-auto">{time}</span>
+      </div>
+      <div className="px-3 py-3 bg-white">
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: fromState.dotColor }} />
+              <span className="text-[10px] text-slate-500 line-through">{fromState.label}</span>
+            </div>
+            <p className="text-[9px] text-slate-400 pl-2.5">{fromState.meaning}</p>
+          </div>
+          <ChevronRight size={14} className="text-slate-300 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: toState.dotColor }} />
+              <span className="text-[11px] font-semibold text-slate-700">{toState.label}</span>
+            </div>
+            <p className="text-[9px] text-slate-600 pl-2.5">{toState.meaning}</p>
+          </div>
+        </div>
+        <div className="mt-2.5 pt-2.5 border-t border-slate-100">
+          <p className="text-[10px] text-slate-500"><span className="font-semibold text-slate-600">触发条件：</span>{trigger}</p>
+          <p className="text-[10px] text-slate-500 mt-1"><span className="font-semibold text-slate-600">下一步：</span>{toState.nextAction}</p>
+          <p className="text-[10px] text-slate-500 mt-1"><span className="font-semibold text-slate-600">当前责任方：</span>{toState.owner}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   P0-1: BUSINESS THREAD CARD (增强版：显示生命周期状态)
+════════════════════════════════════════════════════════════ */
+function BusinessThreadCard({ thread, active, onClick, lifecycle }: {
+  thread: typeof BUSINESS_THREADS[0]; active: boolean; onClick: () => void; lifecycle?: IssueLifecycle;
 }) {
   const domainColor: Record<string, string> = {
     '续约': 'bg-rose-500',
@@ -1373,6 +1600,7 @@ function BusinessThreadCard({ thread, active, onClick }: {
     '招商结构': 'bg-violet-500',
   };
   const badgeColor = thread.badge === 'P0' ? 'bg-rose-500' : 'bg-amber-500';
+  const lifecycleState = lifecycle ? LIFECYCLE_STATES[lifecycle] : null;
 
   return (
     <button onClick={onClick}
@@ -1398,6 +1626,17 @@ function BusinessThreadCard({ thread, active, onClick }: {
           </span>
         </div>
 
+        {/* Lifecycle state badge */}
+        {lifecycleState && (
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: lifecycleState.dotColor }} />
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${lifecycleState.colorCls}`}>
+              {lifecycleState.label}
+            </span>
+            <span className="text-[9px] text-slate-400">· {lifecycleState.owner}</span>
+          </div>
+        )}
+
         {/* Impact domain tag + impact */}
         <div className="flex items-center gap-1.5 mb-1.5">
           <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600 flex-shrink-0">
@@ -1408,15 +1647,17 @@ function BusinessThreadCard({ thread, active, onClick }: {
           </p>
         </div>
 
-        {/* Bottleneck */}
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-          <span className="text-slate-400">卡点:</span>
-          <span className="truncate">{thread.bottleneck}</span>
-        </div>
+        {/* Next action from lifecycle */}
+        {lifecycleState && (
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mb-1">
+            <span className="text-slate-400">下一步:</span>
+            <span className="truncate">{lifecycleState.nextAction}</span>
+          </div>
+        )}
 
         {/* Consequence - 降低视觉权重 */}
         {thread.badge === 'P0' && (
-          <p className="text-[9px] text-slate-400 mt-1.5 leading-snug">
+          <p className="text-[9px] text-slate-400 mt-1 leading-snug">
             ⚠ {thread.consequence}
           </p>
         )}
@@ -1717,7 +1958,11 @@ export default function WorkspacePage() {
 
   /* Auto-play engine */
   useEffect(() => {
-    if (isPaused || waitForCEO) { setTypingAgent(null); return; }
+    if (isPaused || waitForCEO) {
+      // Use a ref-based approach to avoid setState in effect body
+      const t = setTimeout(() => setTypingAgent(null), 0);
+      return () => clearTimeout(t);
+    }
     if (scriptIdx >= SCRIPT.length) return;
     const item = SCRIPT[scriptIdx];
     const mult = 1 / speed;
@@ -1734,8 +1979,11 @@ export default function WorkspacePage() {
     if (item.type === 'phase-sep' || item.type === 'system' || item.type === 'phase-conclusion' || item.type === 'judgment-revision') {
       timerRef.current = setTimeout(finish, 400 * mult);
     } else if (item.type === 'agent' && item.agentId) {
-      setTypingAgent(item.agentId);
-      timerRef.current = setTimeout(() => { setTypingAgent(null); finish(); }, (item.typingMs ?? 1400) * mult);
+      const agentId = item.agentId;
+      timerRef.current = setTimeout(() => {
+        setTypingAgent(agentId);
+        timerRef.current = setTimeout(() => { setTypingAgent(null); finish(); }, (item.typingMs ?? 1400) * mult);
+      }, 0);
     } else {
       timerRef.current = setTimeout(finish, (item.typingMs ?? 700) * mult);
     }
@@ -1831,8 +2079,6 @@ export default function WorkspacePage() {
       (m.type === 'memory-card' && !m.confirmed)
     ), [currentMsgs]);
 
-  const evidenceList = useMemo(() => currentMsgs.filter(m => m.embed), [currentMsgs]);
-  const hasCase = useMemo(() => currentMsgs.some(m => m.embed === 'case'), [currentMsgs]);
   const hasTasks = useMemo(() => currentMsgs.some(m => m.type === 'task-card'), [currentMsgs]);
   const memoryDone = useMemo(() => currentMsgs.some(m => m.type === 'memory-card' && m.confirmed), [currentMsgs]);
 
@@ -1958,7 +2204,7 @@ export default function WorkspacePage() {
                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">待我处理</p>
                 </div>
                 {BUSINESS_THREADS.filter(t => t.id === 'b-event').map(t => (
-                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} />
+                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} lifecycle={THREAD_LIFECYCLE[t.id]} />
                 ))}
               </div>
             </>}
@@ -1992,7 +2238,7 @@ export default function WorkspacePage() {
                   <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">待我拍板</p>
                 </div>
                 {BUSINESS_THREADS.filter(t => t.id === 'wangchao').map(t => (
-                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} />
+                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} lifecycle={THREAD_LIFECYCLE[t.id]} />
                 ))}
               </div>
               <div className="px-3 pb-1">
@@ -2001,7 +2247,7 @@ export default function WorkspacePage() {
                   <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">研判推进中</p>
                 </div>
                 {BUSINESS_THREADS.filter(t => t.id === 'xinxiang').map(t => (
-                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} />
+                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} lifecycle={THREAD_LIFECYCLE[t.id]} />
                 ))}
               </div>
               <div className="px-3 pt-1">
@@ -2020,7 +2266,7 @@ export default function WorkspacePage() {
                   <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">续约跟进</p>
                 </div>
                 {BUSINESS_THREADS.filter(t => t.id === 'wangchao').map(t => (
-                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} />
+                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} lifecycle={THREAD_LIFECYCLE[t.id]} />
                 ))}
               </div>
               <div className="px-3 pb-1">
@@ -2042,7 +2288,7 @@ export default function WorkspacePage() {
                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">待复盘</p>
                 </div>
                 {BUSINESS_THREADS.filter(t => t.id === 'b-event').map(t => (
-                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} />
+                  <BusinessThreadCard key={t.id} thread={t} active={activeThread === t.id} onClick={() => setActiveThread(t.id)} lifecycle={THREAD_LIFECYCLE[t.id]} />
                 ))}
               </div>
               <div className="px-3 pb-1">
@@ -2171,7 +2417,7 @@ export default function WorkspacePage() {
                 </div>
                 <div className="mb-3">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">核心理由</p>
-                  <p className="text-[11px] text-slate-700 leading-snug">30天内最可能改变招商侧"观察→保留"评级，经营+体验双修，产生的改善信号能同时说服招商侧</p>
+                  <p className="text-[11px] text-slate-700 leading-snug">30天内最可能改变招商侧&ldquo;观察→保留&rdquo;评级，经营+体验双修，产生的改善信号能同时说服招商侧</p>
                 </div>
                 <div className="mb-3">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">最大风险</p>
@@ -2235,46 +2481,112 @@ export default function WorkspacePage() {
         <div className="w-72 flex-shrink-0 bg-white border-l border-slate-200 flex flex-col overflow-hidden lg:flex xl:flex hidden">
           <div className="flex-1 overflow-y-auto">
 
-            {/* ① 拍板依据 - 第一优先 */}
-            {activeThread === 'wangchao' && currentPhase === 'solution' && (
-              <div className="px-4 py-3 border-b-2 border-slate-200 bg-slate-50">
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2.5">拍板依据</p>
-
-                {/* 是否可拍板 */}
-                <div className="mb-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] text-slate-500">当前状态</span>
-                    <span className="text-[11px] font-semibold text-amber-600">等待拍板</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500">证据充分度</span>
-                    <span className="text-[11px] font-semibold text-emerald-600">4/5 充分</span>
-                  </div>
+            {/* ① 当前决策对象 - 第一优先 */}
+            {activeThread === 'wangchao' && (currentPhase === 'solution' || currentPhase === 'decision') && (
+              <div className="px-4 py-3 border-b-2 border-rose-200 bg-rose-50/50">
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <AlertTriangle size={11} className="text-rose-500" />
+                  <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">当前决策对象</p>
                 </div>
 
-                {/* 关键依据 */}
-                <div className="mb-3">
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">关键依据</p>
+                <div className="mb-3 p-2.5 rounded-lg bg-white border border-rose-100">
+                  <p className="text-[11px] font-semibold text-slate-800 leading-snug mb-2">{WANGCHAO_DECISION.question}</p>
                   <div className="space-y-1">
-                    <div className="flex items-start gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-slate-400 flex-shrink-0 mt-1.5" />
-                      <p className="text-[10px] text-slate-600 leading-snug">客单价下降12%，消费质量恶化</p>
-                    </div>
-                    <div className="flex items-start gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-slate-400 flex-shrink-0 mt-1.5" />
-                      <p className="text-[10px] text-slate-600 leading-snug">现场体验5项短板，拖累复购</p>
-                    </div>
-                    <div className="flex items-start gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-slate-400 flex-shrink-0 mt-1.5" />
-                      <p className="text-[10px] text-slate-600 leading-snug">招商侧仍保留窗口，30天可改变评级</p>
-                    </div>
+                    {WANGCHAO_DECISION.options.map(opt => (
+                      <div key={opt.id} className="flex items-center gap-1.5">
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${opt.recommended ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                          {opt.id}
+                        </span>
+                        <span className="text-[10px] text-slate-600">{opt.label.split('·')[1]?.trim() || opt.label}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* 决策缺口 */}
+                <div className="mb-2.5">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">推荐方案</p>
+                  <p className="text-[10px] text-emerald-700 font-semibold">{WANGCHAO_DECISION.recommendedOption}</p>
+                  <p className="text-[10px] text-slate-600 leading-snug mt-0.5">{WANGCHAO_DECISION.recommendReason}</p>
+                </div>
+
+                <div className="mb-2.5">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">最大风险</p>
+                  <p className="text-[10px] text-amber-700 leading-snug">{WANGCHAO_DECISION.risks}</p>
+                </div>
+
                 <div>
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">决策缺口</p>
-                  <p className="text-[10px] text-slate-600 leading-snug">无关键阻塞，仅需选择执行方案</p>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">验证指标</p>
+                  <div className="space-y-0.5">
+                    {WANGCHAO_DECISION.verificationMetrics.slice(0, 2).map((m, i) => (
+                      <p key={i} className="text-[9px] text-slate-600 leading-snug">• {m}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ② 证据账本摘要 */}
+            {activeThread === 'wangchao' && (
+              <div className="px-4 py-3 border-b border-slate-200">
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2.5">证据账本 ({WANGCHAO_EVIDENCE.length})</p>
+                <div className="space-y-2">
+                  {WANGCHAO_EVIDENCE.map(ev => (
+                    <div key={ev.id} className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-semibold ${EVIDENCE_TYPE_COLOR[ev.type]}`}>
+                          {ev.type}
+                        </span>
+                        <span className="text-[8px] text-slate-400">{ev.updatedAt}</span>
+                        <span className={`ml-auto text-[8px] px-1 py-0.5 rounded ${
+                          ev.credibility === 'high' ? 'bg-emerald-100 text-emerald-600' :
+                          ev.credibility === 'medium' ? 'bg-amber-100 text-amber-600' :
+                          'bg-slate-100 text-slate-500'
+                        }`}>
+                          {ev.credibility === 'high' ? '高' : ev.credibility === 'medium' ? '中' : '低'}
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-slate-600 leading-snug mb-1">{ev.summary}</p>
+                      <p className="text-[8px] text-slate-400">提供者：{ev.provider}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ③ 执行验证指标 */}
+            {activeThread === 'wangchao' && hasTasks && (
+              <div className="px-4 py-3 border-b border-slate-200">
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2.5">执行验证闭环</p>
+                <div className="space-y-2">
+                  {WANGCHAO_EXECUTION_TASKS.map(task => (
+                    <div key={task.no} className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[8px] font-bold flex-shrink-0">
+                          {task.no}
+                        </span>
+                        <p className="text-[10px] font-semibold text-slate-700 truncate flex-1">{task.title}</p>
+                      </div>
+                      <p className="text-[9px] text-slate-500 mb-0.5">责任人：{task.owner}</p>
+                      <p className="text-[9px] text-slate-500 mb-1">截止：{task.deadline}</p>
+                      <div className="pt-1 border-t border-slate-200">
+                        <p className="text-[8px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">预期领先指标</p>
+                        <p className="text-[9px] text-slate-600 leading-snug">{task.leadIndicator}</p>
+                      </div>
+                      {task.actualResult && (
+                        <div className="mt-1.5 pt-1.5 border-t border-slate-200">
+                          <p className="text-[8px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">实际结果</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
+                              task.onTarget ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                            }`}>
+                              {task.onTarget ? '✓ 达标' : '✗ 未达标'}
+                            </span>
+                            <p className="text-[9px] text-slate-600">{task.actualResult}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -2316,7 +2628,7 @@ export default function WorkspacePage() {
               {activeThread === 'wangchao' && (
                 <div className="rounded-lg bg-slate-900 px-2.5 py-2 mb-1.5">
                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">研判目标</p>
-                  <p className="text-[10px] text-white leading-snug">在91天窗口内，保住招商侧"优先保留"评级</p>
+                  <p className="text-[10px] text-white leading-snug">在91天窗口内，保住招商侧&ldquo;优先保留&rdquo;评级</p>
                 </div>
               )}
               {activeThread === 'wangchao' && (
