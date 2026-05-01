@@ -1590,7 +1590,8 @@ function LifecycleTransitionCard({ from, to, trigger, time }: {
    P0-1: BUSINESS THREAD CARD (增强版：显示生命周期状态)
 ════════════════════════════════════════════════════════════ */
 function BusinessThreadCard({ thread, active, onClick, lifecycle }: {
-  thread: typeof BUSINESS_THREADS[0]; active: boolean; onClick: () => void; lifecycle?: IssueLifecycle;
+  thread: { id: string; title: string; subtitle: string; badge: 'P0' | 'P1'; tags: string[]; impact: string; impactDomain: string; stage: string; bottleneck: string; consequence: string; time: string; };
+  active: boolean; onClick: () => void; lifecycle?: IssueLifecycle;
 }) {
   const domainColor: Record<string, string> = {
     '续约': 'bg-rose-500',
@@ -2224,6 +2225,8 @@ export default function WorkspacePage() {
                         subtitle: `${t.issueBadge} ${t.issueType}`,
                         badge: 'P1' as const, tags: [t.issueType],
                         impact: '等待 Agent 分析', stage: '联合研判准备中',
+                        impactDomain: '续约' as const,
+                        bottleneck: '等待 Agent 初步扫描',
                         consequence: '', time: t.createdAt,
                       }}
                       active={activeThread === t.id}
