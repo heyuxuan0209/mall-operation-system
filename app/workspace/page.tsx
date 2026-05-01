@@ -2110,7 +2110,7 @@ export default function WorkspacePage() {
   }, [activeThread, customThreads]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="h-screen flex flex-col overflow-hidden bg-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <style>{`@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }`}</style>
 
       {/* ── Global Bar ── */}
@@ -2162,9 +2162,9 @@ export default function WorkspacePage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── Left Rail: 经营事项盘 ── */}
-        <div className="w-60 flex-shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col overflow-hidden">
-          <div className="px-3 py-2 border-b border-slate-200 bg-white">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-[11px] text-slate-400">
+        <div className="w-60 flex-shrink-0 border-r border-slate-200 flex flex-col overflow-hidden" style={{ background: '#f1f5f9' }}>
+          <div className="px-3 py-2 border-b border-slate-200" style={{ background: '#e8edf2' }}>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/70 text-[11px] text-slate-400">
               <Search size={11} /><span>搜索事项…</span>
             </div>
           </div>
@@ -2332,7 +2332,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* ── Center ── */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden bg-white">
 
           {/* Thread Header */}
           <div className="flex-shrink-0 px-5 py-3 bg-white border-b border-slate-200">
@@ -2445,7 +2445,7 @@ export default function WorkspacePage() {
           )}
 
           {/* Message Feed */}
-          <div ref={feedRef} className="flex-1 overflow-y-auto px-5 py-4">
+          <div ref={feedRef} className="flex-1 overflow-y-auto px-5 py-4" style={{ background: '#f8fafc' }}>
             {currentMsgs.map(msg => (
               <MsgBubble key={msg.id} msg={msg}
                 onConsultApprove={handleConsultApprove}
@@ -2478,7 +2478,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* ── Right Panel: 拍板依据栏 ── */}
-        <div className="w-72 flex-shrink-0 bg-white border-l border-slate-200 flex flex-col overflow-hidden lg:flex xl:flex hidden">
+        <div className="w-72 flex-shrink-0 border-l border-amber-100 flex flex-col overflow-hidden lg:flex xl:flex hidden" style={{ background: '#fffbeb' }}>
           <div className="flex-1 overflow-y-auto">
 
             {/* ① 当前决策对象 - 第一优先 */}
@@ -2527,11 +2527,11 @@ export default function WorkspacePage() {
 
             {/* ② 证据账本摘要 */}
             {activeThread === 'wangchao' && (
-              <div className="px-4 py-3 border-b border-slate-200">
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2.5">证据账本 ({WANGCHAO_EVIDENCE.length})</p>
+              <div className="px-4 py-3 border-b border-amber-100">
+                <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2.5">证据账本 ({WANGCHAO_EVIDENCE.length})</p>
                 <div className="space-y-2">
                   {WANGCHAO_EVIDENCE.map(ev => (
-                    <div key={ev.id} className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                    <div key={ev.id} className="p-2 rounded-lg bg-white border border-amber-100">
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-semibold ${EVIDENCE_TYPE_COLOR[ev.type]}`}>
                           {ev.type}
@@ -2555,11 +2555,11 @@ export default function WorkspacePage() {
 
             {/* ③ 执行验证指标 */}
             {activeThread === 'wangchao' && hasTasks && (
-              <div className="px-4 py-3 border-b border-slate-200">
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2.5">执行验证闭环</p>
+              <div className="px-4 py-3 border-b border-amber-100">
+                <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2.5">执行验证闭环</p>
                 <div className="space-y-2">
                   {WANGCHAO_EXECUTION_TASKS.map(task => (
-                    <div key={task.no} className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                    <div key={task.no} className="p-2 rounded-lg bg-white border border-amber-100">
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[8px] font-bold flex-shrink-0">
                           {task.no}
