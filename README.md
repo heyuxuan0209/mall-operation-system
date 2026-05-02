@@ -8,7 +8,7 @@
 [![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8.svg)](https://tailwindcss.com/)
 
 **🌐 在线体验**: [https://merchant-smartops.zeabur.app](https://merchant-smartops.zeabur.app)
-**🔑 访问码**: `hyx2026`
+**🔑 访问码**: 请联系作者获取
 **📍 核心页面**: `/workspace` — 联合研判工作台
 
 ---
@@ -138,7 +138,7 @@ git push origin main
 
 | Key | Value |
 |-----|-------|
-| `ACCESS_CODE` | hyx2026 |
+| `ACCESS_CODE` | 在 Zeabur Dashboard 中设置，不公开 |
 
 ---
 
