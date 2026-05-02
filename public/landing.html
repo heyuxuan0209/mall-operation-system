@@ -1,598 +1,1005 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>商户智运Agent — 商户健康度诊断与帮扶闭环 Agent 系统</title>
-  <style>
-    :root {
-      --bg: #0f0f0f;
-      --bg-secondary: #161616;
-      --bg-card: #1a1a1a;
-      --bg-card-hover: #1f1f1f;
-      --border: #262626;
-      --border-hover: #3a3a3a;
-      --text-primary: #e8e8e8;
-      --text-secondary: #888;
-      --accent: #4c6ef5;
-      --accent-hover: #6281f7;
-      --font: system-ui, -apple-system, sans-serif;
-      --radius-card: 8px;
-      --radius-btn: 6px;
-      --line-height: 1.7;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商户智运Agent — 经营议题操作系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+:root {
+  --bg: #0a0a0f;
+  --bg2: #0f1117;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border-amber: rgba(245,158,11,0.4);
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --amber: #f59e0b;
+  --amber-light: #fcd34d;
+  --amber-dim: rgba(245,158,11,0.15);
+  --slate: #1e293b;
+}
 
-    html {
-      scroll-behavior: smooth;
-    }
+html { scroll-behavior: smooth; }
 
-    body {
-      background: var(--bg);
-      color: var(--text-primary);
-      font-family: var(--font);
-      line-height: var(--line-height);
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
-    }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Serif SC', serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
 
-    /* ── Navigation ── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(15, 15, 15, 0.92);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 48px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+/* ── Scroll animations ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
 
-    .nav-logo {
-      width: 28px;
-      height: 28px;
-      background: var(--accent);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
-    }
+/* ── Nav ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--text);
+}
+.nav-logo span { color: var(--amber); }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-size: 13px; color: var(--text-muted); text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--amber); }
 
-    .nav-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
+/* ── Hero ── */
+#hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 120px 48px 80px;
+  gap: 64px;
+  position: relative;
+  overflow: hidden;
+}
+#hero::before {
+  content: '';
+  position: absolute; top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+#hero::after {
+  content: '';
+  position: absolute; bottom: -100px; right: 10%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
 
-    /* ── Section wrapper ── */
-    .section {
-      padding: 96px 48px;
-    }
+.hero-left {
+  flex: 1; max-width: 520px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  background: var(--amber-dim);
+  border: 1px solid var(--border-amber);
+  border-radius: 100px;
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  color: var(--amber); letter-spacing: 0.05em;
+  width: fit-content;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--amber);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
 
-    .section-inner {
-      max-width: 960px;
-    }
+.hero-h1 {
+  font-size: clamp(42px, 6vw, 72px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #f1f5f9;
+}
+.hero-h2 {
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 0.02em;
+}
+.hero-body {
+  font-size: 16px;
+  color: var(--text-dim);
+  line-height: 1.8;
+  max-width: 420px;
+}
+.hero-cta {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  margin-top: 8px;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px;
+  background: var(--amber);
+  color: #0a0a0f;
+  font-size: 15px; font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 0 0 0 rgba(245,158,11,0.4);
+}
+.btn-primary:hover {
+  background: var(--amber-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245,158,11,0.3);
+}
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 15px; font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s, transform 0.15s;
+}
+.btn-secondary:hover {
+  border-color: var(--border-amber);
+  color: var(--amber);
+  transform: translateY(-2px);
+}
+.hero-author {
+  font-size: 13px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 8px;
+}
 
-    /* ── Hero ── */
-    #hero {
-      min-height: calc(100vh - 56px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
+/* ── Browser Mockup ── */
+.hero-right {
+  flex: 1; max-width: 580px;
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.browser-window {
+  background: #1a1a2e;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+}
+.browser-bar {
+  background: #16213e;
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.browser-dots { display: flex; gap: 6px; }
+.browser-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.browser-dots span:nth-child(1) { background: #ff5f57; }
+.browser-dots span:nth-child(2) { background: #febc2e; }
+.browser-dots span:nth-child(3) { background: #28c840; }
+.browser-url {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  color: #64748b;
+}
+.browser-tabs {
+  background: #0f1117;
+  padding: 8px 12px;
+  display: flex; gap: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.browser-tab {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: #475569;
+}
+.browser-tab.active {
+  background: rgba(245,158,11,0.15);
+  color: var(--amber);
+}
+.browser-body {
+  display: flex; height: 320px;
+}
+.mock-left {
+  width: 28%;
+  background: #f1f5f9;
+  padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mock-thread {
+  background: white;
+  border-radius: 6px;
+  padding: 8px;
+  border-left: 3px solid #ef4444;
+}
+.mock-thread-title {
+  font-size: 9px; font-weight: 700; color: #1e293b;
+  font-family: 'JetBrains Mono', monospace;
+}
+.mock-thread-sub {
+  font-size: 8px; color: #94a3b8; margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.mock-thread-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #fef2f2;
+  color: #ef4444;
+  border-radius: 3px;
+  font-size: 7px; font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
+}
+.mock-center {
+  flex: 1;
+  background: white;
+  padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  overflow: hidden;
+}
+.mock-msg {
+  display: flex; gap: 6px; align-items: flex-start;
+}
+.mock-avatar {
+  width: 18px; height: 18px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 2px;
+}
+.mock-bubble {
+  background: #f8fafc;
+  border-radius: 0 8px 8px 8px;
+  padding: 6px 8px;
+  font-size: 8px; color: #475569;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.5;
+  max-width: 85%;
+}
+.mock-bubble.amber-bubble {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  color: #92400e;
+}
+.mock-right {
+  width: 30%;
+  background: #fffbeb;
+  padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mock-card {
+  background: white;
+  border-radius: 6px;
+  padding: 8px;
+  border: 1px solid rgba(245,158,11,0.2);
+}
+.mock-card-title {
+  font-size: 8px; font-weight: 700; color: #92400e;
+  font-family: 'JetBrains Mono', monospace;
+}
+.mock-card-body {
+  font-size: 7px; color: #b45309; margin-top: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.6;
+}
 
-    .hero-eyebrow {
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 20px;
-    }
+/* ── Section base ── */
+section {
+  padding: 100px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section-label {
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800; line-height: 1.2;
+  color: #f1f5f9;
+  margin-bottom: 16px;
+}
+.section-sub {
+  font-size: 16px; color: var(--text-dim);
+  max-width: 560px; line-height: 1.8;
+}
 
-    .hero-title {
-      font-size: 48px;
-      font-weight: 600;
-      color: var(--text-primary);
-      line-height: 1.15;
-      margin-bottom: 16px;
-      max-width: 760px;
-    }
+/* ── Proposition ── */
+#proposition {
+  text-align: center;
+  padding: 120px 48px;
+  max-width: 100%;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
+}
+.prop-line1 {
+  font-size: clamp(24px, 4vw, 48px);
+  font-weight: 800; color: #f1f5f9;
+  line-height: 1.3;
+}
+.prop-line2 {
+  font-size: clamp(20px, 3vw, 36px);
+  font-weight: 700; color: var(--amber);
+  margin-top: 12px; line-height: 1.3;
+}
+.flow-container {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-top: 64px; flex-wrap: wrap;
+}
+.flow-node {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 20px 24px;
+}
+.flow-icon {
+  width: 48px; height: 48px;
+  background: var(--amber-dim);
+  border: 1px solid var(--border-amber);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.flow-label {
+  font-size: 14px; font-weight: 600; color: var(--text);
+}
+.flow-arrow {
+  font-size: 20px; color: var(--text-muted);
+  padding: 0 4px;
+  animation: arrow-pulse 2s ease-in-out infinite;
+}
+@keyframes arrow-pulse {
+  0%, 100% { opacity: 0.4; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(4px); }
+}
 
-    .hero-subtitle {
-      font-size: 22px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 32px;
-    }
+/* ── Architecture Cards ── */
+#architecture {
+  max-width: 1200px;
+}
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+.arch-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  cursor: default;
+}
+.arch-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-amber);
+  box-shadow: 0 0 32px rgba(245,158,11,0.1), 0 16px 40px rgba(0,0,0,0.3);
+  background: var(--surface-hover);
+}
+.arch-card-icon {
+  width: 52px; height: 52px;
+  background: var(--amber-dim);
+  border: 1px solid var(--border-amber);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+.arch-card-title {
+  font-size: 20px; font-weight: 700; color: #f1f5f9;
+  margin-bottom: 10px;
+}
+.arch-card-desc {
+  font-size: 14px; color: var(--text-dim); line-height: 1.8;
+  margin-bottom: 16px;
+}
+.lifecycle-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;
+}
+.lifecycle-tag {
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+}
+.lifecycle-tag.active {
+  background: var(--amber-dim);
+  border-color: var(--border-amber);
+  color: var(--amber);
+}
 
-    .hero-desc {
-      font-size: 16px;
-      color: var(--text-secondary);
-      max-width: 680px;
-      margin-bottom: 48px;
-    }
+/* ── Timeline ── */
+#timeline {
+  max-width: 100%;
+  padding: 100px 0;
+  overflow: hidden;
+}
+#timeline .inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+.timeline-scroll {
+  overflow-x: auto;
+  padding: 32px 48px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.timeline-scroll::-webkit-scrollbar { height: 4px; }
+.timeline-scroll::-webkit-scrollbar-track { background: transparent; }
+.timeline-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.timeline-track {
+  display: flex; align-items: flex-start;
+  gap: 0;
+  min-width: max-content;
+  padding-bottom: 16px;
+}
+.timeline-node {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+.timeline-connector {
+  display: flex; align-items: center;
+  padding-top: 24px;
+}
+.timeline-line {
+  width: 48px; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--border) 0, var(--border) 6px, transparent 6px, transparent 12px);
+  transition: background 0.3s;
+}
+.timeline-node.active .timeline-line,
+.timeline-node.active + .timeline-connector .timeline-line {
+  background: repeating-linear-gradient(90deg, var(--amber) 0, var(--amber) 6px, transparent 6px, transparent 12px);
+}
+.timeline-dot {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.25s;
+  position: relative; z-index: 1;
+}
+.timeline-node:hover .timeline-dot,
+.timeline-node.active .timeline-dot {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  box-shadow: 0 0 20px rgba(245,158,11,0.3);
+}
+.timeline-step-label {
+  font-size: 13px; font-weight: 700; color: var(--text-dim);
+  margin-top: 10px; text-align: center;
+  transition: color 0.25s;
+}
+.timeline-node:hover .timeline-step-label,
+.timeline-node.active .timeline-step-label { color: var(--amber); }
+.timeline-badge {
+  margin-top: 6px;
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all 0.25s;
+}
+.timeline-node.active .timeline-badge {
+  background: var(--amber-dim);
+  border-color: var(--border-amber);
+  color: var(--amber);
+}
+.timeline-detail {
+  max-width: 1200px; margin: 0 auto;
+  padding: 0 48px;
+}
+.timeline-detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border-amber);
+  border-radius: 12px;
+  padding: 24px 32px;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.timeline-detail-card.visible { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.detail-step { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--amber); margin-bottom: 8px; }
+.detail-title { font-size: 20px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+.detail-desc { font-size: 14px; color: var(--text-dim); line-height: 1.8; }
+.detail-badge {
+  display: inline-block; margin-top: 12px;
+  padding: 4px 12px;
+  background: var(--amber-dim);
+  border: 1px solid var(--border-amber);
+  border-radius: 100px;
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  color: var(--amber);
+}
 
-    .hero-desc p + p {
-      margin-top: 12px;
-    }
+/* ── Tech + CTA ── */
+#cta {
+  max-width: 1200px;
+  text-align: center;
+}
+.tech-badges {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  justify-content: center;
+  margin-bottom: 80px;
+}
+.tech-badge {
+  padding: 8px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+  transition: border-color 0.2s, color 0.2s;
+}
+.tech-badge:hover {
+  border-color: var(--border-amber);
+  color: var(--amber);
+}
+.cta-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 64px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.cta-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--amber), transparent 50%, var(--amber));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.cta-card::after {
+  content: '';
+  position: absolute; top: -100px; right: -100px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 900; color: #f1f5f9;
+  margin-bottom: 16px;
+}
+.cta-sub {
+  font-size: 16px; color: var(--text-dim);
+  max-width: 480px; margin: 0 auto 40px;
+  line-height: 1.8;
+}
+.btn-cta {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 18px 40px;
+  background: var(--amber);
+  color: #0a0a0f;
+  font-size: 17px; font-weight: 800;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(245,158,11,0.3);
+}
+.btn-cta:hover {
+  background: var(--amber-light);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(245,158,11,0.4);
+}
 
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 500;
-      border: none;
-      border-radius: var(--radius-btn);
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 150ms ease;
-    }
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 40px 48px;
+  border-top: 1px solid var(--border);
+  font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+}
 
-    .btn-primary:hover {
-      background: var(--accent-hover);
-    }
-
-    /* ── Demo Section ── */
-    #demo {
-      background: var(--bg-secondary);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .section-label {
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .section-title {
-      font-size: 32px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 12px;
-    }
-
-    .section-desc {
-      font-size: 15px;
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin-bottom: 32px;
-    }
-
-    .demo-btn-group {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
-
-    .btn-demo {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 500;
-      border-radius: var(--radius-btn);
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      transition: border-color 150ms, background 150ms, color 150ms;
-    }
-
-    .btn-demo:hover {
-      border-color: var(--border-hover);
-      background: var(--bg-card-hover);
-    }
-
-    .btn-demo.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(76, 110, 245, 0.08);
-    }
-
-    .demo-player-wrapper {
-      max-width: 900px;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-card);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .demo-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      text-align: center;
-      padding: 24px;
-    }
-
-    .demo-placeholder-icon {
-      width: 48px;
-      height: 48px;
-      border: 2px solid var(--border);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .demo-player-wrapper video,
-    .demo-player-wrapper iframe {
-      width: 100%;
-      height: 100%;
-      display: block;
-      border: none;
-    }
-
-    .demo-hint {
-      margin-top: 12px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .demo-hint a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .demo-hint a:hover {
-      color: var(--accent-hover);
-    }
-
-    /* ── Capabilities ── */
-    #capabilities {
-      background: var(--bg);
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      max-width: 900px;
-      margin-top: 40px;
-    }
-
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-card);
-      padding: 28px 24px;
-      transition: border-color 150ms, background 150ms;
-    }
-
-    .card:hover {
-      border-color: var(--border-hover);
-      background: var(--bg-card-hover);
-    }
-
-    .card-icon {
-      font-size: 22px;
-      margin-bottom: 14px;
-      display: block;
-      line-height: 1;
-    }
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-
-    .card-desc {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* ── Stack ── */
-    #stack {
-      background: var(--bg-secondary);
-      border-top: 1px solid var(--border);
-    }
-
-    .stack-table {
-      max-width: 640px;
-      margin-top: 40px;
-    }
-
-    .stack-row {
-      display: grid;
-      grid-template-columns: 100px 1fr;
-      align-items: baseline;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--border);
-      gap: 24px;
-    }
-
-    .stack-row:first-child {
-      border-top: 1px solid var(--border);
-    }
-
-    .stack-label {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-    }
-
-    .stack-value {
-      font-size: 15px;
-      color: var(--text-primary);
-    }
-
-    /* ── Footer ── */
-    footer {
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      padding: 36px 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .footer-copy {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .footer-link {
-      font-size: 13px;
-      color: var(--accent);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 150ms;
-    }
-
-    .footer-link:hover {
-      color: var(--accent-hover);
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 767px) {
-      nav {
-        padding: 0 20px;
-      }
-
-      .section {
-        padding: 64px 20px;
-      }
-
-      .hero-title {
-        font-size: 32px;
-      }
-
-      .hero-subtitle {
-        font-size: 18px;
-      }
-
-      .section-title {
-        font-size: 26px;
-      }
-
-      .btn-primary {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .demo-btn-group {
-        flex-direction: column;
-      }
-
-      .btn-demo {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .cards-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stack-row {
-        grid-template-columns: 80px 1fr;
-      }
-
-      footer {
-        padding: 28px 20px;
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-  </style>
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  nav { padding: 14px 24px; }
+  .nav-links { display: none; }
+  #hero { flex-direction: column; padding: 100px 24px 60px; gap: 48px; }
+  .hero-right { max-width: 100%; }
+  section { padding: 72px 24px; }
+  #proposition { padding: 72px 24px; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .flow-container { gap: 0; }
+  .flow-arrow { display: none; }
+  .cta-card { padding: 40px 24px; }
+  footer { padding: 32px 24px; }
+  #timeline .inner, .timeline-detail { padding: 0 24px; }
+}
+</style>
 </head>
 <body>
 
-  <!-- Navigation -->
-  <nav>
-    <div class="nav-logo">智</div>
-    <span class="nav-name">商户智运Agent</span>
-  </nav>
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">商户智运<span>Agent</span></div>
+  <div class="nav-links">
+    <a href="#proposition">核心命题</a>
+    <a href="#architecture">架构</a>
+    <a href="#timeline">演示流程</a>
+    <a href="/workspace">进入工作台</a>
+  </div>
+</nav>
 
-  <!-- Hero -->
-  <section class="section" id="hero">
-    <div class="section-inner">
-      <p class="hero-eyebrow">Agent System · 商户运营智能化</p>
-      <h1 class="hero-title">商户健康度诊断与帮扶闭环 Agent 系统</h1>
-      <p class="hero-subtitle">商户智运Agent</p>
-      <div class="hero-desc">
-        <p>面向购物中心的 AI 运营系统，能够自动分析商户经营健康度、定位问题根因，并生成可执行的帮扶任务，形成"感知 → 诊断 → 干预 → 复盘"的闭环。</p>
-        <p>系统集成 LLM 推理链、RAG 知识检索与多工具 Agent 编排，将原本依赖人工经验的运营决策流程转化为可复用、可追溯的智能工作流。</p>
-      </div>
-      <a href="#demo" class="btn-primary">
-        观看 3 分钟完整演示 ↓
-      </a>
+<!-- Hero -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-badge">作品集项目 · 2026</div>
+    <h1 class="hero-h1">商户智运Agent</h1>
+    <h2 class="hero-h2">经营议题操作系统</h2>
+    <p class="hero-body">商业地产总经理的 AI 决策伙伴——从发现问题到沉淀经验，全程陪跑。不是报表，不是聊天机器人，而是一个完整的经营决策工作流。</p>
+    <div class="hero-cta">
+      <a href="/workspace" class="btn-primary">进入演示工作台 →</a>
+      <a href="https://github.com/heyuxuan0209/mall-operation-system" target="_blank" class="btn-secondary">查看源码</a>
     </div>
-  </section>
-
-  <!-- Demo -->
-  <section class="section" id="demo">
-    <div class="section-inner">
-      <p class="section-label">Demo</p>
-      <h2 class="section-title">完整业务闭环演示</h2>
-      <p class="section-desc">本视频展示从问题发现到任务生成与知识沉淀的完整流程。</p>
-
-      <div class="demo-btn-group">
-        <button class="btn-demo" id="btn-local" onclick="loadVideo('local')">
-          ▶ 国内播放
-        </button>
-        <button class="btn-demo" id="btn-intl" onclick="openYoutube()">
-          ↗ 海外播放
-        </button>
+    <div class="hero-author">何雨轩 · 182 1020 9768</div>
+  </div>
+  <div class="hero-right">
+    <div class="browser-window">
+      <div class="browser-bar">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">merchant-smartops.zeabur.app/workspace</div>
       </div>
-
-      <div class="demo-player-wrapper" id="demo-player">
-        <div class="demo-placeholder">
-          <div class="demo-placeholder-icon">▶</div>
-          <span>选择播放方式以加载视频</span>
-        </div>
+      <div class="browser-tabs">
+        <div class="browser-tab active">风险研判</div>
+        <div class="browser-tab">今日经营</div>
+        <div class="browser-tab">招商协同</div>
+        <div class="browser-tab">组织经验</div>
       </div>
-      <p class="demo-hint" id="demo-hint" style="display:none">
-        画面不够清晰？
-        <a href="https://www.bilibili.com/video/BV178fiB1EkG/" target="_blank" rel="noopener">在 B 站观看完整高清版 ↗</a>
-      </p>
-    </div>
-  </section>
-
-  <!-- Capabilities -->
-  <section class="section" id="capabilities">
-    <div class="section-inner">
-      <p class="section-label">系统能力</p>
-      <h2 class="section-title">系统能力结构</h2>
-      <p class="section-desc">五层能力模块协同工作，覆盖数据接入到知识沉淀的全链路。</p>
-
-      <div class="cards-grid">
-        <div class="card">
-          <span class="card-icon">◼</span>
-          <h3 class="card-title">数据层</h3>
-          <p class="card-desc">商户档案 / 行为日志 / 指标数据，统一接入与结构化存储，为上层分析提供可靠数据基础。</p>
+      <div class="browser-body">
+        <div class="mock-left">
+          <div class="mock-thread">
+            <div class="mock-thread-title">望潮港火锅</div>
+            <div class="mock-thread-sub">续约风险 · 联合研判中</div>
+            <div class="mock-thread-badge">P0</div>
+          </div>
+          <div class="mock-thread" style="border-left-color:#f59e0b; opacity:0.7;">
+            <div class="mock-thread-title">辛香汇</div>
+            <div class="mock-thread-sub">客流下滑 · 建议升级</div>
+            <div class="mock-thread-badge" style="background:#fffbeb;color:#b45309;">P1</div>
+          </div>
         </div>
-        <div class="card">
-          <span class="card-icon">🔍</span>
-          <h3 class="card-title">RAG 检索</h3>
-          <p class="card-desc">历史案例语义检索与推荐，将过往成功的帮扶经验召回，辅助当前诊断决策。</p>
+        <div class="mock-center">
+          <div class="mock-msg">
+            <div class="mock-avatar" style="background:#ef4444;"></div>
+            <div class="mock-bubble">风险诊断师：检测到 P0 级续约风险，近3月销售额下滑 34%，建议立即升级研判</div>
+          </div>
+          <div class="mock-msg">
+            <div class="mock-avatar" style="background:#3b82f6;"></div>
+            <div class="mock-bubble">经营分析师：补充经营数据证据，客单价同比下降 18%，周末客流恢复至 72%</div>
+          </div>
+          <div class="mock-msg">
+            <div class="mock-avatar" style="background:#f59e0b;"></div>
+            <div class="mock-bubble amber-bubble">任务调度官：已收敛 3 个续约方案，请总经理拍板</div>
+          </div>
         </div>
-        <div class="card">
-          <span class="card-icon">🧠</span>
-          <h3 class="card-title">Agent 推理链</h3>
-          <p class="card-desc">问题拆解与根因分析，通过多步推理将复杂经营问题定位到可干预的具体因素。</p>
-        </div>
-        <div class="card">
-          <span class="card-icon">⚙️</span>
-          <h3 class="card-title">任务流编排</h3>
-          <p class="card-desc">自动生成巡检与帮扶任务，将诊断结论转化为结构化任务，分配给对应运营人员。</p>
-        </div>
-        <div class="card">
-          <span class="card-icon">📚</span>
-          <h3 class="card-title">记忆系统</h3>
-          <p class="card-desc">知识沉淀与经验复用，每次帮扶结果回写知识库，持续优化后续诊断质量。</p>
+        <div class="mock-right">
+          <div class="mock-card">
+            <div class="mock-card-title">当前决策</div>
+            <div class="mock-card-body">方案B：阶梯租金<br/>+ 联合营销支持<br/>预算：¥12万</div>
+          </div>
+          <div class="mock-card" style="margin-top:4px;">
+            <div class="mock-card-title">证据账本</div>
+            <div class="mock-card-body">5条证据<br/>可信度：高</div>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Stack -->
-  <section class="section" id="stack">
-    <div class="section-inner">
-      <p class="section-label">技术架构</p>
-      <h2 class="section-title">技术架构</h2>
-      <p class="section-desc">基于现代 AI 工程栈构建，各模块职责清晰、可独立演进。</p>
+<!-- Proposition -->
+<div id="proposition">
+  <div class="reveal">
+    <div class="prop-line1">总经理面对续约风险，需要的不是报表</div>
+    <div class="prop-line2">而是一个能帮他研判、决策、执行、复盘的操作系统</div>
+  </div>
+  <div class="flow-container reveal reveal-delay-2">
+    <div class="flow-node">
+      <div class="flow-icon">🔍</div>
+      <div class="flow-label">发现问题</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">🤝</div>
+      <div class="flow-label">联合研判</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">⚖️</div>
+      <div class="flow-label">做出决策</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">📋</div>
+      <div class="flow-label">追踪执行</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">🧠</div>
+      <div class="flow-label">沉淀经验</div>
+    </div>
+  </div>
+</div>
 
-      <div class="stack-table">
-        <div class="stack-row">
-          <span class="stack-label">LLM</span>
-          <span class="stack-value">Claude / GPT-4</span>
-        </div>
-        <div class="stack-row">
-          <span class="stack-label">RAG</span>
-          <span class="stack-value">向量数据库 + 语义检索</span>
-        </div>
-        <div class="stack-row">
-          <span class="stack-label">Agent</span>
-          <span class="stack-value">多工具编排 · 推理链</span>
-        </div>
-        <div class="stack-row">
-          <span class="stack-label">Workflow</span>
-          <span class="stack-value">任务流自动生成 · 状态追踪</span>
-        </div>
-        <div class="stack-row">
-          <span class="stack-label">Memory</span>
-          <span class="stack-value">档案 + 行为日志持久化</span>
-        </div>
+<!-- Architecture -->
+<section id="architecture">
+  <div class="reveal">
+    <div class="section-label">CORE ARCHITECTURE</div>
+    <div class="section-title">核心架构：4 个业务对象</div>
+    <div class="section-sub">不是功能堆砌，而是对经营决策工作流的结构化建模。每个对象都有明确的业务语义。</div>
+  </div>
+  <div class="cards-grid">
+    <div class="arch-card reveal reveal-delay-1">
+      <div class="arch-card-icon">🔄</div>
+      <div class="arch-card-title">议题生命周期</div>
+      <div class="arch-card-desc">9个状态的完整状态机，每个状态明确责任方、进入条件和下一步动作。议题不会消失在流程里。</div>
+      <div class="lifecycle-tags">
+        <span class="lifecycle-tag">自动识别</span>
+        <span class="lifecycle-tag active">联合研判中</span>
+        <span class="lifecycle-tag">等待拍板</span>
+        <span class="lifecycle-tag">执行中</span>
+        <span class="lifecycle-tag">已沉淀</span>
       </div>
     </div>
-  </section>
+    <div class="arch-card reveal reveal-delay-2">
+      <div class="arch-card-icon">⚖️</div>
+      <div class="arch-card-title">决策对象</div>
+      <div class="arch-card-desc">拍板不是一个按钮，而是一个业务对象。包含决策问题、可选方案、推荐理由、关键依据、风险代价和验证指标。</div>
+      <div class="lifecycle-tags">
+        <span class="lifecycle-tag">决策问题</span>
+        <span class="lifecycle-tag">可选方案</span>
+        <span class="lifecycle-tag active">推荐方案</span>
+        <span class="lifecycle-tag">验证指标</span>
+      </div>
+    </div>
+    <div class="arch-card reveal reveal-delay-3">
+      <div class="arch-card-icon">📒</div>
+      <div class="arch-card-title">证据账本</div>
+      <div class="arch-card-desc">Agent 发言背后的依据结构化存储。6种证据类型，每条证据标注提供者、更新时间、支撑判断和可信度。</div>
+      <div class="lifecycle-tags">
+        <span class="lifecycle-tag">经营数据</span>
+        <span class="lifecycle-tag">现场证据</span>
+        <span class="lifecycle-tag active">历史案例</span>
+        <span class="lifecycle-tag">招商判断</span>
+        <span class="lifecycle-tag">客诉反馈</span>
+      </div>
+    </div>
+    <div class="arch-card reveal reveal-delay-4">
+      <div class="arch-card-icon">✅</div>
+      <div class="arch-card-title">执行验证闭环</div>
+      <div class="arch-card-desc">拍板后不只生成任务，还追踪结果。预期领先指标 vs 实际结果，复盘结论沉淀为组织记忆，反哺下次判断。</div>
+      <div class="lifecycle-tags">
+        <span class="lifecycle-tag">执行任务</span>
+        <span class="lifecycle-tag active">领先指标</span>
+        <span class="lifecycle-tag">实际结果</span>
+        <span class="lifecycle-tag">复盘结论</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <footer>
-    <span class="footer-copy">© 2025 商户智运Agent · 商户健康度诊断与帮扶闭环系统</span>
-    <a href="/dashboard" class="footer-link" target="_blank" rel="noopener">
-      在线体验（需访问码）→
-    </a>
-  </footer>
+<!-- Timeline -->
+<div id="timeline">
+  <div class="inner reveal">
+    <div class="section-label">DEMO FLOW</div>
+    <div class="section-title">演示流程：望潮港火锅续约风险</div>
+    <div class="section-sub">打开工作台后，AutoPlay 引擎自动演示完整的 8 阶段研判流程。点击节点查看详情。</div>
+  </div>
+  <div class="timeline-scroll">
+    <div class="timeline-track" id="timelineTrack">
+      <div class="timeline-node" data-index="0" onclick="selectNode(0)">
+        <div class="timeline-dot">🔍</div>
+        <div class="timeline-step-label">发现</div>
+        <div class="timeline-badge">自动识别</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="1" onclick="selectNode(1)">
+        <div class="timeline-dot">📊</div>
+        <div class="timeline-step-label">证据</div>
+        <div class="timeline-badge">联合研判中</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="2" onclick="selectNode(2)">
+        <div class="timeline-dot">🙋</div>
+        <div class="timeline-step-label">请示</div>
+        <div class="timeline-badge">等待请示</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="3" onclick="selectNode(3)">
+        <div class="timeline-dot">🔄</div>
+        <div class="timeline-step-label">判断</div>
+        <div class="timeline-badge">联合研判中</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="4" onclick="selectNode(4)">
+        <div class="timeline-dot">📋</div>
+        <div class="timeline-step-label">方案</div>
+        <div class="timeline-badge">等待拍板</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="5" onclick="selectNode(5)">
+        <div class="timeline-dot">⚖️</div>
+        <div class="timeline-step-label">决策</div>
+        <div class="timeline-badge">已拍板</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="6" onclick="selectNode(6)">
+        <div class="timeline-dot">🚀</div>
+        <div class="timeline-step-label">执行</div>
+        <div class="timeline-badge">执行中</div>
+      </div>
+      <div class="timeline-connector"><div class="timeline-line"></div></div>
+      <div class="timeline-node" data-index="7" onclick="selectNode(7)">
+        <div class="timeline-dot">🧠</div>
+        <div class="timeline-step-label">沉淀</div>
+        <div class="timeline-badge">已沉淀</div>
+      </div>
+    </div>
+  </div>
+  <div class="timeline-detail">
+    <div class="timeline-detail-card" id="timelineDetail"></div>
+  </div>
+</div>
 
-  <script>
-    var currentMode = null;
+<!-- CTA -->
+<section id="cta">
+  <div class="reveal">
+    <div class="section-label">TECH STACK</div>
+  </div>
+  <div class="tech-badges reveal reveal-delay-1">
+    <span class="tech-badge">Next.js 16.1.4</span>
+    <span class="tech-badge">React 19</span>
+    <span class="tech-badge">TypeScript 5.x</span>
+    <span class="tech-badge">Tailwind CSS</span>
+    <span class="tech-badge">全静态 Mock Data</span>
+    <span class="tech-badge">纯 SVG 图表</span>
+    <span class="tech-badge">Zeabur 部署</span>
+  </div>
+  <div class="cta-card reveal reveal-delay-2">
+    <div class="cta-title">准备好体验了吗？</div>
+    <div class="cta-sub">全程 AutoPlay 演示，无需登录，直接感受 AI 联合研判全流程。8 个阶段，完整走一遍。</div>
+    <a href="/workspace" class="btn-cta">进入演示工作台 →</a>
+  </div>
+</section>
 
-    function loadVideo(mode) {
-      if (currentMode === mode) return;
-      currentMode = mode;
+<footer>
+  何雨轩 · 182 1020 9768 · 2026 &nbsp;|&nbsp; 商户智运Agent — 经营议题操作系统
+</footer>
 
-      var player = document.getElementById('demo-player');
-      var btnLocal = document.getElementById('btn-local');
-      var hint = document.getElementById('demo-hint');
+<script>
+const TIMELINE_DATA = [
+  {
+    step: 'STAGE 01 / 发现',
+    title: '风险诊断师检测到 P0 级续约风险',
+    desc: '系统自动扫描商户经营数据，发现望潮港火锅近3月销售额下滑34%，合同到期日距今仅剩45天。风险诊断师触发 P0 级预警，建议立即升级为联合研判议题。',
+    badge: '自动识别 → 建议升级'
+  },
+  {
+    step: 'STAGE 02 / 证据',
+    title: '4位Agent补充经营/活动/现场/案例证据',
+    desc: '经营分析师补充销售数据（客单价下降18%，周末客流恢复至72%）；活动复盘师提供近期活动效果数据；现场巡检师上传现场照片证据；案例记忆官检索历史同类案例3条。',
+    badge: '→ 联合研判中'
+  },
+  {
+    step: 'STAGE 03 / 请示',
+    title: '超出Agent权限，请示总经理邀请招商经理',
+    desc: '续约谈判涉及租金条款调整，超出 Agent 自主决策权限。任务调度官向总经理发出请示，建议邀请招商经理补充续约侧信息，以完善判断依据。',
+    badge: '→ 等待请示'
+  },
+  {
+    step: 'STAGE 04 / 判断',
+    title: '招商经理补充续约侧信息，修正初始判断',
+    desc: '招商经理加入研判，补充商户方反馈：品牌方有意续约但要求降租15%，同时透露已在考察竞品商场。初始判断从"建议不续"修正为"有条件续约，需谈判"。',
+    badge: '→ 联合研判中'
+  },
+  {
+    step: 'STAGE 05 / 方案',
+    title: '任务调度官收敛3个方案，8维度对比',
+    desc: '任务调度官综合所有证据，生成3个可选方案：方案A（维持原租金+装修补贴）、方案B（阶梯租金+联合营销）、方案C（短期续约+重新招商备案）。8个维度全面对比。',
+    badge: '→ 等待拍板'
+  },
+  {
+    step: 'STAGE 06 / 决策',
+    title: '总经理拍板方案B，批第一阶段预算',
+    desc: '总经理综合研判结论，选择方案B：阶梯租金（首年降8%，次年恢复）+ 联合营销支持。批准第一阶段预算12万元，要求30天内完成谈判签约。',
+    badge: '→ 已拍板'
+  },
+  {
+    step: 'STAGE 07 / 执行',
+    title: '生成4项执行任务，同步各责任人',
+    desc: '系统自动生成4项执行任务：①招商经理主导租金谈判（7天）②运营团队制定联合营销方案（5天）③法务审核合同条款（3天）④总经理签字确认（1天）。各责任人收到通知。',
+    badge: '→ 执行中'
+  },
+  {
+    step: 'STAGE 08 / 沉淀',
+    title: '案例记忆官归档，反哺下次同类判断',
+    desc: '案例记忆官将本次研判过程、决策依据、执行结果完整归档。关键洞察：阶梯租金方案对销售下滑型商户的续约成功率比直接降租高23%。下次遇到同类议题时自动推送。',
+    badge: '→ 已沉淀'
+  }
+];
 
-      player.innerHTML = '';
-      btnLocal.classList.add('active');
-      hint.style.display = 'block';
+let activeNode = -1;
 
-      var iframe = document.createElement('iframe');
-      iframe.src = 'https://player.bilibili.com/player.html?bvid=BV178fiB1EkG&autoplay=0&high_quality=1&danmaku=0';
-      iframe.allowFullscreen = true;
-      iframe.allow = 'fullscreen';
-      player.appendChild(iframe);
-    }
+function selectNode(index) {
+  const nodes = document.querySelectorAll('.timeline-node');
+  const detail = document.getElementById('timelineDetail');
 
-    function openYoutube() {
-      window.open('https://youtu.be/uTbHGTIPEyA', '_blank', 'noopener');
-    }
-  </script>
+  nodes.forEach((n, i) => {
+    n.classList.toggle('active', i === index);
+  });
 
+  if (activeNode === index) {
+    detail.classList.remove('visible');
+    detail.innerHTML = '';
+    activeNode = -1;
+    return;
+  }
+
+  activeNode = index;
+  const d = TIMELINE_DATA[index];
+  detail.innerHTML = `
+    <div class="detail-step">${d.step}</div>
+    <div class="detail-title">${d.title}</div>
+    <div class="detail-desc">${d.desc}</div>
+    <div class="detail-badge">${d.badge}</div>
+  `;
+  detail.classList.add('visible');
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
 </body>
 </html>
