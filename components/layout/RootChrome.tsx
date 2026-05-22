@@ -7,11 +7,11 @@ import DemoWatermark from '@/components/demo/DemoWatermark';
 import FloatingAssistant from '@/components/ai-assistant/FloatingAssistant';
 
 // Routes that manage their own complete UI — no root chrome
-const CLEAN_ROUTES = ['/workspace', '/merchant-workspace', '/v4'];
+const CLEAN_ROUTES = ['/', '/workspace', '/merchant-workspace', '/v4'];
 
 export default function RootChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isClean = CLEAN_ROUTES.some(r => pathname.startsWith(r));
+  const isClean = CLEAN_ROUTES.some(r => (r === '/' ? pathname === '/' : pathname.startsWith(r)));
 
   if (isClean) {
     return <>{children}</>;

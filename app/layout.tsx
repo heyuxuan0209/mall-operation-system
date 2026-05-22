@@ -2,19 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 import MainLayout from "@/components/layout/MainLayout";
 import RootChrome from "@/components/layout/RootChrome";
-import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "商户智运Agent - AI驱动的商户健康管理系统",
-  description: "AI驱动的商业地产商户运营管理系统 | 个人作品集项目，展示AI产品设计与全栈开发能力 | Next.js + React + TypeScript",
-  keywords: "商户运营,AI诊断,健康度监控,智能巡检,商业地产,作品集",
+  title: "Mall Operation Agent - AI 商场运营与门店改善工作台",
+  description: "AI 驱动的商场运营研判与门店改善闭环演示，覆盖续约风险识别、专家建议下发、门店任务执行和效果回流。",
+  keywords: "商场运营,门店改善,AI Agent,续约风险,经营诊断,商业地产,经营工作台",
   authors: [{ name: "Heyuxuan" }],
   creator: "Heyuxuan",
   publisher: "Heyuxuan",
   robots: "index, follow",
   openGraph: {
-    title: "商户智运Agent - AI驱动的商户健康管理系统",
-    description: "AI驱动的商业地产商户运营管理系统 | 个人作品集项目",
+    title: "Mall Operation Agent - AI 商场运营与门店改善工作台",
+    description: "从商场续约风险研判到门店改善执行回流的 AI 经营工作台演示。",
     type: "website",
     locale: "zh_CN",
   },
