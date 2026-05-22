@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { Suspense, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import {
+  createMerchantDispatch,
+  getImprovementSummary,
+  loadCurrentDispatch,
+  type ImprovementSummary,
+  type MerchantDispatch,
+} from '@/utils/merchantImprovementState';
 import {
   Search, Plus, Bell, Zap, Send, Users,
   CheckCircle2, BookOpen,
   Play, Pause, ChevronRight,
   ArrowRight, FileText, BarChart3, ListChecks,
-  Brain, Sparkles, AlertTriangle,
+  Brain, Sparkles, AlertTriangle, Store,
 } from 'lucide-react';
 
 /* ════════════════════════════════════════════════════════════
@@ -1178,12 +1186,12 @@ function PlanCard({ msg, onSelect }: { msg: Msg; onSelect: (p: 'A' | 'B' | 'C') 
         </div>
       )}
       {/* Header row */}
-      <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x divide-slate-100 border-b border-slate-200">
         {PLANS.map(plan => {
           const isChosen = chosen === plan.id;
           const isOther = chosen && chosen !== plan.id;
           return (
-            <div key={plan.id} className="px-3 pt-3 pb-2 transition-all"
+            <div key={plan.id} className="px-3 pt-3 pb-2 transition-all border-b md:border-b-0 last:border-b-0"
               style={{ background: isChosen ? '#f0fdf4' : isOther ? '#f8fafc' : plan.recommended ? '#fdfcf5' : 'white', opacity: isOther ? 0.55 : 1 }}>
               <div className="flex items-center gap-1 mb-1">
                 {plan.recommended && !chosen && (
@@ -1198,7 +1206,7 @@ function PlanCard({ msg, onSelect }: { msg: Msg; onSelect: (p: 'A' | 'B' | 'C') 
       </div>
       {/* 8 fields */}
       {FIELDS.map(({ key, label }) => (
-        <div key={label} className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-50">
+        <div key={label} className="grid grid-cols-1 md:grid-cols-3 md:divide-x divide-slate-100 border-b border-slate-50">
           {PLANS.map(plan => {
             const isChosen = chosen === plan.id;
             const isOther = chosen && chosen !== plan.id;
@@ -1208,11 +1216,12 @@ function PlanCard({ msg, onSelect }: { msg: Msg; onSelect: (p: 'A' | 'B' | 'C') 
             return (
               <div key={plan.id} className="px-3 py-2 transition-all"
                 style={{ background: isChosen ? '#f0fdf4' : isOther ? '#f8fafc' : 'white', opacity: isOther ? 0.55 : 1 }}>
-                {/* Only show label in first plan column */}
+                {/* Show label on mobile for all plans, on desktop only for plan A */}
+                <p className="text-[9px] font-semibold text-slate-400 uppercase mb-0.5 md:hidden">{label}</p>
                 {plan.id === 'A' && (
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase mb-0.5">{label}</p>
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase mb-0.5 hidden md:block">{label}</p>
                 )}
-                {plan.id !== 'A' && <div className="h-3.5" />}
+                {plan.id !== 'A' && <div className="h-3.5 hidden md:block" />}
                 <p className={`text-[11px] leading-snug ${
                   isRisk ? 'text-amber-600' :
                   isRenewal && val.startsWith('高') ? 'text-emerald-600 font-medium' :
@@ -1239,7 +1248,7 @@ function PlanCard({ msg, onSelect }: { msg: Msg; onSelect: (p: 'A' | 'B' | 'C') 
       {/* Action buttons */}
       {!chosen && (
         <div className="p-3 bg-slate-50">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 mb-2">
             {PLANS.map(plan => (
               <button key={plan.id} onClick={() => onSelect(plan.id)}
                 className="flex-1 py-2 rounded-xl text-[11px] font-semibold transition-all border"
@@ -1670,12 +1679,13 @@ function BusinessThreadCard({ thread, active, onClick, lifecycle }: {
 /* ════════════════════════════════════════════════════════════
    主持控制台
 ════════════════════════════════════════════════════════════ */
-function CeoDirectiveBar({ currentPhase, participants, ceoInput, setCeoInput, onSend }: {
+function CeoDirectiveBar({ currentPhase, participants, ceoInput, setCeoInput, onSend, isThinking }: {
   currentPhase: Phase;
   participants: AgentId[];
   ceoInput: string;
   setCeoInput: (v: string) => void;
   onSend: () => void;
+  isThinking?: boolean;
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const inPlanPhase = currentPhase === 'solution' || currentPhase === 'decision';
@@ -1786,15 +1796,17 @@ function CeoDirectiveBar({ currentPhase, participants, ceoInput, setCeoInput, on
       </div>
       <div className="flex items-center gap-2 px-3 pb-2.5 pt-1">
         <input
-          className="flex-1 text-[13px] text-slate-700 placeholder-slate-300 bg-transparent outline-none"
-          placeholder="输入研判指令，或 @某位专家先回答…"
+          className="flex-1 text-[13px] text-slate-700 placeholder-slate-300 bg-transparent outline-none disabled:opacity-50"
+          placeholder={isThinking ? '专家正在分析中…' : '输入研判指令，或 @某位专家先回答…'}
           value={ceoInput}
           onChange={e => setCeoInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+          disabled={isThinking}
         />
         <button onClick={onSend}
-          className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-900 text-white hover:bg-slate-700 transition-colors flex-shrink-0">
-          <Send size={13} />
+          disabled={isThinking}
+          className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-900 text-white hover:bg-slate-700 transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed">
+          {isThinking ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={13} />}
         </button>
       </div>
     </div>
@@ -1898,7 +1910,11 @@ function NewConsultModal({ onClose, onCreate }: {
 /* ════════════════════════════════════════════════════════════
    MAIN COMPONENT
 ════════════════════════════════════════════════════════════ */
-export default function WorkspacePage() {
+function WorkspacePageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isMerchantFeedbackView = searchParams.get('view') === 'merchant-feedback';
+  const feedbackDispatchId = searchParams.get('dispatchId');
   const [messages, setMessages] = useState<Msg[]>([]);
   const [scriptIdx, setScriptIdx] = useState(0);
   const [typingAgent, setTypingAgent] = useState<AgentId | null>(null);
@@ -1907,17 +1923,79 @@ export default function WorkspacePage() {
   const [speed, setSpeed] = useState<1 | 2 | 3>(1);
   const [activeThread, setActiveThread] = useState('wangchao');
   const [ceoInput, setCeoInput] = useState('');
+  const [isAgentThinking, setIsAgentThinking] = useState(false);
   const [xinxiangApproved, setXinxiangApproved] = useState(false);
   const [beventConfirmed, setBeventConfirmed] = useState(false);
   const [showNewConsult, setShowNewConsult] = useState(false);
   const [customThreads, setCustomThreads] = useState<CustomThread[]>([]);
   const [activeTab, setActiveTab] = useState<BusinessTab>('risk');
+  const [merchantDispatch, setMerchantDispatch] = useState<MerchantDispatch | null>(() => loadCurrentDispatch(feedbackDispatchId));
+  const [merchantFeedbackSummary, setMerchantFeedbackSummary] = useState<ImprovementSummary>(() => {
+    const dispatch = loadCurrentDispatch(feedbackDispatchId);
+    return getImprovementSummary(dispatch?.tasks ?? [], dispatch);
+  });
   const feedRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const msgCounter = useRef(0);
 
+  const refreshMerchantFeedbackSummary = useCallback(() => {
+    const dispatch = loadCurrentDispatch(feedbackDispatchId);
+    setMerchantDispatch(dispatch);
+    setMerchantFeedbackSummary(getImprovementSummary(dispatch?.tasks ?? [], dispatch));
+  }, [feedbackDispatchId]);
+
+  const handleDispatchToMerchant = useCallback(() => {
+    const dispatch = createMerchantDispatch();
+    router.push(`/merchant-workspace?dispatchId=${dispatch.dispatchId}`);
+  }, [router]);
+
+  const handleOpenMerchantWorkspace = useCallback(() => {
+    const dispatch = loadCurrentDispatch(feedbackDispatchId) ?? createMerchantDispatch();
+    router.push(`/merchant-workspace?dispatchId=${dispatch.dispatchId}`);
+  }, [feedbackDispatchId, router]);
+
+  const scrollPlanCardIntoView = useCallback(() => {
+    const feed = feedRef.current;
+    const planCard = feed?.querySelector<HTMLElement>('[data-plan-card]');
+    if (!feed || !planCard) return;
+
+    const top = planCard.offsetTop - feed.offsetTop - 24;
+    feed.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }, []);
+
   /* currentMsgs: display layer — switches per thread */
   const currentMsgs = useMemo(() => {
+    if (isMerchantFeedbackView && activeThread === 'wangchao') {
+      return [
+        { id: 'feedback-phase', type: 'phase-sep', time: '当前', phase: 'execution', content: '商家执行回流' },
+        {
+          id: 'feedback-system',
+          type: 'system',
+          time: '当前',
+          phase: 'execution',
+          content: merchantDispatch
+            ? `门店改善任务已回流商场端，正在评估本次下发批次 ${merchantDispatch.dispatchId} 的改善信号。`
+            : '尚未找到商家回流批次，请先从商场端下发任务，或从商家端回流评估。',
+        },
+        {
+          id: 'feedback-agent',
+          type: 'agent',
+          agentId: 'merchant',
+          time: '当前',
+          phase: 'execution',
+          content: merchantDispatch
+            ? `我已收到望潮港火锅的门店改善进度：已完成 **${merchantFeedbackSummary.completed}/${merchantFeedbackSummary.total}** 项，当前商场侧风险为 **${merchantFeedbackSummary.riskChange}**。\n\n续约建议：**${merchantFeedbackSummary.renewalAdvice}**。\n\n下一步不需要重新诊断，应直接观察午市客流、活动客单价和服务响应三个指标是否在第 7/14 天达标。`
+            : `当前没有可评估的门店执行批次。请先在商场端完成方案下发，再让商家确认和执行任务。`,
+        },
+        {
+          id: 'feedback-task-card',
+          type: 'task-card',
+          agentId: 'scheduler',
+          time: '当前',
+          phase: 'execution',
+        },
+      ] as Msg[];
+    }
     if (activeThread === 'xinxiang') {
       return xinxiangApproved ? XINXIANG_MSGS_APPROVED : XINXIANG_MSGS;
     }
@@ -1931,7 +2009,7 @@ export default function WorkspacePage() {
     const custom = customThreads.find(t => t.id === activeThread);
     if (custom) return getCustomThreadInitMsgs(custom);
     return messages; // wangchao: live autoplay
-  }, [activeThread, xinxiangApproved, beventConfirmed, messages, customThreads]);
+  }, [activeThread, xinxiangApproved, beventConfirmed, messages, customThreads, isMerchantFeedbackView, merchantFeedbackSummary, merchantDispatch]);
 
   /* activeThreadMeta: dynamic meta for active thread, supports custom threads */
   const activeThreadMeta = useMemo(() => {
@@ -1959,6 +2037,12 @@ export default function WorkspacePage() {
 
   /* Auto-play engine */
   useEffect(() => {
+    if (isMerchantFeedbackView) {
+      setTypingAgent(null);
+      setWaitForCEO(false);
+      setIsPaused(true);
+      return;
+    }
     if (isPaused || waitForCEO) {
       // Use a ref-based approach to avoid setState in effect body
       const t = setTimeout(() => setTypingAgent(null), 0);
@@ -1989,7 +2073,27 @@ export default function WorkspacePage() {
       timerRef.current = setTimeout(finish, (item.typingMs ?? 700) * mult);
     }
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [scriptIdx, isPaused, waitForCEO, speed, addMessage]);
+  }, [scriptIdx, isPaused, waitForCEO, speed, addMessage, isMerchantFeedbackView]);
+
+  useEffect(() => {
+    refreshMerchantFeedbackSummary();
+
+    const handleFocus = () => refreshMerchantFeedbackSummary();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshMerchantFeedbackSummary();
+    };
+    const handleStorage = () => refreshMerchantFeedbackSummary();
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshMerchantFeedbackSummary]);
 
   /* Scroll to bottom */
   useEffect(() => {
@@ -2055,16 +2159,78 @@ export default function WorkspacePage() {
     else if (tab === 'event') setActiveThread('b-event');
   }, []);
 
-  const handleCeoSend = useCallback(() => {
-    if (!ceoInput.trim()) return;
+  const handleCeoSend = useCallback(async () => {
+    if (!ceoInput.trim() || isAgentThinking) return;
+    const userText = ceoInput.trim();
     msgCounter.current += 1;
     const curPhase = messages[messages.length - 1]?.phase ?? 'discovery';
+    const now = () => new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+    // 1. 追加 CEO 消息
     setMessages(prev => [...prev, {
-      id: `m${msgCounter.current}`, type: 'gm', content: ceoInput.trim(),
-      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), phase: curPhase,
+      id: `m${msgCounter.current}`, type: 'gm', content: userText,
+      time: now(), phase: curPhase,
     }]);
     setCeoInput('');
-  }, [ceoInput, messages]);
+
+    // 2. 只在 wangchao 线程触发真实 LLM（其他线程保持脚本模式）
+    if (activeThread !== 'wangchao') return;
+
+    setIsAgentThinking(true);
+
+    // 望潮港核心数据上下文
+    const merchantContext = `
+商户：望潮港（港式茶餐厅，B1层，合同到期剩91天）
+经营数据：人均消费¥112（↓12%），高毛利单品占比31%（↓11pp），翻台率1.8次/天（↓14%），复购率18%（行业均值27%）
+现场问题：服务响应慢、导视弱、照明不足、出品慢、卫生间问题（5项体验短板）
+活动效果：两次活动客流+11%但客单-9%，低质量流量
+招商判断：仍保留续约窗口，30天内改善可影响评级
+历史案例：相似度87%的案例显示体验整改是关键变量
+当前议题：91天续约窗口内选择干预方案（A:经营修复¥3-5万 / B:修复+体验整改¥8-12万 / C:活动拉新¥6-8万）
+当前阶段：${curPhase}
+`.trim();
+
+    try {
+      const res = await fetch('/api/llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: `你是"商户经营顾问"Agent，参与商场运营多Agent会商。你的职责是基于经营数据给出专业分析和建议。
+回复要求：
+- 直接回应总经理的指令，不要寒暄
+- 语言简洁专业，每次回复100-200字
+- 如有数据支撑，直接引用
+- 结尾给出明确的建议或判断`,
+            },
+            {
+              role: 'user',
+              content: `【商户背景】\n${merchantContext}\n\n【总经理指令】${userText}`,
+            },
+          ],
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.content) {
+        msgCounter.current += 1;
+        setMessages(prev => [...prev, {
+          id: `m${msgCounter.current}`,
+          type: 'agent',
+          agentId: 'risk',
+          content: data.content,
+          time: now(),
+          phase: curPhase,
+        }]);
+      }
+    } catch (err) {
+      console.error('[Workspace] LLM call failed:', err);
+    } finally {
+      setIsAgentThinking(false);
+    }
+  }, [ceoInput, messages, activeThread, isAgentThinking]);
 
   /* Derived state — all use currentMsgs */
   const participants = useMemo(() => {
@@ -2082,6 +2248,7 @@ export default function WorkspacePage() {
 
   const hasTasks = useMemo(() => currentMsgs.some(m => m.type === 'task-card'), [currentMsgs]);
   const memoryDone = useMemo(() => currentMsgs.some(m => m.type === 'memory-card' && m.confirmed), [currentMsgs]);
+  const hasPlanCard = useMemo(() => currentMsgs.some(m => m.type === 'plan-card'), [currentMsgs]);
 
   const currentPhase = useMemo(() => {
     const last = currentMsgs[currentMsgs.length - 1];
@@ -2120,8 +2287,16 @@ export default function WorkspacePage() {
           <div className="w-6 h-6 rounded-lg bg-slate-900 flex items-center justify-center">
             <Zap size={12} className="text-white" />
           </div>
-          <span className="text-[13px] font-bold text-slate-800">商户智运Agent</span>
+          <span className="text-[13px] font-bold text-slate-800">商场工作台</span>
           <span className="text-[10px] text-slate-400 ml-1">经营事项工作台</span>
+        </div>
+        <div className="flex items-center gap-1 rounded-xl border border-slate-200 p-0.5 bg-slate-50">
+          <span className="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-900 text-white">
+            商场工作台
+          </span>
+          <button onClick={handleDispatchToMerchant} className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-white transition-all">
+            下发给商家
+          </button>
         </div>
         <div className="flex-1 max-w-sm mx-auto">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-[12px] text-slate-400">
@@ -2160,10 +2335,10 @@ export default function WorkspacePage() {
       </div>
 
       {/* ── 3-panel ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* ── Left Rail: 经营事项盘 ── */}
-        <div className="w-60 flex-shrink-0 border-r border-slate-200 flex flex-col overflow-hidden" style={{ background: '#f1f5f9' }}>
+        <div className="w-60 flex-shrink-0 border-r border-slate-200 flex flex-col min-h-0 overflow-hidden" style={{ background: '#f1f5f9' }}>
           <div className="px-3 py-2 border-b border-slate-200" style={{ background: '#e8edf2' }}>
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/70 text-[11px] text-slate-400">
               <Search size={11} /><span>搜索事项…</span>
@@ -2335,7 +2510,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* ── Center ── */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white">
 
           {/* Thread Header */}
           <div className="flex-shrink-0 px-5 py-3 bg-white border-b border-slate-200">
@@ -2347,6 +2522,11 @@ export default function WorkspacePage() {
                   </span>
                   <h2 className="text-[15px] font-bold text-slate-800">{activeThreadMeta.title}</h2>
                   <span className="text-[11px] text-slate-400">{activeThreadMeta.code}</span>
+                  {isMerchantFeedbackView && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
+                      商家执行回流评估
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-[11px] text-slate-500">
@@ -2358,7 +2538,7 @@ export default function WorkspacePage() {
                   </span>
                 </div>
               </div>
-              {activeThread === 'wangchao' && (
+              {activeThread === 'wangchao' && !isMerchantFeedbackView && (
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <div className="flex items-center gap-1 rounded-xl border border-slate-200 p-0.5 bg-white">
                     {([1, 2, 3] as const).map(s => (
@@ -2400,7 +2580,7 @@ export default function WorkspacePage() {
           </div>
 
           {/* 当前拍板焦点卡 - 第一视觉焦点 */}
-          {activeThread === 'wangchao' && currentPhase === 'solution' && !messages.some(m => m.type === 'plan-card' && m.selectedPlan) && (
+          {activeThread === 'wangchao' && !isMerchantFeedbackView && currentPhase === 'solution' && !hasPlanCard && !messages.some(m => m.type === 'plan-card' && m.selectedPlan) && (
             <div className="flex-shrink-0 mx-5 mt-4 rounded-2xl overflow-hidden shadow-lg" style={{ border: '2px solid #1e293b' }}>
               <div className="flex items-center gap-2 px-4 py-3" style={{ background: '#1e293b' }}>
                 <AlertTriangle size={14} className="text-amber-400" />
@@ -2427,10 +2607,7 @@ export default function WorkspacePage() {
                   <p className="text-[11px] text-amber-700 leading-snug">执行协同复杂度中等，需要总经理授权推进，预算需先批第一阶段</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => {
-                    const planCard = document.querySelector('[data-plan-card]');
-                    planCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
+                  <button onClick={scrollPlanCardIntoView}
                     className="flex-1 py-2 rounded-xl text-[12px] font-semibold bg-slate-900 text-white hover:bg-slate-700 transition-colors">
                     查看方案详情
                   </button>
@@ -2442,13 +2619,17 @@ export default function WorkspacePage() {
                     className="px-4 py-2 rounded-xl text-[12px] font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                     暂缓结论
                   </button>
+                  <button onClick={handleDispatchToMerchant}
+                    className="px-4 py-2 rounded-xl text-[12px] font-medium border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                    下发给商家执行
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
           {/* Message Feed */}
-          <div ref={feedRef} className="flex-1 overflow-y-auto px-5 py-4" style={{ background: '#f8fafc' }}>
+          <div ref={feedRef} className="flex-1 min-h-0 overflow-y-auto px-5 pt-4 pb-10" style={{ background: '#f8fafc' }}>
             {currentMsgs.map(msg => (
               <MsgBubble key={msg.id} msg={msg}
                 onConsultApprove={handleConsultApprove}
@@ -2465,24 +2646,27 @@ export default function WorkspacePage() {
           </div>
 
           {/* P0-3: CEO Directive Bar */}
-          {activeThread === 'wangchao' && waitForCEO && pendingDecisions.length > 0 && (
+          {!isMerchantFeedbackView && activeThread === 'wangchao' && waitForCEO && pendingDecisions.length > 0 && (
             <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-amber-50 border-t border-amber-100">
               <AlertTriangle size={12} className="text-amber-500 flex-shrink-0" />
               <span className="text-[11px] text-amber-700">有 {pendingDecisions.length} 项等待你的决策，请在上方消息中操作</span>
             </div>
           )}
-          <CeoDirectiveBar
-            currentPhase={currentPhase}
-            participants={participants}
-            ceoInput={ceoInput}
-            setCeoInput={setCeoInput}
-            onSend={handleCeoSend}
-          />
+          {!isMerchantFeedbackView && (
+            <CeoDirectiveBar
+              currentPhase={currentPhase}
+              participants={participants}
+              ceoInput={ceoInput}
+              setCeoInput={setCeoInput}
+              onSend={handleCeoSend}
+              isThinking={isAgentThinking}
+            />
+          )}
         </div>
 
         {/* ── Right Panel: 拍板依据栏 ── */}
-        <div className="w-72 flex-shrink-0 border-l border-amber-100 flex flex-col overflow-hidden lg:flex xl:flex hidden" style={{ background: '#fffbeb' }}>
-          <div className="flex-1 overflow-y-auto">
+        <div className="w-72 flex-shrink-0 border-l border-amber-100 flex flex-col min-h-0 overflow-hidden lg:flex xl:flex hidden" style={{ background: '#fffbeb' }}>
+          <div className="flex-1 min-h-0 overflow-y-auto pb-6">
 
             {/* ① 当前决策对象 - 第一优先 */}
             {activeThread === 'wangchao' && (currentPhase === 'solution' || currentPhase === 'decision') && (
@@ -2529,7 +2713,86 @@ export default function WorkspacePage() {
             )}
 
             {/* ② 证据账本摘要 */}
-            {activeThread === 'wangchao' && (
+            {activeThread === 'wangchao' && hasTasks && (
+              <div className="px-4 py-3 border-b border-emerald-100 bg-emerald-50/70">
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <Store size={11} className="text-emerald-600" />
+                  <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">商家执行回流</p>
+                </div>
+                <div className="rounded-lg bg-white border border-emerald-100 p-2.5 mb-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-[11px] font-semibold text-slate-800">{merchantFeedbackSummary.status}</p>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold">
+                      {merchantFeedbackSummary.cycle}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">任务完成</p>
+                      <p className="text-[15px] font-bold text-emerald-700">
+                        {merchantFeedbackSummary.completed}<span className="text-[11px] text-slate-400 font-normal">/{merchantFeedbackSummary.total}</span>
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">续约建议</p>
+                      <p className="text-[12px] font-semibold text-slate-800">{merchantFeedbackSummary.renewalAdvice}</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    商场侧风险：<span className="font-semibold text-emerald-700">{merchantFeedbackSummary.riskChange}</span>
+                  </p>
+                </div>
+                <div className="space-y-1.5 mb-2.5">
+                  {merchantFeedbackSummary.items.map(item => (
+                    <div key={item.label} className="flex items-center justify-between gap-2 text-[10px]">
+                      <span className="text-slate-500">{item.label}</span>
+                      <span className="text-slate-700 font-medium">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+                {isMerchantFeedbackView && (
+                  <div className="rounded-lg bg-white border border-emerald-100 p-2.5 mb-2.5">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">改善效果验证</p>
+                    <div className="rounded-lg bg-slate-900 px-2.5 py-2 mb-2">
+                      <p className="text-[11px] font-semibold text-white">{merchantFeedbackSummary.effectVerdict.title}</p>
+                      <p className="text-[9px] text-slate-300 leading-snug mt-1">{merchantFeedbackSummary.effectVerdict.detail}</p>
+                    </div>
+                    <div className="space-y-2">
+                      {merchantFeedbackSummary.metrics.map(metric => (
+                        <div key={metric.label} className="rounded-lg border border-slate-100 bg-slate-50 p-2">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] font-semibold text-slate-700">{metric.label}</span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
+                              metric.verdict === '达标' ? 'bg-emerald-100 text-emerald-700' :
+                              metric.verdict === '接近达标' ? 'bg-amber-100 text-amber-700' :
+                              metric.verdict === '未达标' ? 'bg-rose-100 text-rose-700' :
+                              'bg-slate-100 text-slate-500'
+                            }`}>
+                              {metric.verdict}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1 text-[9px]">
+                            <span className="text-slate-400">目标：{metric.target ?? '-'}</span>
+                            <span className="text-slate-600 text-right">当前：{metric.actual ?? '-'}</span>
+                          </div>
+                          <p className="text-[9px] text-slate-500 leading-snug mt-1">{metric.current}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-emerald-800 leading-snug mt-2 pt-2 border-t border-emerald-100">
+                      下一步：{merchantFeedbackSummary.effectVerdict.nextAction}
+                    </p>
+                  </div>
+                )}
+                <p className="text-[10px] text-emerald-800 leading-snug mb-2.5">{merchantFeedbackSummary.recommendation}</p>
+                <button onClick={handleOpenMerchantWorkspace}
+                  className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-semibold hover:bg-emerald-700 transition-colors">
+                  查看门店改善工作台 <ArrowRight size={9} />
+                </button>
+              </div>
+            )}
+
+            {activeThread === 'wangchao' && completedPhases.has('evidence') && (
               <div className="px-4 py-3 border-b border-amber-100">
                 <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2.5">证据账本 ({WANGCHAO_EVIDENCE.length})</p>
                 <div className="space-y-2">
@@ -2641,6 +2904,13 @@ export default function WorkspacePage() {
                   <ArrowRight size={8} />
                 </Link>
               )}
+              {activeThread === 'wangchao' && (
+                <button onClick={handleOpenMerchantWorkspace}
+                  className="mt-1.5 flex items-center gap-1 text-[9px] text-emerald-600 hover:text-emerald-700 transition-colors">
+                  <span>查看门店改善工作台</span>
+                  <ArrowRight size={8} />
+                </button>
+              )}
             </div>
 
             {/* ④ 参会专家 - 紧凑 */}
@@ -2716,5 +2986,13 @@ export default function WorkspacePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function WorkspacePage() {
+  return (
+    <Suspense fallback={null}>
+      <WorkspacePageContent />
+    </Suspense>
   );
 }
