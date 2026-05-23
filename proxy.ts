@@ -12,8 +12,14 @@ export default function proxy(request: NextRequest) {
   // 当前请求路径
   const { pathname } = request.nextUrl;
 
+  const PUBLIC_ROUTES = ['/', '/mall', '/merchant', '/workspace', '/merchant-workspace'];
+  const isPublicRoute = PUBLIC_ROUTES.some(route =>
+    route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`)
+  );
+
   // 排除访问码验证页面本身和静态资源（含 .html，使 landing.html 可直接访问）
   if (
+    isPublicRoute ||
     pathname === ACCESS_PAGE ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
