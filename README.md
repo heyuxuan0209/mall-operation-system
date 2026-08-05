@@ -1,11 +1,259 @@
 # Mall Operation Agent
 
 > 把资深商场专家的经营判断，变成可复用、可追踪、可沉淀的 Agent 工作流。
+> Turn a senior mall expert's operational judgment into a reusable, traceable, and knowledge-accumulating Agent workflow.
 
 [![Framework](https://img.shields.io/badge/Next.js-16.1.4-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
 [![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8.svg)](https://tailwindcss.com/)
+
+**English** · [中文](#中文)
+
+## English
+
+### Live Demo
+
+- Home: https://mall-operation-system.vercel.app
+- Mall Workspace: https://mall-operation-system.vercel.app/workspace
+- Merchant Improvement Workspace: https://mall-operation-system.vercel.app/merchant-workspace
+- Mall Short Path: https://mall-operation-system.vercel.app/mall
+- Merchant Short Path: https://mall-operation-system.vercel.app/merchant
+
+### 1. What Problem Does This Project Solve
+
+Malls don't lack data; what they lack is replicable operational judgment.
+
+Core contradictions:
+
+- Data is scattered across sales, foot traffic, contracts, campaigns, ratings, and store-inspection records
+- Different roles can only see their local slice
+- Experienced operations / leasing experts are scarce
+- Judgment relies on individual experience and is hard to replicate
+- After a problem is spotted, it's hard to keep pushing it through to execution and review
+- Expert judgment is never accumulated into organizational capability
+
+Mall Operation Agent attempts to break down a senior expert's judgment process into a collaborative, traceable, and reusable Agent workflow.
+
+### 2. Product Positioning
+
+Mall Operation Agent is neither a traditional merchant management admin panel nor a pure data dashboard.
+
+It is an AI Agent workspace for commercial real estate operations teams, helping malls to:
+
+- Identify merchant operational risks
+- Connect multi-source operational evidence
+- Diagnose the root cause of problems
+- Generate expert recommendations
+- Assign merchant improvement tasks
+- Track execution results
+- Feed back into renewal and asset operation judgment
+- Accumulate organizational experience
+
+### 3. Current Demo Loop
+
+The current Demo revolves around "Wangchao Port Hotpot renewal-risk escalation" as the main storyline.
+
+```txt
+多源证据
+-> Agent 研判
+-> 专家建议
+-> 商户改善任务
+-> 执行反馈
+-> 效果验证
+-> 回流商场续约判断
+```
+
+Corresponding pages:
+
+- `/`: Project landing page
+- `/workspace`: Mall Workspace
+- `/merchant-workspace`: Merchant Improvement Workspace
+- `/mall`: Mall Workspace short path
+- `/merchant`: Merchant Improvement Workspace short path
+
+### 4. Multi-Source Operational Evidence
+
+The system integrates 6 categories of evidence around merchant operational judgment:
+
+| Evidence Type | Examples |
+| --- | --- |
+| Sales Evidence | Revenue, order volume, average transaction value, sales per square meter, rent-to-sales ratio |
+| Foot Traffic Evidence | Impression traffic, in-store traffic, off-peak foot traffic, conversion trends |
+| Contract Evidence | Lease expiration, rent level, renewal milestones, commercial terms |
+| Campaign Evidence | Campaign participation rate, campaign gross margin, coupon redemption rate, campaign ROI |
+| Reputation Evidence | Rating changes, review content, complaint records, complaint feedback |
+| Store-Inspection Evidence | Inspection records, inspection photos, interview records, rectification records |
+
+### 5. Multi-Agent Collaboration Design
+
+The current product does not use a single "all-purpose AI" to answer questions; instead, it breaks down the expert judgment process into multiple Agent responsibilities.
+
+| Agent / Capability | Role |
+| --- | --- |
+| Operations Radar Agent | Scans multi-source data to find merchants with genuine operational anomalies |
+| Evidence Organization Agent | Organizes scattered evidence into a judgment chain |
+| Root Cause Diagnosis Agent | Determines whether the problem comes from products, staff, experience, or price, or from traffic, campaigns, competitors, or trade-area changes |
+| Strategy Recommendation Agent | Generates recommendations for support, negotiation, continued observation, or replacement |
+| Execution Tracking Agent | Breaks recommendations into merchant tasks and tracks confirmation, completion, and feedback |
+| Effect Verification Agent | Compares metrics before and after improvement and updates the risk judgment |
+| Memory Accumulation Agent | Accumulates historical problems, inspection records, support actions, and improvement results |
+
+### 6. Memory and Iteration
+
+The design focus is not one-off Q&A, but continuously forming operational memory.
+
+Content that gets accumulated:
+
+- Merchant historical problems
+- Inspection records
+- Support actions
+- Leasing negotiation records
+- Merchant execution feedback
+- Improvement effects
+- Final renewal judgment
+
+This data feeds back into the next round of:
+
+- Risk early warning
+- Root cause judgment
+- Strategy recommendation
+- Merchant improvement tasks
+- Renewal evaluation
+
+### 7. Page Descriptions
+
+#### `/workspace` Mall Workspace
+
+For mall general managers, operations managers, and leasing managers.
+
+Core capabilities:
+
+- Merchant risk identification
+- Multi-Agent operational judgment
+- Evidence ledger
+- Expert recommendations
+- Task assignment
+- Merchant execution feedback loop
+- Renewal judgment support
+
+#### `/merchant-workspace` Merchant Improvement Workspace
+
+For merchants / store managers.
+
+Core capabilities:
+
+- Receive mall improvement plans
+- View problems that affect renewal and resource support
+- Confirm tasks
+- Mark as complete
+- Fill in execution feedback
+- Feed back into mall evaluation
+
+### 8. Sample Case: Wangchao Port Hotpot
+
+Case background:
+
+- Sales, average transaction value, off-peak foot traffic, campaign redemption, ratings, and inspection feedback are weakening simultaneously
+- Lease expires in 45 days
+- The mall needs to decide: support, negotiate, continue observing, or replace
+
+Agent judgment:
+
+- It's not a single sales decline
+- Off-peak foot traffic, campaign appeal, and service experience jointly affect the renewal evaluation
+
+Output actions:
+
+- Lunch set menu
+- Coupon threshold adjustment
+- Off-peak guidance
+- Service scheduling optimization
+- 7 / 14-day effect tracking
+- Feed back into renewal judgment
+
+### 9. Technical Implementation
+
+| Layer | Technology |
+| --- | --- |
+| Framework | Next.js 16 + React 19 |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| State | React Hooks + localStorage mock state |
+| Icons | lucide-react |
+| Data | Static mock data |
+| Deployment | Vercel |
+
+### 10. Running Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Visit:
+
+```txt
+http://localhost:3000
+```
+
+### 11. Key Files
+
+```txt
+app/page.tsx
+公网落地页
+
+app/workspace/page.tsx
+商场工作台
+
+app/merchant-workspace/page.tsx
+商户改善工作台
+
+data/merchant-workspace/wangchao-improvement.ts
+望潮港火锅改善任务 mock 数据
+
+utils/merchantImprovementState.ts
+商场下发、商户执行、效果回流状态管理
+```
+
+The legacy V4 project documentation has been archived:
+
+```txt
+docs/archive/v4/README-V4-legacy.md
+```
+
+### 12. Roadmap
+
+- Mall side: enhance multi-merchant portfolio analysis, business-format structure impact, and asset operation perspective
+- Merchant side: refine task execution, feedback upload, and improvement effect verification
+- Agent side: enhance memory accumulation, strategy reuse, and inspection data feedback
+- New product line: Merchant Agent, for chain brand headquarters and single-store operations management
+
+### 13. Notes
+
+This is a personal product and technical portfolio project, meant to showcase:
+
+- AI Agent product design
+- Abstraction of commercial real estate operations scenarios
+- Multi-role workspace design
+- A closed-loop system from judgment to execution
+- Full-stack prototyping capability with Next.js
+
+### License
+
+This software is proprietary and protected by copyright. See [LICENSE.md](LICENSE.md) for details.
+
+- Online experience and evaluation are permitted
+- Use for technical interview demonstration is permitted
+- Commercial use / reproduction / distribution is prohibited
+
+---
+
+Author: He Yuxuan
+
+---
+
+## 中文
 
 ## 在线体验
 
@@ -245,3 +493,34 @@ docs/archive/v4/README-V4-legacy.md
 ---
 
 作者：何雨轩
+
+---
+
+## 🔗 关注我 · Follow me
+
+边做 AI 产品边把一手经验和思考公开分享，欢迎关注、来聊。<br>
+I build AI products in public and share the notes here — come say hi:
+
+<table>
+  <tr>
+    <td align="center"><b>小红书 · Xiaohongshu</b></td>
+    <td align="center"><b>公众号 · WeChat</b></td>
+    <td align="center"><b>抖音 · Douyin</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/qr-xiaohongshu.jpg" width="210" alt="小红书 杰西卡"></td>
+    <td align="center"><img src="assets/qr-wechat.jpg" width="180" alt="公众号 杰西卡聊AI"></td>
+    <td align="center"><img src="assets/qr-douyin.jpg" width="210" alt="抖音 杰西卡"></td>
+  </tr>
+  <tr>
+    <td align="center">杰西卡 · 小红书号 <code>111013749</code></td>
+    <td align="center">搜「<b>杰西卡聊AI</b>」关注</td>
+    <td align="center">@杰西卡 · 抖音号 <code>2179932674</code></td>
+  </tr>
+</table>
+
+## License & 二开须知 · Contributing
+
+MIT — 见 [LICENSE](LICENSE.md)。欢迎 **Star / Fork / Issue**，也欢迎二次开发、魔改、接进你自己的产品或工作流。**唯一的请求**：二开或转载时**注明出处**，并 **@ 一下我**（公众号 / 小红书「**杰西卡聊AI**」，主页见上）——让顺着来的人能找到源头，就是最好的感谢 🙏。
+
+MIT licensed — see [LICENSE](LICENSE.md). **Star / Fork / Issues welcome**, and feel free to remix, modify, or build it into your own product or workflow. **One ask:** if you fork/remix or repost, please **credit the source and @ me** (Jessica · 杰西卡聊AI). That's the best thank-you 🙏.
